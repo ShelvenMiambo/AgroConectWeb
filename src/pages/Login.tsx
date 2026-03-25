@@ -172,7 +172,7 @@ const Login = () => {
                 <ArrowLeft className="h-4 w-4" /> Voltar ao login
               </button>
               <div className="mb-8">
-                <h1 className="text-3xl font-black font-['Outfit'] mb-2">Recuperar senha 🔑</h1>
+                <h1 className="text-3xl font-black font-['Outfit'] mb-2">Recuperar senha</h1>
                 <p className="text-muted-foreground text-sm">
                   Introduza o seu email e enviamos um link para redefinir a sua palavra-passe.
                 </p>
@@ -202,7 +202,7 @@ const Login = () => {
             <>
               <div className="mb-8">
                 <h1 className="text-3xl font-black font-['Outfit'] mb-2">
-                  {mode === 'login' ? 'Bem-vindo de volta 👋' : 'Criar conta gratuita 🌱'}
+                  {mode === 'login' ? 'Bem-vindo de volta' : 'Criar conta gratuita'}
                 </h1>
                 <p className="text-muted-foreground text-sm">
                   {mode === 'login'

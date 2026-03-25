@@ -21,7 +21,7 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, userRole, logout } = useAuth();
+  const { currentUser, userData, userRole, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -198,27 +198,14 @@ const Header = () => {
           onClick={() => setMenuOpen(false)}
         />
 
-        {/* Drawer Panel */}
+        {/* Drawer Panel — starts BELOW the sticky header */}
         <div
-          className={`absolute top-0 right-0 h-full w-72 bg-background shadow-strong border-l border-border/60 transition-transform duration-300 ${
+          className={`absolute top-16 right-0 h-[calc(100%-4rem)] w-[min(18rem,85vw)] bg-background shadow-strong border-l border-border/60 transition-transform duration-300 flex flex-col ${
             menuOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
-          {/* Drawer Header */}
-          <div className="flex items-center justify-between p-5 border-b border-border/60">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-                <span className="text-white font-black text-xs font-['Outfit']">AC</span>
-              </div>
-              <span className="font-black text-primary font-['Outfit']">AgroConecta</span>
-            </div>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setMenuOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
           {/* Navigation Items */}
-          <nav className="p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             <Link
               to="/"
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
@@ -258,7 +245,7 @@ const Header = () => {
           </nav>
 
           {/* Drawer Footer */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border/60 space-y-3">
+          <div className="p-4 border-t border-border/60 space-y-3 mt-auto">
             {currentUser ? (
               <>
                 <div className="flex items-center gap-3 px-2">
@@ -266,7 +253,7 @@ const Header = () => {
                     {currentUser.email?.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate">{currentUser.displayName || currentUser.email?.split('@')[0]}</p>
+                    <p className="text-sm font-semibold truncate">{userData?.name || currentUser.displayName || currentUser.email?.split('@')[0]}</p>
                     <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
                   </div>
                 </div>
@@ -284,7 +271,7 @@ const Header = () => {
               </Link>
             )}
             <p className="text-xs text-center text-muted-foreground">
-              Feito com ❤️ em Moçambique
+              Feito com carinho em Moçambique
             </p>
           </div>
         </div>

@@ -164,7 +164,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-1.5">
                 <Leaf className="h-3.5 w-3.5 text-primary" />
-                <span>Feito com orgulho em Moçambique 🇲🇿</span>
+                <span>Feito com orgulho em Moçambique</span>
               </div>
             </div>
           </div>

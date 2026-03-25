@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Smartphone, Users, TrendingUp, Play, ChevronDown } from "lucide-react";
+import { ArrowRight, Smartphone, Users, TrendingUp, ChevronDown, Award, Leaf, Play } from "lucide-react";
 import heroImage from "@/assets/hero-agriculture.jpg";
 import { Link } from "react-router-dom";
 
@@ -46,15 +46,13 @@ const HeroSection = () => {
         <img
           src={heroImage}
           alt="Agricultura moderna em Moçambique"
-          className="w-full h-full object-cover transition-transform duration-[20s] ease-out"
-          style={{ transform: heroLoaded ? 'scale(1.05)' : 'scale(1.1)' }}
+          className="w-full h-full object-cover object-center"
+          style={{ filter: 'brightness(0.92) saturate(1.1)' }}
           onLoad={() => setHeroLoaded(true)}
         />
-        {/* Multi-layer gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        {/* Dot pattern overlay */}
-        <div className="absolute inset-0 dot-pattern opacity-20" />
+        {/* Overlay: darker left, lighter right to show image */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
       </div>
 
       {/* Floating badges — desktop only */}
@@ -74,7 +72,7 @@ const HeroSection = () => {
           style={{ animationDelay: '1.5s' }}
         >
           <div className="text-center">
-            <p className="text-2xl font-bold text-gradient-gold font-['Outfit']">🏆</p>
+            <Award className="h-5 w-5 text-yellow-400 mx-auto" />
             <p className="text-xs text-white/90 font-medium mt-1">Melhor AgriTech<br/>Moçambique 2025</p>
           </div>
         </div>
@@ -84,7 +82,7 @@ const HeroSection = () => {
           style={{ animationDelay: '1.8s' }}
         >
           <div className="flex items-center gap-2">
-            <span className="text-lg">🌱</span>
+            <Leaf className="h-4 w-4 text-green-400" />
             <div>
               <p className="text-xs font-bold text-white">Novo registo</p>
               <p className="text-[10px] text-white/70">há 2 minutos</p>
