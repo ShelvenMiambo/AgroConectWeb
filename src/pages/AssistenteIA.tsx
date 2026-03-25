@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Bot, Send, Mic, MicOff, Volume2, VolumeX,
   Languages, BookOpen, Lightbulb, Bug, Cloud, Sprout,
-  Loader2, Sparkles
+  Loader2, Sparkles, AlertTriangle
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -19,34 +19,100 @@ type Message = {
 };
 
 const topicSuggestions = [
-  { icon: Sprout, text: "Como plantar milho?",    category: "Cultivo",   color: "text-success" },
-  { icon: Bug,    text: "Pragas no tomateiro",    category: "Pragas",    color: "text-destructive" },
-  { icon: Cloud,  text: "Previsão do tempo",      category: "Clima",     color: "text-primary" },
-  { icon: Lightbulb, text: "Melhores práticas",  category: "Dicas",     color: "text-accent" },
+  { icon: Sprout,    text: "Como plantar milho em Moçambique?",  category: "Cultivo",  color: "text-success" },
+  { icon: Bug,       text: "Pragas no tomateiro — como tratar?", category: "Pragas",   color: "text-destructive" },
+  { icon: Cloud,     text: "Melhores culturas para época seca?", category: "Clima",    color: "text-primary" },
+  { icon: Lightbulb, text: "Como melhorar a fertilidade do solo?",category: "Solo",    color: "text-accent" },
 ];
 
 const languages = [
-  { code: 'pt',  name: 'Português', flag: '🇲🇿' },
-  { code: 'mua', name: 'Makua',     flag: '🌍' },
-  { code: 'seh', name: 'Sena',      flag: '🌍' },
-  { code: 'tsc', name: 'Changana',  flag: '🌍' },
+  { code: 'pt',  name: 'Português', flag: '🇲🇿', instruction: 'Responsa sempre em Português de Moçambique.' },
+  { code: 'mua', name: 'Makua',     flag: '🌍', instruction: 'Responda em Makua (língua bantu de Moçambique). Se não for possível, use Português simples.' },
+  { code: 'seh', name: 'Sena',      flag: '🌍', instruction: 'Responda em Sena (língua bantu de Moçambique). Se não for possível, use Português simples.' },
+  { code: 'tsc', name: 'Changana',  flag: '🌍', instruction: 'Responda em Changana (língua bantu do sul de Moçambique). Se não for possível, use Português simples.' },
 ];
 
-function generateAIResponse(input: string): string {
-  const i = input.toLowerCase();
-  if (i.includes('milho') || i.includes('plantar')) {
-    return 'Para plantar milho em Moçambique:\n\n🌱 **Época ideal**: Outubro–Novembro (início das chuvas)\n🌿 **Espaçamento**: 25 cm entre plantas, 75 cm entre linhas\n🪣 **Rega**: 400–600 mm durante o ciclo\n🌾 **Variedades locais**: ZM421, ZM401 adaptadas ao clima\n\nPrecisa de mais detalhes sobre alguma fase?';
+const SYSTEM_PROMPT = `Você é o AgroBot, um assistente agrícola especializado em Moçambique, desenvolvido pela AgroConecta.
+
+Missão: Ajudar agricultores moçambicanos com conselhos práticos, acessíveis e adaptados ao contexto local.
+
+Conhecimentos principais:
+- Culturas locais: milho, feijão, arroz, mandioca, amendoim, algodão, caju, tabaco, horticultura
+- Clima de Moçambique: época das chuvas (outubro–março), época seca (abril–setembro), ciclones costeiros
+- Solos moçambicanos: argiloso, arenoso, franco, latossolo vermelho-amarelo
+- Pragas comuns: lagarta do cartucho, mosca-branca, pulgão, ácaros, ferrugem, míldio
+- Técnicas adaptadas: agricultura de conservação, rotação de culturas, compostagem, rega gota-a-gota
+- Preços e mercado: Mercado Municipal de Maputo, preços em Meticais (MT), cooperativas locais
+- Regiões: Maputo, Gaza, Inhambane, Sofala, Manica, Tete, Zambézia, Nampula, Cabo Delgado, Niassa
+
+Estilo de resposta:
+- Seja direto, claro e prático
+- Use exemplos locais (variedades moçambicanas, condições locais)
+- Formate as respostas com emojis relevantes para facilitar a leitura
+- Dê sempre recomendações acionáveis
+- Mencione preços em MT quando relevante
+- Adapte-se ao nível do agricultor (pode ser analfabeto digital)`;
+
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+async function callGemini(userMessage: string, history: Message[], langInstruction: string): Promise<string> {
+  if (!GEMINI_API_KEY) {
+    return '⚠️ Chave API Gemini não configurada. Contacte o administrador.';
   }
-  if (i.includes('praga') || i.includes('inseto') || i.includes('tomate')) {
-    return 'Para controlo de pragas no tomateiro:\n\n🐛 **Identificação**: Lagarta, pulgão ou mosca-branca?\n🟡 **Armadilhas cromáticas**: Use painéis amarelos\n🧪 **Controlo biológico**: Bacillus thuringiensis\n🔄 **Rotação de culturas**: Evita acumulação de pragas\n\nConsiga identificar qual praga está a afetar a sua cultura?';
+
+  // Build conversation history for Gemini
+  const contents = [
+    // System context as first user message
+    {
+      role: 'user',
+      parts: [{ text: `${SYSTEM_PROMPT}\n\nInstrução de idioma: ${langInstruction}` }]
+    },
+    {
+      role: 'model',
+      parts: [{ text: 'Olá! Estou pronto para ajudar os agricultores moçambicanos. Como posso ajudá-lo?' }]
+    },
+    // Add conversation history (last 6 messages to stay within token limits)
+    ...history.slice(-6).map(m => ({
+      role: m.sender === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }]
+    })),
+    // Current message
+    {
+      role: 'user',
+      parts: [{ text: userMessage }]
+    }
+  ];
+
+  const response = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+        topP: 0.8,
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      ]
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    console.error('[Gemini Error]', err);
+    if (response.status === 429) return '⏳ Muitas perguntas seguidas. Aguarde um momento e tente novamente.';
+    if (response.status === 401 || response.status === 403) return '🔑 Chave API inválida. Contacte o administrador.';
+    return `❌ Erro ao contactar o assistente (${response.status}). Tente novamente.`;
   }
-  if (i.includes('tempo') || i.includes('chuva') || i.includes('clima')) {
-    return '☀️ Previsão agrícola para esta semana:\n\n🌡️ Temperatura: 25–32°C\n💧 Humidade: 65–80%\n🌧️ Probabilidade de chuva: 40%\n💨 Vento: Moderado de SE\n\n**Recomendações:**\n• Bom período para plantação\n• Prepare drenagem para excesso de água\n• Applique fertilizantes antes da chuva';
-  }
-  if (i.includes('solo') || i.includes('terra') || i.includes('adubar')) {
-    return '🌍 Sobre gestão de solo:\n\n**Tipos principais:**\n• 🟤 Argiloso: retém água, ideal para arroz\n• 🟡 Arenoso: drenagem rápida, boa para raízes\n• 🟢 Franco: equilibrado, versátil\n\n**Adubação recomendada:**\nUse composto orgânico + NPK 10-20-10 para solos moçambicanos. Faça análise de solo antes de aplicar.';
-  }
-  return '🤖 Olá! Sou o seu assistente agrícola especializado em Moçambique.\n\nPosso ajudá-lo com:\n• 🌱 Técnicas de cultivo\n• 🐛 Controlo de pragas\n• ☀️ Previsões climáticas\n• 🌍 Gestão de solo e água\n• 📊 Melhores práticas\n\nReformule a sua pergunta ou escolha um tema sugerido!';
+
+  const data = await response.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) return '🤔 Não consegui gerar uma resposta. Tente reformular a pergunta.';
+  return text;
 }
 
 const AssistenteIA = () => {
@@ -54,74 +120,108 @@ const AssistenteIA = () => {
     {
       id: 1,
       sender: 'ai',
-      content: 'Olá! 👋 Sou o seu assistente agrícola inteligente. Posso ajudar com cultivo, pragas, clima, solo e muito mais — disponível em 4 idiomas locais. Como posso ajudá-lo hoje?',
+      content: 'Olá! Sou o AgroBot, o seu assistente agrícola especializado em Moçambique 🌱\n\nPosso ajudá-lo com cultivo, pragas, clima, solo, preços de mercado e muito mais — em Português e línguas locais.\n\nComo posso ajudá-lo hoje?',
       timestamp: new Date(),
     }
   ]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [inputMessage, setInputMessage]     = useState('');
+  const [isTyping, setIsTyping]             = useState(false);
+  const [isRecording, setIsRecording]       = useState(false);
+  const [audioEnabled, setAudioEnabled]     = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('pt');
+  const [apiError, setApiError]             = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef       = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const sendMessage = (content: string) => {
-    if (!content.trim() || isTyping) return;
+  const getCurrentLang = () => languages.find(l => l.code === selectedLanguage) || languages[0];
 
-    const userMessage: Message = {
+  const sendMessage = async (content: string) => {
+    if (!content.trim() || isTyping) return;
+    setApiError(false);
+
+    const userMsg: Message = {
       id: Date.now(),
       sender: 'user',
       content: content.trim(),
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMsg]);
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate realistic AI thinking time
-    const delay = 800 + Math.random() * 800;
-    setTimeout(() => {
-      const aiMessage: Message = {
+    try {
+      const lang = getCurrentLang();
+      const reply = await callGemini(content.trim(), messages, lang.instruction);
+
+      const aiMsg: Message = {
         id: Date.now() + 1,
         sender: 'ai',
-        content: generateAIResponse(content),
+        content: reply,
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, aiMessage]);
-      setIsTyping(false);
-    }, delay);
-  };
+      setMessages(prev => [...prev, aiMsg]);
 
-  const toggleRecording = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      // Simulate voice input
-      const phrases = [
-        "Como tratar as pragas no meu feijão?",
-        "Qual é a melhor época para plantar milho?",
-        "O meu tomate tem manchas amarelas"
-      ];
-      setInputMessage(phrases[Math.floor(Math.random() * phrases.length)]);
-    } else {
-      setIsRecording(true);
-      // Auto-stop after 4s
-      setTimeout(() => setIsRecording(false), 4000);
+      // Text-to-speech if enabled
+      if (audioEnabled && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(reply.replace(/[🌱🐛☀️🌍🤖⚠️❌⏳🔑🤔]/gu, ''));
+        utterance.lang = 'pt-PT';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (e) {
+      console.error('[AssistenteIA]', e);
+      setApiError(true);
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        sender: 'ai',
+        content: '❌ Ocorreu um erro de rede. Verifique a sua ligação à internet e tente novamente.',
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsTyping(false);
     }
   };
 
-  const formatContent = (text: string) => {
-    return text.split('\n').map((line, i) => (
-      <span key={i}>
-        {line.replace(/\*\*(.*?)\*\*/g, '$1')}
-        {i < text.split('\n').length - 1 && <br />}
-      </span>
-    ));
+  const toggleRecording = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('O seu browser não suporta reconhecimento de voz. Use Chrome para esta funcionalidade.');
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-MZ';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInputMessage(transcript);
+      setIsRecording(false);
+    };
+    recognition.onerror = () => setIsRecording(false);
+    recognition.onend = () => setIsRecording(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
+
+  const toggleAudio = () => {
+    if (audioEnabled) window.speechSynthesis?.cancel();
+    setAudioEnabled(!audioEnabled);
   };
 
   return (
@@ -138,9 +238,21 @@ const AssistenteIA = () => {
             <span className="text-gradient-primary">Assistente IA</span> Agrícola
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Conselhos personalizados sobre cultivo, pragas, clima e práticas agrícolas.
-            Disponível em 4 idiomas.
+            Conselhos reais sobre cultivo, pragas, clima e mercado — powered by Google Gemini.
           </p>
+          {/* API status badge */}
+          <div className="mt-3">
+            {GEMINI_API_KEY ? (
+              <Badge variant="secondary" className="gap-1.5 text-success border-success/30 bg-success/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
+                Gemini AI Ativo
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="gap-1.5 text-destructive border-destructive/30 bg-destructive/10">
+                <AlertTriangle className="h-3 w-3" /> API não configurada
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Language + Audio Controls */}
@@ -150,7 +262,7 @@ const AssistenteIA = () => {
             <select
               value={selectedLanguage}
               onChange={e => setSelectedLanguage(e.target.value)}
-              className="bg-transparent text-sm font-medium border-none outline-none cursor-pointer"
+              className="bg-transparent text-sm font-medium border-none outline-none cursor-pointer text-foreground"
             >
               {languages.map(l => (
                 <option key={l.code} value={l.code}>{l.flag} {l.name}</option>
@@ -161,8 +273,9 @@ const AssistenteIA = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setAudioEnabled(!audioEnabled)}
+            onClick={toggleAudio}
             className={`rounded-xl gap-2 ${audioEnabled ? 'text-primary' : 'text-muted-foreground'}`}
+            title={audioEnabled ? 'Desativar leitura em voz alta' : 'Ativar leitura em voz alta'}
           >
             {audioEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             <span className="text-xs hidden sm:inline">{audioEnabled ? 'Áudio ativo' : 'Mudo'}</span>
@@ -183,19 +296,18 @@ const AssistenteIA = () => {
               <p className="font-semibold text-sm">AgroBot</p>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Sparkles className="h-3 w-3 text-accent" />
-                Especialista em Agricultura Moçambicana
+                Powered by Google Gemini 2.0 Flash
               </p>
             </div>
           </div>
 
           {/* Messages */}
-          <div className="h-80 overflow-y-auto p-5 space-y-4">
+          <div className="h-96 overflow-y-auto p-5 space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}
               >
-                {/* Avatar */}
                 {message.sender === 'ai' && (
                   <div className="flex-shrink-0 w-7 h-7 rounded-lg gradient-hero flex items-center justify-center shadow-soft mt-0.5">
                     <Bot className="h-3.5 w-3.5 text-white" />
@@ -203,13 +315,13 @@ const AssistenteIA = () => {
                 )}
 
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     message.sender === 'user'
                       ? 'gradient-primary text-white rounded-tr-sm'
                       : 'bg-muted rounded-tl-sm'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{formatContent(message.content)}</p>
+                  <p className="whitespace-pre-wrap">{message.content}</p>
                   <p className={`text-[10px] mt-1.5 ${message.sender === 'user' ? 'text-white/60 text-right' : 'text-muted-foreground'}`}>
                     {message.timestamp.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -224,17 +336,17 @@ const AssistenteIA = () => {
                   <Bot className="h-3.5 w-3.5 text-white" />
                 </div>
                 <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <div className="flex gap-1">
-                      {[0,1,2].map(i => (
+                      {[0, 1, 2].map(i => (
                         <span
                           key={i}
-                          className="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce"
+                          className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce"
                           style={{ animationDelay: `${i * 150}ms` }}
                         />
                       ))}
                     </div>
-                    <span className="text-xs text-muted-foreground">A pensar...</span>
+                    <span className="text-xs text-muted-foreground">A consultar Gemini AI...</span>
                   </div>
                 </div>
               </div>
@@ -258,8 +370,9 @@ const AssistenteIA = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`absolute right-1 top-1 h-9 w-9 p-0 rounded-lg ${isRecording ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}
+                  className={`absolute right-1 top-1 h-9 w-9 p-0 rounded-lg ${isRecording ? 'text-destructive animate-pulse' : 'text-muted-foreground hover:text-foreground'}`}
                   onClick={toggleRecording}
+                  title={isRecording ? 'Parar gravação' : 'Gravar voz (Chrome)'}
                 >
                   {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                 </Button>
@@ -272,6 +385,12 @@ const AssistenteIA = () => {
                 {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
+            {isRecording && (
+              <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse inline-block" />
+                A gravar... Fale agora
+              </p>
+            )}
           </div>
         </Card>
 
@@ -282,7 +401,7 @@ const AssistenteIA = () => {
               key={i}
               onClick={() => sendMessage(text)}
               disabled={isTyping}
-              className="group flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5 hover:-translate-y-1 transition-spring text-center disabled:opacity-50"
+              className="group flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5 hover:-translate-y-1 transition-spring text-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="p-2 rounded-xl bg-muted group-hover:bg-primary/10 transition-colors">
                 <Icon className={`h-5 w-5 ${color}`} />
@@ -296,9 +415,9 @@ const AssistenteIA = () => {
         {/* Feature Cards */}
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { icon: Languages, title: "4 Idiomas Locais",  desc: "Português, Makua, Sena e Changana",         color: "text-primary",     bg: "bg-primary/8" },
-            { icon: Volume2,   title: "Áudio Integrado",   desc: "Ouça as respostas em alta voz",             color: "text-accent",      bg: "bg-accent/8" },
-            { icon: BookOpen,  title: "Conteúdo Técnico",  desc: "Guias, vídeos e dados especializados",      color: "text-success",     bg: "bg-success/8" },
+            { icon: Languages, title: "4 Idiomas Locais",  desc: "Português, Makua, Sena e Changana — Gemini adapta-se ao idioma pedido", color: "text-primary",  bg: "bg-primary/8" },
+            { icon: Volume2,   title: "Áudio Integrado",   desc: "Ative o áudio para ouvir as respostas em voz alta (Web Speech API)",    color: "text-accent",  bg: "bg-accent/8" },
+            { icon: BookOpen,  title: "IA Real",            desc: "Powered by Google Gemini 2.0 Flash — respostas inteligentes e actuais", color: "text-success", bg: "bg-success/8" },
           ].map(({ icon: Icon, title, desc, color, bg }, i) => (
             <div key={i} className="flex flex-col items-center text-center p-5 rounded-2xl border border-border/60 bg-card hover:shadow-soft transition-smooth">
               <div className={`p-3 rounded-xl ${bg} mb-3`}>
