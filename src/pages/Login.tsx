@@ -44,13 +44,18 @@ const perks = [
 ];
 
 const errorMap: Record<string, string> = {
-  'auth/invalid-credential':   'Email ou palavra-passe incorretos.',
+  'auth/invalid-credential':    'Email ou palavra-passe incorretos.',
   'auth/user-not-found':        'Nenhuma conta com este email.',
   'auth/wrong-password':        'Palavra-passe incorreta.',
   'auth/too-many-requests':     'Muitas tentativas. Aguarde alguns minutos.',
   'auth/email-already-in-use':  'Este email já está registado.',
   'auth/weak-password':         'Palavra-passe demasiado fraca.',
   'auth/network-request-failed':'Verifique a sua ligação à internet.',
+  'auth/popup-closed-by-user':  'A janela do Google foi fechada. Tente novamente.',
+  'auth/popup-blocked':         'Popup bloqueado pelo browser. Permita pop-ups para este site.',
+  'auth/cancelled-popup-request':'A operação foi cancelada. Tente novamente.',
+  'auth/unauthorized-domain':   'Domínio não autorizado. Contacte o administrador.',
+  'auth/operation-not-allowed': 'Login com Google não está ativado. Contacte o administrador.',
 };
 
 const Login = () => {
@@ -95,7 +100,10 @@ const Login = () => {
     try { clearMessages(); setLoading(true);
       await loginWithGoogle();
       navigate('/');
-    } catch (e: any) { setError('Erro ao entrar com Google. Tente novamente.');
+    } catch (e: any) {
+      const msg = errorMap[e.code] || `Erro Google (${e.code || 'desconhecido'}). Tente novamente.`;
+      setError(msg);
+      console.error('[Google Login Error]', e.code, e.message);
     } finally { setLoading(false); }
   };
 

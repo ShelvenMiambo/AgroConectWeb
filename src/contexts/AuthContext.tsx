@@ -35,33 +35,49 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const useAuth = () => useContext(AuthContext);
 
-// Helper: fetch or create user document in Firestore
-const syncUserToFirestore = async (user: User, extraData?: Partial<UserData>) => {
-  const ref = doc(db, 'users', user.uid);
-  const snap = await getDoc(ref);
+// Helper: fetch or create user document in Firestore (non-blocking)
+const syncUserToFirestore = async (user: User, extraData?: Partial<UserData>): Promise<UserData | null> => {
+  try {
+    const ref = doc(db, 'users', user.uid);
+    const snap = await getDoc(ref);
 
-  // Determine role: admin email from env, otherwise 'user'
-  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || '';
-  const isAdmin = user.email === adminEmail;
+    // Determine role: admin email from env, otherwise 'user'
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || '';
+    const isAdmin = adminEmail && user.email === adminEmail;
 
-  if (!snap.exists()) {
-    // First time: create user document
-    await setDoc(ref, {
+    if (!snap.exists()) {
+      // First time: create user document
+      await setDoc(ref, {
+        uid: user.uid,
+        name: extraData?.name || user.displayName || user.email?.split('@')[0] || 'Utilizador',
+        email: user.email || '',
+        phone: extraData?.phone || '',
+        role: isAdmin ? 'admin' : 'user',
+        photoURL: user.photoURL || '',
+        createdAt: serverTimestamp(),
+      });
+    } else if (isAdmin && snap.data()?.role !== 'admin') {
+      // Promote to admin if env email matches
+      await setDoc(ref, { role: 'admin' }, { merge: true });
+    }
+
+    const updated = await getDoc(ref);
+    return updated.data() as UserData;
+  } catch (err) {
+    // Firestore unavailable or rules blocking — log but don't crash login
+    console.warn('[AgroConecta] Firestore sync failed, continuing with auth only:', err);
+    // Return a minimal userData based on Firebase Auth info
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || '';
+    return {
       uid: user.uid,
       name: extraData?.name || user.displayName || user.email?.split('@')[0] || 'Utilizador',
       email: user.email || '',
       phone: extraData?.phone || '',
-      role: isAdmin ? 'admin' : 'user',
+      role: (adminEmail && user.email === adminEmail) ? 'admin' : 'user',
       photoURL: user.photoURL || '',
-      createdAt: serverTimestamp(),
-    });
-  } else if (isAdmin && snap.data()?.role !== 'admin') {
-    // Promote to admin if env email matches
-    await setDoc(ref, { role: 'admin' }, { merge: true });
+      createdAt: null,
+    } as UserData;
   }
-
-  const updated = await getDoc(ref);
-  return updated.data() as UserData;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
