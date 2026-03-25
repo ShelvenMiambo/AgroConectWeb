@@ -385,3 +385,85 @@
   outline-offset: 2px;
   border-radius: calc(var(--radius) - 2px);
 }
+
+/* ── Mobile & iOS/Android Responsiveness ── */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* iOS safe area support (notch, home bar) */
+.safe-top    { padding-top:    env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Minimum touch targets 44×44px (Apple + Google guidelines) */
+button, a, [role="button"] {
+  touch-action: manipulation;
+}
+@media (pointer: coarse) {
+  button, [role="button"] {
+    min-height: 44px;
+  }
+  nav a {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+}
+
+/* Fast tap on Android (removes 300ms delay) */
+* {
+  -webkit-tap-highlight-color: hsl(var(--primary) / 0.12);
+}
+
+/* Smooth momentum scrolling on iOS */
+.overflow-y-auto,
+.overflow-auto,
+.overflow-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hero full viewport — works with mobile browser chrome */
+.hero-full {
+  min-height: 100svh;
+}
+
+/* Modal bottom sheet on mobile */
+@media (max-width: 640px) {
+  [data-radix-dialog-content] {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    max-height: 92svh !important;
+    overflow-y: auto;
+  }
+}
+
+/* Compact hero on landscape phones */
+@media (max-height: 500px) and (orientation: landscape) {
+  section[class*="min-h"] {
+    min-height: 100vh;
+    padding-top: 5rem;
+    padding-bottom: 2rem;
+  }
+}
+
+/* Desktop comfortable reading width */
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1320px;
+  }
+}
+
+/* Hide floating decorative badges on small tablets */
+@media (max-width: 1023px) {
+  .float {
+    display: none;
+  }
+}

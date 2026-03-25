@@ -57,7 +57,7 @@ const Footer = () => {
                 Pronto para transformar o seu negócio?
               </h3>
               <p className="text-white/70 text-base">
-                Junte-se a mais de 10.000 agricultores que já usam o AgroConecta.
+                Junte-se a mais de 10.000 agricultores que já usam o AgroConect.
               </p>
             </div>
             <div className="flex gap-3 flex-shrink-0">
@@ -84,7 +84,7 @@ const Footer = () => {
                   <span className="text-white font-black font-['Outfit']">AC</span>
                 </div>
                 <div>
-                  <div className="text-lg font-black text-background dark:text-card-foreground font-['Outfit']">AgroConecta</div>
+                  <div className="text-lg font-black text-background dark:text-card-foreground font-['Outfit']">AgroConect</div>
                   <div className="text-xs text-background/50 dark:text-card-foreground/50 font-medium tracking-widest uppercase">AI Platform</div>
                 </div>
               </Link>
@@ -104,9 +104,9 @@ const Footer = () => {
                   <Phone className="h-4 w-4 text-primary flex-shrink-0" />
                   +258 84 000 0000
                 </a>
-                <a href="mailto:info@agroconecta.mz" className="flex items-center gap-2.5 text-sm text-background/70 dark:text-card-foreground/70 hover:text-background dark:hover:text-card-foreground transition-colors">
+                <a href="mailto:info@agroconect.mz" className="flex items-center gap-2.5 text-sm text-background/70 dark:text-card-foreground/70 hover:text-background dark:hover:text-card-foreground transition-colors">
                   <Mail className="h-4 w-4 text-primary flex-shrink-0" />
-                  info@agroconecta.mz
+                  info@agroconect.mz
                 </a>
               </div>
 
@@ -154,7 +154,7 @@ const Footer = () => {
           <div className="container mx-auto px-4 lg:px-8 py-5">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-background/50 dark:text-card-foreground/50">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1">
-                <span>© 2026 AgroConecta AI. Todos os direitos reservados.</span>
+                <span>© 2026 AgroConect AI. Todos os direitos reservados.</span>
                 <div className="hidden md:block w-px h-3 bg-current opacity-30" />
                 <div className="flex gap-4">
                   {["Privacidade", "Termos", "Cookies"].map(label => (

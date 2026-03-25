@@ -113,7 +113,7 @@ const Login = () => {
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden flex-col justify-between p-12">
         <img
           src={heroImage}
-          alt="AgroConecta"
+          alt="AgroConect"
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-primary/40 to-black/60" />
@@ -126,7 +126,7 @@ const Login = () => {
               <span className="text-white font-black font-['Outfit']">AC</span>
             </div>
             <div>
-              <p className="text-lg font-black text-white font-['Outfit']">AgroConecta</p>
+              <p className="text-lg font-black text-white font-['Outfit']">AgroConect</p>
               <p className="text-xs text-white/60 tracking-widest uppercase">AI Platform</p>
             </div>
           </Link>
@@ -156,7 +156,7 @@ const Login = () => {
         {/* Bottom */}
         <div className="relative z-10">
           <p className="text-white/40 text-xs">
-            © 2026 AgroConecta AI · Feito em Moçambique 🇲🇿
+            © 2026 AgroConect AI · Feito em Moçambique 🇲🇿
           </p>
         </div>
       </div>
@@ -169,7 +169,7 @@ const Login = () => {
             <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-medium">
               <span className="text-white font-black font-['Outfit']">AC</span>
             </div>
-            <span className="text-xl font-black text-primary font-['Outfit']">AgroConecta</span>
+            <span className="text-xl font-black text-primary font-['Outfit']">AgroConect</span>
           </Link>
         </div>
 
@@ -181,7 +181,7 @@ const Login = () => {
             </h1>
             <p className="text-muted-foreground text-sm">
               {mode === 'login'
-                ? 'Entre na sua conta AgroConecta para continuar.'
+                ? 'Entre na sua conta AgroConect para continuar.'
                 : 'Registe-se e comece a explorar o futuro da agricultura.'
               }
             </p>

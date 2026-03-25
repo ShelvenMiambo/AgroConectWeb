@@ -61,7 +61,7 @@ const Header = () => {
                 <span className={`text-base font-black font-['Outfit'] transition-colors ${
                   scrolled || !isHome ? 'text-primary' : 'text-white'
                 }`}>
-                  AgroConecta
+                  AgroConect
                 </span>
                 <span className={`text-[10px] font-semibold tracking-widest uppercase transition-colors ${
                   scrolled || !isHome ? 'text-muted-foreground' : 'text-white/60'
@@ -195,7 +195,7 @@ const Header = () => {
               <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
                 <span className="text-white font-black text-xs font-['Outfit']">AC</span>
               </div>
-              <span className="font-black text-primary font-['Outfit']">AgroConecta</span>
+              <span className="font-black text-primary font-['Outfit']">AgroConect</span>
             </div>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setMenuOpen(false)}>
               <X className="h-4 w-4" />
