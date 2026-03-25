@@ -304,7 +304,7 @@ const HeroSection = () => {
       </div>
 
       {/* ── Hero Content ── */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32 lg:pb-24">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 lg:pt-28 pb-16 sm:pb-20 lg:pb-24">
         <div className="max-w-2xl">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/20 text-white text-xs font-semibold mb-8 fade-in-up">
@@ -313,7 +313,7 @@ const HeroSection = () => {
           </div>
 
           {/* Headline */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black font-['Outfit'] leading-[1.05] mb-6 fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-['Outfit'] leading-[1.05] mb-4 sm:mb-6 fade-in-up" style={{ animationDelay: '0.2s' }}>
             <span className="text-white drop-shadow-lg">Conecta.</span>{' '}
             <span className="text-gradient-gold">Cultiva.</span>
             <br />
@@ -321,7 +321,7 @@ const HeroSection = () => {
           </h1>
 
           {/* Subtext */}
-          <p className="text-lg text-white/85 leading-relaxed mb-10 max-w-lg fade-in-up font-medium" style={{ animationDelay: '0.4s' }}>
+          <p className="text-base sm:text-lg text-white/85 leading-relaxed mb-7 sm:mb-10 max-w-sm sm:max-w-lg fade-in-up font-medium" style={{ animationDelay: '0.4s' }}>
             Conectamos agricultores, donos de terra e compradores numa plataforma inteligente com{' '}
             <strong className="text-white font-bold">IA agrícola</strong>,{' '}
             <strong className="text-white font-bold">marketplace de terras</strong>{' '}
@@ -329,15 +329,15 @@ const HeroSection = () => {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-wrap gap-4 mb-16 fade-in-up" style={{ animationDelay: '0.6s' }}>
+          <div className="flex flex-wrap gap-3 sm:gap-4 mb-8 sm:mb-12 fade-in-up" style={{ animationDelay: '0.6s' }}>
             <Link to="/login">
-              <Button size="lg" className="gradient-primary text-white border-0 rounded-2xl px-8 py-4 text-base font-bold shadow-glow hover:shadow-strong hover:-translate-y-1 transition-spring h-auto gap-2">
+              <Button size="lg" className="gradient-primary text-white border-0 rounded-2xl px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold shadow-glow hover:shadow-strong hover:-translate-y-1 transition-spring h-auto gap-2">
                 Começar Gratuitamente
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <Link to="/#features">
-              <Button variant="outline" size="lg" className="rounded-2xl px-8 py-4 text-base font-semibold border-white/30 text-white bg-white/10 hover:bg-white/20 hover:-translate-y-1 transition-spring h-auto backdrop-blur gap-2">
+              <Button variant="outline" size="lg" className="rounded-2xl px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold border-white/30 text-white bg-white/10 hover:bg-white/20 hover:-translate-y-1 transition-spring h-auto backdrop-blur gap-2">
                 <Play className="h-4 w-4 fill-current" />
                 Ver Demonstração
               </Button>
@@ -345,7 +345,7 @@ const HeroSection = () => {
           </div>
 
           {/* Stats */}
-          <div className="flex flex-wrap gap-6 fade-in-up" style={{ animationDelay: '0.8s' }}>
+          <div className="flex flex-wrap gap-4 sm:gap-6 fade-in-up" style={{ animationDelay: '0.8s' }}>
             {stats.map(({ icon: Icon, value, label }) => (
               <div key={label} className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center shadow-medium flex-shrink-0">

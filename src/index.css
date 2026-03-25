@@ -172,6 +172,33 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
+    /* Smooth theme transition */
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Smooth colour transitions on all elements when theme changes */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color;
+    transition-duration: 250ms;
+    transition-timing-function: ease;
+  }
+  /* But never slow down transforms/opacity animations */
+  button, a, [role="button"], .transition-spring, .transition-smooth, .float {
+    transition-property: background-color, border-color, color, transform, opacity, box-shadow;
+  }
+
+  /* Landscape phones: compact hero to fit in viewport height */
+  @media (max-height: 480px) and (orientation: landscape) {
+    section[class*="min-h"] {
+      min-height: auto;
+      padding-top: 4rem;
+      padding-bottom: 2rem;
+    }
+    h1[class*="text-4xl"] {
+      font-size: 1.75rem;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+    }
   }
 
   h1, h2, h3 {
