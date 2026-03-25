@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Menu, X, Bell, User, ChevronDown,
-  MapPin, Bot, Sprout, Handshake, Home, LogOut
+  MapPin, Bot, Sprout, Handshake, Home, LogOut, Shield
 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -21,7 +21,7 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, logout } = useAuth();
+  const { currentUser, userRole, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -61,12 +61,12 @@ const Header = () => {
                 <span className={`text-base font-black font-['Outfit'] transition-colors ${
                   scrolled || !isHome ? 'text-primary' : 'text-white'
                 }`}>
-                  AgroConect
+                  AgroConecta
                 </span>
                 <span className={`text-[10px] font-semibold tracking-widest uppercase transition-colors ${
                   scrolled || !isHome ? 'text-muted-foreground' : 'text-white/60'
                 }`}>
-                  AI Platform
+                  Moçambique
                 </span>
               </div>
             </Link>
@@ -93,6 +93,21 @@ const Header = () => {
                 </Link>
               ))}
             </nav>
+
+            {/* Admin link (admin only) — desktop */}
+            {currentUser && userRole === 'admin' && (
+              <Link
+                to="/admin"
+                className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  scrolled || !isHome
+                    ? 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/20'
+                    : 'bg-white/15 text-white hover:bg-white/25'
+                }`}
+              >
+                <Shield className="h-3.5 w-3.5" />
+                Admin
+              </Link>
+            )}
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">
@@ -195,7 +210,7 @@ const Header = () => {
               <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
                 <span className="text-white font-black text-xs font-['Outfit']">AC</span>
               </div>
-              <span className="font-black text-primary font-['Outfit']">AgroConect</span>
+              <span className="font-black text-primary font-['Outfit']">AgroConecta</span>
             </div>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setMenuOpen(false)}>
               <X className="h-4 w-4" />
@@ -225,6 +240,21 @@ const Header = () => {
                 {label}
               </Link>
             ))}
+
+            {/* Admin link in mobile drawer */}
+            {currentUser && userRole === 'admin' && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-colors ${
+                  isActive('/admin')
+                    ? 'bg-yellow-500/10 text-yellow-700'
+                    : 'hover:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400'
+                }`}
+              >
+                <Shield className="h-4 w-4" />
+                Painel Admin
+              </Link>
+            )}
           </nav>
 
           {/* Drawer Footer */}

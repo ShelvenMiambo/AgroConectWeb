@@ -1,73 +1,136 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
-  User,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  signInWithPopup,
-  GoogleAuthProvider
+  User, onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signOut, signInWithPopup,
+  sendPasswordResetEmail, updateProfile
 } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import {
+  doc, setDoc, getDoc, serverTimestamp
+} from 'firebase/firestore';
+import { auth, db, googleProvider } from '@/lib/firebase';
+
+export interface UserData {
+  uid: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: 'user' | 'admin';
+  createdAt: any;
+  photoURL?: string;
+}
 
 interface AuthContextType {
   currentUser: User | null;
+  userData: UserData | null;
+  userRole: 'user' | 'admin' | null;
   loading: boolean;
   login: (email: string, pass: string) => Promise<any>;
-  register: (email: string, pass: string) => Promise<any>;
+  register: (email: string, pass: string, name: string, phone?: string) => Promise<any>;
   logout: () => Promise<void>;
   loginWithGoogle: () => Promise<any>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-export const useAuth = () => {
-  return useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);
+
+// Helper: fetch or create user document in Firestore
+const syncUserToFirestore = async (user: User, extraData?: Partial<UserData>) => {
+  const ref = doc(db, 'users', user.uid);
+  const snap = await getDoc(ref);
+
+  // Determine role: admin email from env, otherwise 'user'
+  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || '';
+  const isAdmin = user.email === adminEmail;
+
+  if (!snap.exists()) {
+    // First time: create user document
+    await setDoc(ref, {
+      uid: user.uid,
+      name: extraData?.name || user.displayName || user.email?.split('@')[0] || 'Utilizador',
+      email: user.email || '',
+      phone: extraData?.phone || '',
+      role: isAdmin ? 'admin' : 'user',
+      photoURL: user.photoURL || '',
+      createdAt: serverTimestamp(),
+    });
+  } else if (isAdmin && snap.data()?.role !== 'admin') {
+    // Promote to admin if env email matches
+    await setDoc(ref, { role: 'admin' }, { merge: true });
+  }
+
+  const updated = await getDoc(ref);
+  return updated.data() as UserData;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Authentication Methods
-  const register = (email: string, pass: string) => {
-    return createUserWithEmailAndPassword(auth, email, pass);
+  const userRole = userData?.role ?? null;
+
+  // Register — saves to Firebase Auth + Firestore
+  const register = async (email: string, pass: string, name: string, phone?: string) => {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: name });
+    const data = await syncUserToFirestore(cred.user, { name, phone });
+    setUserData(data);
+    return cred;
   };
 
-  const login = (email: string, pass: string) => {
-    return signInWithEmailAndPassword(auth, email, pass);
+  // Login with email/password — fetches Firestore profile
+  const login = async (email: string, pass: string) => {
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    const data = await syncUserToFirestore(cred.user);
+    setUserData(data);
+    return cred;
   };
 
-  const loginWithGoogle = () => {
-    return signInWithPopup(auth, googleProvider);
+  // Login with Google — creates or syncs Firestore profile
+  const loginWithGoogle = async () => {
+    const cred = await signInWithPopup(auth, googleProvider);
+    const data = await syncUserToFirestore(cred.user);
+    setUserData(data);
+    return cred;
   };
 
-  const logout = () => {
-    return signOut(auth);
+  // Logout — clears local state
+  const logout = async () => {
+    await signOut(auth);
+    setUserData(null);
   };
 
-  // Observer on Auth State
+  // Password reset email
+  const resetPassword = (email: string) => {
+    return sendPasswordResetEmail(auth, email);
+  };
+
+  // Auth state observer — runs once on mount
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      if (user) {
+        try {
+          const data = await syncUserToFirestore(user);
+          setUserData(data);
+        } catch {
+          setUserData(null);
+        }
+      } else {
+        setUserData(null);
+      }
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
 
-  const value = {
-    currentUser,
-    loading,
-    login,
-    register,
-    logout,
-    loginWithGoogle
-  };
-
-  // Don't render children until the initial auth check is done
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{
+      currentUser, userData, userRole, loading,
+      login, register, logout, loginWithGoogle, resetPassword
+    }}>
       {!loading && children}
     </AuthContext.Provider>
   );

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -13,6 +14,7 @@ import Marketplace from "./pages/Marketplace";
 import AssistenteIA from "./pages/AssistenteIA";
 import Producao from "./pages/Producao";
 import Negociacoes from "./pages/Negociacoes";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,18 +33,13 @@ const App = () => (
               <Route path="/login" element={<Login />} />
 
               {/* Protected Routes — require login */}
-              <Route path="/marketplace" element={
-                <ProtectedRoute><Marketplace /></ProtectedRoute>
-              } />
-              <Route path="/assistente-ia" element={
-                <ProtectedRoute><AssistenteIA /></ProtectedRoute>
-              } />
-              <Route path="/producao" element={
-                <ProtectedRoute><Producao /></ProtectedRoute>
-              } />
-              <Route path="/negociacoes" element={
-                <ProtectedRoute><Negociacoes /></ProtectedRoute>
-              } />
+              <Route path="/marketplace"   element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+              <Route path="/assistente-ia" element={<ProtectedRoute><AssistenteIA /></ProtectedRoute>} />
+              <Route path="/producao"      element={<ProtectedRoute><Producao /></ProtectedRoute>} />
+              <Route path="/negociacoes"   element={<ProtectedRoute><Negociacoes /></ProtectedRoute>} />
+
+              {/* Admin Route — require login + admin role */}
+              <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
