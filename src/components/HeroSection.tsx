@@ -45,17 +45,14 @@ const HeroSection = () => {
       <div className="absolute inset-0">
         <img
           src={heroImage}
-          alt="Agricultura moderna em Moçambique"
-          className="w-full h-full object-cover object-center"
-          style={{
-            imageRendering: 'auto',
-            WebkitBackfaceVisibility: 'hidden',
-          }}
+          alt="AgroConecta — Paisagem agrícola de Moçambique"
+          className="w-full h-full object-cover object-top"
           onLoad={() => setHeroLoaded(true)}
         />
-        {/* Left-focused gradient: protects text, image visible on right */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
+        {/* Strong directional overlay: left heavy for text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-black/20" />
+        {/* Bottom vignette to separate from hero stats */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
       </div>
 
       {/* Floating badges — desktop only */}
