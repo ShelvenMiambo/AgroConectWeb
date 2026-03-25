@@ -164,7 +164,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-1.5">
                 <Leaf className="h-3.5 w-3.5 text-primary" />
-                <span>Feito com orgulho em Moçambique</span>
+                <span>Feito com orgulho em Moçambique &bull; <a href="https://shelvenmiambo-portfolio.vercel.app/" target="_blank" rel="noopener noreferrer" className="hover:text-background dark:hover:text-card-foreground transition-colors underline underline-offset-2">Shelven Miambo</a></span>
               </div>
             </div>
           </div>
