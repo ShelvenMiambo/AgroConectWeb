@@ -10,16 +10,16 @@
 @layer base {
   :root {
     /* ── Core Backgrounds ── */
-    --background: 45 30% 97%;
-    --foreground: 120 20% 12%;
+    --background: 45 20% 98%;
+    --foreground: 120 25% 7%;
 
     /* ── Cards ── */
     --card: 0 0% 100%;
-    --card-foreground: 120 20% 12%;
+    --card-foreground: 120 25% 7%;
 
     /* ── Popovers ── */
     --popover: 0 0% 100%;
-    --popover-foreground: 120 20% 12%;
+    --popover-foreground: 120 25% 7%;
 
     /* ── Primary — Deep Forest Green ── */
     --primary: 128 48% 28%;
@@ -35,7 +35,7 @@
 
     /* ── Muted ── */
     --muted: 45 20% 93%;
-    --muted-foreground: 120 12% 48%;
+    --muted-foreground: 120 15% 32%;
 
     /* ── Accent — Golden Harvest ── */
     --accent: 42 90% 52%;
@@ -94,11 +94,11 @@
 
   .dark {
     /* ── Dark Mode — Night Fields ── */
-    --background: 130 18% 7%;
-    --foreground: 45 25% 93%;
+    --background: 130 20% 6%;
+    --foreground: 45 30% 96%;
 
-    --card: 130 16% 9%;
-    --card-foreground: 45 25% 93%;
+    --card: 130 18% 8%;
+    --card-foreground: 45 30% 96%;
 
     --popover: 130 16% 9%;
     --popover-foreground: 45 25% 93%;
@@ -114,7 +114,7 @@
     --secondary-hover: 130 16% 18%;
 
     --muted: 130 16% 13%;
-    --muted-foreground: 45 18% 62%;
+    --muted-foreground: 45 22% 68%;
 
     --accent: 42 88% 62%;
     --accent-foreground: 130 18% 7%;
