@@ -47,12 +47,15 @@ const HeroSection = () => {
           src={heroImage}
           alt="Agricultura moderna em Moçambique"
           className="w-full h-full object-cover object-center"
-          style={{ filter: 'brightness(0.92) saturate(1.1)' }}
+          style={{
+            imageRendering: 'auto',
+            WebkitBackfaceVisibility: 'hidden',
+          }}
           onLoad={() => setHeroLoaded(true)}
         />
-        {/* Overlay: darker left, lighter right to show image */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+        {/* Left-focused gradient: protects text, image visible on right */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
       </div>
 
       {/* Floating badges — desktop only */}

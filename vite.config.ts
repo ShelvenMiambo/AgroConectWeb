@@ -19,4 +19,15 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Preserve image quality: never inline images as base64
+    assetsInlineLimit: 0,
+    rollupOptions: {
+      output: {
+        // Keep assets in organized folders
+        assetFileNames: 'assets/[name]-[hash][extname]',
+      }
+    }
+  }
 }));
+
