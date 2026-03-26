@@ -1,36 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import {
-  Handshake, FileText, Shield, CreditCard, MessageSquare, Eye,
-  Plus, Clock, CheckCircle, AlertCircle, DollarSign, Calendar,
-  User, MapPin, X, ChevronRight, TrendingUp, ArrowLeft
+  Handshake, FileText, Shield, CreditCard, MessageSquare,
+  Plus, Clock, CheckCircle, AlertCircle, TrendingUp,
+  X, ChevronRight, ArrowLeft, Loader2, User
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-
-const mockContratos = [
-  { id: 1, tipo: 'Arrendamento de Terra', propriedade: 'Quinta da Esperança', contraparte: 'João Machava',    valor: '15.000 MT/mês', status: 'Ativo',                dataInicio: '2025-10-01', dataFim: '2026-09-30', progresso: 25, proximoPagamento: '2026-04-01', assinado: true,  icon: '🏞️' },
-  { id: 2, tipo: 'Venda de Produção',     produto:    'Milho — 500kg',        contraparte: 'Maria Santos',    valor: '25.000 MT',     status: 'Pendente Assinatura', dataInicio: '2026-04-01', dataFim: '2026-04-15', progresso: 60, proximoPagamento: 'Aguardando assinatura', assinado: false, icon: '🌽' },
-  { id: 3, tipo: 'Parceria Agrícola',     propriedade: 'Campos do Sul',       contraparte: 'António Mucavel', valor: '30% da produção', status: 'Em Negociação',    dataInicio: '2026-05-01', dataFim: '2026-12-31', progresso: 40, proximoPagamento: 'A definir', assinado: false, icon: '🤝' },
-];
-
-const mockTransacoes = [
-  { id: 1, tipo: 'Recebimento', descricao: 'Arrendamento — Quinta da Esperança', valor: 15000,  data: '2026-03-01', status: 'Concluído',   metodo: 'M-Pesa',   referencia: 'MP20260301' },
-  { id: 2, tipo: 'Pagamento',   descricao: 'Comissão da plataforma',             valor: -750,   data: '2026-03-01', status: 'Concluído',   metodo: 'Automático',referencia: 'COM20260301' },
-  { id: 3, tipo: 'Recebimento', descricao: 'Venda de milho',                     valor: 25000,  data: '2026-02-28', status: 'Processando', metodo: 'eMola',    referencia: 'EM20260228' },
-];
-
-const statusConfig: Record<string, { bg: string; text: string }> = {
-  'Ativo':                { bg: 'bg-success/15',     text: 'text-success' },
-  'Pendente Assinatura':  { bg: 'bg-warning/15',     text: 'text-warning' },
-  'Em Negociação':        { bg: 'bg-primary/15',     text: 'text-primary' },
-  'Expirado':             { bg: 'bg-destructive/15', text: 'text-destructive' },
-  'Concluído':            { bg: 'bg-muted',          text: 'text-muted-foreground' },
-};
+import { useAuth } from "@/contexts/AuthContext";
+import { getNegociacoes, createNegociacao, updateNegociacaoStatus, Negociacao } from "@/lib/firestoreService";
 
 const CONTRACT_TYPES = [
   { icon: '🏞️', title: 'Arrendamento de Terra',  desc: 'Arrende a sua ou outra propriedade agrícola' },
@@ -38,12 +20,37 @@ const CONTRACT_TYPES = [
   { icon: '💰', title: 'Venda de Produção',        desc: 'Venda os seus produtos com contratos seguros' },
 ];
 
-// New Contract Modal
-const NewContractModal = ({ onClose }: { onClose: () => void }) => {
-  const [step, setStep] = useState(1);
-  const [selectedType, setSelectedType] = useState('');
-  const [form, setForm] = useState({ contraparte: '', valor: '', dataInicio: '', dataFim: '', notas: '' });
+const STATUS_CONFIG: Record<Negociacao['status'], { bg: string; text: string; label: string }> = {
+  pendente:  { bg: 'bg-warning/15',     text: 'text-warning',     label: '⏳ Pendente' },
+  aceite:    { bg: 'bg-success/15',     text: 'text-success',     label: '✅ Aceite' },
+  recusada:  { bg: 'bg-destructive/15', text: 'text-destructive', label: '❌ Recusada' },
+};
+
+/* ── New Negotiation Modal ────────────────────────────── */
+const NewNegociacaoModal = ({ uid, nome, onClose, onSaved }: { uid: string; nome: string; onClose: () => void; onSaved: () => void }) => {
+  const [step, setStep]             = useState(1);
+  const [selectedType, setType]     = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
+  const [form, setForm]             = useState({ propriedade: '', proprietarioNome: '', valor: '', mensagem: '' });
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleCreate = async () => {
+    setLoading(true); setError('');
+    try {
+      await createNegociacao({
+        propertyId: '',
+        propertyNome: `${selectedType} — ${form.propriedade}`,
+        arrendatarioUid: uid,
+        arrendatarioNome: nome,
+        proprietarioUid: 'pending',
+        proprietarioNome: form.proprietarioNome.trim() || 'A definir',
+        mensagem: form.mensagem.trim() || `Proposta de ${selectedType.toLowerCase()}`,
+      });
+      onSaved(); onClose();
+    } catch { setError('Erro ao criar. Tente novamente.'); }
+    finally { setLoading(false); }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -52,7 +59,7 @@ const NewContractModal = ({ onClose }: { onClose: () => void }) => {
         <CardHeader className="pb-4 sticky top-0 bg-card border-b border-border/60 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="font-['Outfit']">Novo Contrato</CardTitle>
+              <CardTitle className="font-['Outfit']">Nova Negociação</CardTitle>
               <CardDescription>Passo {step} de 3</CardDescription>
             </div>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}><X className="h-4 w-4" /></Button>
@@ -60,21 +67,16 @@ const NewContractModal = ({ onClose }: { onClose: () => void }) => {
           <Progress value={(step / 3) * 100} className="h-1 mt-3" />
         </CardHeader>
         <CardContent className="p-5 space-y-4">
+          {error && <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-xl">{error}</p>}
           {step === 1 && (
             <>
-              <p className="text-sm font-semibold text-muted-foreground">Selecione o tipo de contrato</p>
+              <p className="text-sm font-semibold text-muted-foreground">Selecione o tipo de negócio</p>
               <div className="space-y-3">
                 {CONTRACT_TYPES.map(ct => (
-                  <button
-                    key={ct.title}
-                    onClick={() => setSelectedType(ct.title)}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${selectedType === ct.title ? 'border-primary bg-primary/5' : 'border-border/60 hover:border-primary/40'}`}
-                  >
+                  <button key={ct.title} onClick={() => setType(ct.title)}
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${selectedType === ct.title ? 'border-primary bg-primary/5' : 'border-border/60 hover:border-primary/40'}`}>
                     <span className="text-3xl">{ct.icon}</span>
-                    <div>
-                      <p className="font-semibold text-sm">{ct.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{ct.desc}</p>
-                    </div>
+                    <div><p className="font-semibold text-sm">{ct.title}</p><p className="text-xs text-muted-foreground mt-0.5">{ct.desc}</p></div>
                     {selectedType === ct.title && <CheckCircle className="h-5 w-5 text-primary ml-auto flex-shrink-0" />}
                   </button>
                 ))}
@@ -91,17 +93,18 @@ const NewContractModal = ({ onClose }: { onClose: () => void }) => {
                 <p className="font-semibold text-sm">{selectedType}</p>
               </div>
               {[
-                { key: 'contraparte', label: 'Nome da Contraparte', placeholder: 'Ex: João Machava' },
-                { key: 'valor',       label: 'Valor / Termos',      placeholder: 'Ex: 15.000 MT/mês ou 30% produção' },
+                { key: 'propriedade', label: 'Propriedade / Produto', placeholder: 'Ex: Quinta da Esperança ou 500kg de Milho' },
+                { key: 'proprietarioNome', label: 'Nome da Contraparte', placeholder: 'Ex: João Machava (opcional)' },
+                { key: 'valor', label: 'Valor proposto', placeholder: 'Ex: 15.000 MT/mês ou 30% produção' },
               ].map(f => (
                 <div key={f.key} className="space-y-1">
-                  <label className="text-sm font-medium">{f.label} *</label>
+                  <label className="text-sm font-medium">{f.label}</label>
                   <Input placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => set(f.key, e.target.value)} className="rounded-xl" />
                 </div>
               ))}
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setStep(1)}>Voltar</Button>
-                <Button className="flex-1 h-11 rounded-xl gradient-primary text-white border-0 font-semibold" disabled={!form.contraparte || !form.valor} onClick={() => setStep(3)}>
+                <Button className="flex-1 h-11 rounded-xl gradient-primary text-white border-0 font-semibold" disabled={!form.propriedade} onClick={() => setStep(3)}>
                   Continuar <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               </div>
@@ -110,33 +113,22 @@ const NewContractModal = ({ onClose }: { onClose: () => void }) => {
           {step === 3 && (
             <>
               <div className="space-y-1">
-                <label className="text-sm font-medium">Data de Início *</label>
-                <Input type="date" value={form.dataInicio} onChange={e => set('dataInicio', e.target.value)} className="rounded-xl" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Data de Fim *</label>
-                <Input type="date" value={form.dataFim} onChange={e => set('dataFim', e.target.value)} className="rounded-xl" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Notas adicionais</label>
-                <textarea
-                  placeholder="Condições especiais, observações..."
-                  className="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm resize-none h-20 focus-visible:ring-1 focus-visible:ring-ring"
-                  value={form.notas}
-                  onChange={e => set('notas', e.target.value)}
-                />
+                <label className="text-sm font-medium">Mensagem de proposta</label>
+                <textarea placeholder="Apresente-se e descreva os termos da sua proposta..."
+                  className="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm resize-none h-24 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  value={form.mensagem} onChange={e => set('mensagem', e.target.value)} />
               </div>
               <div className="p-4 rounded-xl bg-success/8 border border-success/20">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="h-4 w-4 text-success" />
-                  <p className="text-sm font-semibold text-success">Contrato Seguro</p>
+                  <p className="text-sm font-semibold text-success">Negociação Protegida</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Assinatura digital com validade legal · Pagamentos protegidos · Suporte 24/7</p>
+                <p className="text-xs text-muted-foreground">As suas propostas ficam registadas de forma segura na plataforma.</p>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setStep(2)}>Voltar</Button>
-                <Button className="flex-1 h-11 rounded-xl gradient-primary text-white border-0 font-semibold" disabled={!form.dataInicio || !form.dataFim} onClick={onClose}>
-                  <FileText className="mr-2 h-4 w-4" /> Criar Contrato
+                <Button className="flex-1 h-11 rounded-xl gradient-primary text-white border-0 font-semibold" disabled={loading} onClick={handleCreate}>
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileText className="mr-2 h-4 w-4" /> Enviar Proposta</>}
                 </Button>
               </div>
             </>
@@ -147,95 +139,106 @@ const NewContractModal = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
+/* ── Main Component ───────────────────────────────────── */
 const Negociacoes = () => {
-  const [activeTab, setActiveTab] = useState<'contratos' | 'transacoes'>('contratos');
-  const [selectedContrato, setSelectedContrato] = useState<any>(null);
-  const [showNewContract, setShowNewContract] = useState(false);
+  const { currentUser, userData } = useAuth();
+  const [negociacoes, setNegociacoes] = useState<Negociacao[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [selected, setSelected]       = useState<Negociacao | null>(null);
+  const [showNew, setShowNew]         = useState(false);
+  const [updating, setUpdating]       = useState<string | null>(null);
+  const [activeTab, setActiveTab]     = useState<'todas' | 'pendente' | 'aceite' | 'recusada'>('todas');
 
-  const formatCurrency = (v: number) => new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(Math.abs(v));
+  const load = async () => {
+    if (!currentUser) return;
+    setLoading(true);
+    try { setNegociacoes(await getNegociacoes(currentUser.uid)); }
+    catch { setNegociacoes([]); }
+    finally { setLoading(false); }
+  };
 
-  const statsCards = [
-    { label: 'Contratos Ativos',  value: '1', icon: FileText,    color: 'text-primary',  bg: 'bg-primary/10' },
-    { label: 'Em Negociação',     value: '2', icon: Clock,       color: 'text-warning',  bg: 'bg-warning/10' },
-    { label: 'Total Recebido',    value: '40K MT', icon: TrendingUp, color: 'text-success', bg: 'bg-success/10' },
-    { label: 'Transações',        value: '12', icon: CreditCard, color: 'text-accent',   bg: 'bg-accent/10' },
+  useEffect(() => { load(); }, [currentUser]);
+
+  const handleStatus = async (id: string, status: Negociacao['status']) => {
+    setUpdating(id);
+    try { await updateNegociacaoStatus(id, status); setNegociacoes(prev => prev.map(n => n.id === id ? { ...n, status } : n)); }
+    catch { } finally { setUpdating(null); }
+  };
+
+  const stats = [
+    { label: 'Total',     value: negociacoes.length,                                       icon: FileText,   color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Pendentes', value: negociacoes.filter(n => n.status === 'pendente').length,  icon: Clock,      color: 'text-warning', bg: 'bg-warning/10' },
+    { label: 'Aceites',   value: negociacoes.filter(n => n.status === 'aceite').length,    icon: CheckCircle,color: 'text-success', bg: 'bg-success/10' },
+    { label: 'Recusadas', value: negociacoes.filter(n => n.status === 'recusada').length,  icon: AlertCircle,color: 'text-destructive', bg: 'bg-destructive/10' },
   ];
 
-  // Contract Detail
-  if (selectedContrato) {
-    const c = selectedContrato;
-    const sc = statusConfig[c.status] || { bg: 'bg-muted', text: 'text-muted-foreground' };
+  const filtered = negociacoes.filter(n => activeTab === 'todas' || n.status === activeTab);
+
+  /* Detail */
+  if (selected) {
+    const sc = STATUS_CONFIG[selected.status];
+    const isProprietario = selected.proprietarioUid === currentUser?.uid;
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-4 lg:px-8 py-8 max-w-3xl">
-          <Button variant="ghost" className="mb-6 -ml-2 gap-2" onClick={() => setSelectedContrato(null)}>
+          <Button variant="ghost" className="mb-6 -ml-2 gap-2" onClick={() => setSelected(null)}>
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
           <Card className="border-border/60 shadow-medium rounded-2xl overflow-hidden">
             <div className="h-2 gradient-earth" />
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{c.icon}</span>
-                  <div>
-                    <CardTitle className="font-['Outfit'] text-xl">{c.tipo}</CardTitle>
-                    <CardDescription className="text-base mt-0.5">{c.propriedade || c.produto}</CardDescription>
-                  </div>
+                <div>
+                  <CardTitle className="font-['Outfit'] text-xl mb-1">{selected.propertyNome}</CardTitle>
+                  <CardDescription>Negociação criada em {selected.createdAt?.toDate?.()?.toLocaleDateString('pt-MZ') ?? '—'}</CardDescription>
                 </div>
-                <Badge className={`${sc.bg} ${sc.text} border-0 flex-shrink-0`}>{c.status}</Badge>
+                <Badge className={`${sc.bg} ${sc.text} border-0 flex-shrink-0`}>{sc.label}</Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5">
               <div className="grid md:grid-cols-2 gap-4">
                 {[
-                  { icon: User,      label: 'Contraparte',      value: c.contraparte },
-                  { icon: DollarSign,label: 'Valor',            value: c.valor,       primary: true },
-                  { icon: Calendar,  label: 'Período',          value: `${new Date(c.dataInicio).toLocaleDateString('pt-MZ')} — ${new Date(c.dataFim).toLocaleDateString('pt-MZ')}` },
-                  { icon: Clock,     label: 'Próximo pagamento',value: c.proximoPagamento },
-                ].map(({ icon: Icon, label, value, primary }) => (
-                  <div key={label} className="flex items-center gap-3 p-4 rounded-xl bg-muted/40 border border-border/60">
-                    <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">{label}</p>
-                      <p className={`font-semibold text-sm truncate ${primary ? 'text-primary' : ''}`}>{value}</p>
-                    </div>
+                  { icon: User,         label: 'Iniciante',     value: selected.arrendatarioNome },
+                  { icon: User,         label: 'Contraparte',   value: selected.proprietarioNome },
+                  { icon: MessageSquare,label: 'Mensagem',      value: selected.mensagem },
+                ].map(({ icon: Ic, label, value }) => (
+                  <div key={label} className="flex items-start gap-3 p-4 rounded-xl bg-muted/40 border border-border/60">
+                    <Ic className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-semibold text-sm">{value}</p></div>
                   </div>
                 ))}
               </div>
 
-              <div className="p-4 rounded-xl bg-muted/40 border border-border/60">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-medium">Progresso do Contrato</span>
-                  <span className="text-primary font-bold">{c.progresso}%</span>
+              {selected.status === 'pendente' && (
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  {isProprietario ? (
+                    <>
+                      <Button className="flex-1 gradient-primary text-white border-0 rounded-xl font-semibold" disabled={!!updating}
+                        onClick={() => handleStatus(selected.id!, 'aceite')}>
+                        {updating === selected.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle className="h-4 w-4 mr-2" /> Aceitar Proposta</>}
+                      </Button>
+                      <Button variant="outline" className="flex-1 rounded-xl text-destructive border-destructive/30 hover:bg-destructive/5" disabled={!!updating}
+                        onClick={() => handleStatus(selected.id!, 'recusada')}>
+                        <X className="h-4 w-4 mr-2" /> Recusar
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-warning/8 border border-warning/20 text-sm text-warning w-full text-center">
+                      ⏳ A aguardar resposta da contraparte
+                    </div>
+                  )}
                 </div>
-                <Progress value={c.progresso} className="h-2" />
-              </div>
-
-              <div className="flex items-center gap-3 p-4 rounded-xl border border-border/60">
-                {c.assinado
-                  ? <CheckCircle className="h-5 w-5 text-success" />
-                  : <AlertCircle className="h-5 w-5 text-warning" />
-                }
-                <div>
-                  <p className="font-semibold text-sm">{c.assinado ? 'Assinado digitalmente' : 'Aguardando assinatura'}</p>
-                  <p className="text-xs text-muted-foreground">Status da assinatura</p>
+              )}
+              {selected.status === 'aceite' && (
+                <div className="p-4 rounded-xl bg-success/8 border border-success/20 flex items-center gap-3">
+                  <CheckCircle className="h-5 w-5 text-success" />
+                  <div>
+                    <p className="font-semibold text-success text-sm">Proposta Aceite</p>
+                    <p className="text-xs text-muted-foreground">Contacte a contraparte para formalizar o acordo.</p>
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button className="flex-1 gradient-primary text-white border-0 rounded-xl font-semibold">
-                  <MessageSquare className="h-4 w-4 mr-2" /> Contactar
-                </Button>
-                {!c.assinado && (
-                  <Button variant="outline" className="flex-1 rounded-xl">
-                    <FileText className="h-4 w-4 mr-2" /> Assinar
-                  </Button>
-                )}
-                <Button variant="outline" className="rounded-xl">
-                  <Eye className="h-4 w-4 mr-2" /> Documento
-                </Button>
-              </div>
+              )}
             </CardContent>
           </Card>
         </main>
@@ -244,12 +247,14 @@ const Negociacoes = () => {
     );
   }
 
+  /* List */
   return (
     <div className="min-h-screen bg-background">
-      {showNewContract && <NewContractModal onClose={() => setShowNewContract(false)} />}
+      {showNew && currentUser && userData && (
+        <NewNegociacaoModal uid={currentUser.uid} nome={userData.name} onClose={() => setShowNew(false)} onSaved={load} />
+      )}
       <Header />
       <main>
-        {/* Page Header */}
         <div className="relative overflow-hidden bg-gradient-to-br from-warning/8 via-background to-accent/5 border-b border-border/60 py-12">
           <div className="absolute inset-0 dot-pattern opacity-40" />
           <div className="relative container mx-auto px-4 lg:px-8 text-center">
@@ -259,143 +264,91 @@ const Negociacoes = () => {
             <h1 className="text-4xl md:text-5xl font-black mb-3 font-['Outfit']">
               <span className="text-gradient-primary">Negociações</span> Seguras
             </h1>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Contratos digitais, pagamentos e transações seguras com outros utilizadores.
-            </p>
+            <p className="text-muted-foreground max-w-md mx-auto">Propostas, contratos e acordos digitais registados na plataforma.</p>
           </div>
         </div>
 
         <div className="container mx-auto px-4 lg:px-8 py-8">
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {statsCards.map(({ label, value, icon: Icon, color, bg }, i) => (
-              <Card key={i} className={`border-border/60 shadow-xs fade-in-up`} style={{ animationDelay: `${i * 80}ms` }}>
+            {stats.map(({ label, value, icon: Ic, color, bg }, i) => (
+              <Card key={i} className="border-border/60 shadow-xs fade-in-up" style={{ animationDelay: `${i * 80}ms` }}>
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
                       <p className={`text-xl font-black font-['Outfit'] ${color}`}>{value}</p>
                     </div>
-                    <div className={`p-2.5 rounded-xl ${bg}`}>
-                      <Icon className={`h-5 w-5 ${color}`} />
-                    </div>
+                    <div className={`p-2.5 rounded-xl ${bg}`}><Ic className={`h-5 w-5 ${color}`} /></div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* Tabs + New Contract */}
+          {/* Tabs + New */}
           <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-            <div className="flex gap-1 p-1 bg-muted/60 rounded-xl border border-border/60">
-              {[
-                { key: 'contratos',  label: 'Contratos',  icon: FileText },
-                { key: 'transacoes', label: 'Transações', icon: CreditCard },
-              ].map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveTab(key as any)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                    activeTab === key ? 'bg-background text-primary shadow-soft' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{label}</span>
+            <div className="flex gap-1 p-1 bg-muted/60 rounded-xl border border-border/60 overflow-x-auto">
+              {(['todas', 'pendente', 'aceite', 'recusada'] as const).map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)}
+                  className={`flex-shrink-0 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 capitalize ${activeTab === tab ? 'bg-background text-primary shadow-soft' : 'text-muted-foreground hover:text-foreground'}`}>
+                  {tab === 'todas' ? 'Todas' : STATUS_CONFIG[tab].label}
                 </button>
               ))}
             </div>
-            <Button className="gradient-primary text-white border-0 rounded-xl gap-2 font-semibold shadow-soft" onClick={() => setShowNewContract(true)}>
-              <Plus className="h-4 w-4" /> Novo Contrato
+            <Button className="gradient-primary text-white border-0 rounded-xl gap-2 font-semibold shadow-soft" onClick={() => setShowNew(true)}>
+              <Plus className="h-4 w-4" /> Nova Proposta
             </Button>
           </div>
 
-          {/* ── CONTRATOS ── */}
-          {activeTab === 'contratos' && (
+          {loading ? (
+            <div className="flex flex-col items-center py-20 gap-4">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-muted-foreground">A carregar negociações...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20">
+              <Handshake className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
+              <p className="font-bold text-lg mb-2">{negociacoes.length === 0 ? 'Nenhuma negociação ainda' : 'Nenhuma nesta categoria'}</p>
+              <p className="text-muted-foreground mb-6">Inicie uma proposta para arrendar uma terra ou vender a sua produção.</p>
+              <Button className="rounded-xl gradient-primary text-white border-0 gap-2 font-semibold" onClick={() => setShowNew(true)}>
+                <Plus className="h-4 w-4" /> Criar Proposta
+              </Button>
+            </div>
+          ) : (
             <div className="space-y-4">
-              {mockContratos.map((c, i) => {
-                const sc = statusConfig[c.status] || { bg: 'bg-muted', text: 'text-muted-foreground' };
+              {filtered.map((n, i) => {
+                const sc = STATUS_CONFIG[n.status];
+                const isMinhaInit = n.arrendatarioUid === currentUser?.uid;
                 return (
-                  <Card
-                    key={c.id}
-                    className={`border-border/60 shadow-xs card-hover cursor-pointer rounded-2xl overflow-hidden fade-in-up`}
-                    style={{ animationDelay: `${i * 80}ms` }}
-                    onClick={() => setSelectedContrato(c)}
-                  >
+                  <Card key={n.id} className="border-border/60 shadow-xs card-hover cursor-pointer rounded-2xl overflow-hidden fade-in-up"
+                    style={{ animationDelay: `${i * 80}ms` }} onClick={() => setSelected(n)}>
                     <CardContent className="p-5 sm:p-6">
                       <div className="flex items-center justify-between gap-4 mb-4">
                         <div className="flex items-center gap-3">
-                          <span className="text-2xl">{c.icon}</span>
+                          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                            {n.arrendatarioNome.charAt(0)}
+                          </div>
                           <div>
-                            <h3 className="font-bold font-['Outfit']">{c.tipo}</h3>
-                            <p className="text-sm text-muted-foreground">{c.propriedade || c.produto}</p>
+                            <h3 className="font-bold font-['Outfit'] line-clamp-1">{n.propertyNome}</h3>
+                            <p className="text-sm text-muted-foreground">{isMinhaInit ? 'Proposta enviada por mim' : `Proposta de ${n.arrendatarioNome}`}</p>
                           </div>
                         </div>
-                        <Badge className={`${sc.bg} ${sc.text} border-0 flex-shrink-0 text-xs`}>{c.status}</Badge>
+                        <Badge className={`${sc.bg} ${sc.text} border-0 flex-shrink-0 text-xs`}>{sc.label}</Badge>
                       </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
-                        {[
-                          { label: 'Contraparte',  value: c.contraparte },
-                          { label: 'Valor',        value: c.valor, primary: true },
-                          { label: 'Validade',     value: `${new Date(c.dataFim).toLocaleDateString('pt-MZ')}` },
-                          { label: 'Próx. Pag.',   value: c.proximoPagamento },
-                        ].map(({ label, value, primary }) => (
-                          <div key={label}>
-                            <p className="text-xs text-muted-foreground">{label}</p>
-                            <p className={`font-semibold truncate ${primary ? 'text-primary' : ''}`}>{value}</p>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Progresso</span><span className="font-semibold text-primary">{c.progresso}%</span>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{n.mensagem}</p>
+                      {n.status === 'pendente' && !isMinhaInit && (
+                        <div className="flex gap-3" onClick={e => e.stopPropagation()}>
+                          <Button size="sm" className="flex-1 gradient-primary text-white border-0 rounded-xl text-xs font-semibold" disabled={!!updating}
+                            onClick={() => handleStatus(n.id!, 'aceite')}>
+                            {updating === n.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><CheckCircle className="h-3.5 w-3.5 mr-1" /> Aceitar</>}
+                          </Button>
+                          <Button size="sm" variant="outline" className="flex-1 rounded-xl text-xs text-destructive border-destructive/30" disabled={!!updating}
+                            onClick={() => handleStatus(n.id!, 'recusada')}>
+                            <X className="h-3.5 w-3.5 mr-1" /> Recusar
+                          </Button>
                         </div>
-                        <Progress value={c.progresso} className="h-1.5" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-
-          {/* ── TRANSACOES ── */}
-          {activeTab === 'transacoes' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-2xl font-black font-['Outfit']">Transações</h2>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Saldo disponível</p>
-                  <p className="text-xl font-black text-primary font-['Outfit']">39.250 MT</p>
-                </div>
-              </div>
-              {mockTransacoes.map((t, i) => {
-                const isReceipt = t.tipo === 'Recebimento';
-                return (
-                  <Card key={t.id} className={`border-border/60 shadow-xs rounded-2xl fade-in-up`} style={{ animationDelay: `${i * 80}ms` }}>
-                    <CardContent className="p-5">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${isReceipt ? 'bg-success/15' : 'bg-destructive/15'}`}>
-                          <DollarSign className={`h-5 w-5 ${isReceipt ? 'text-success' : 'text-destructive'}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm">{t.descricao}</p>
-                          <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground mt-0.5">
-                            <span>{new Date(t.data).toLocaleDateString('pt-MZ')}</span>
-                            <span>via {t.metodo}</span>
-                            <span className="font-mono">{t.referencia}</span>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className={`text-lg font-black font-['Outfit'] ${isReceipt ? 'text-success' : 'text-destructive'}`}>
-                            {isReceipt ? '+' : '-'}{formatCurrency(t.valor)}
-                          </p>
-                          <Badge variant={t.status === 'Concluído' ? 'default' : 'secondary'} className="text-[10px] mt-1">
-                            {t.status}
-                          </Badge>
-                        </div>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
