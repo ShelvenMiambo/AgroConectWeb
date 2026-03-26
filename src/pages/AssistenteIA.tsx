@@ -32,8 +32,7 @@ Ajude agricultores com: culturas locais (milho, feijão, arroz, mandioca, caju, 
 Seja direto, prático e use emojis. Dê sempre recomendações acionáveis adaptadas a Moçambique.`;
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-// Use gemini-1.5-flash — stable free tier model
-const MODEL = 'gemini-1.5-flash';
+const MODEL = 'gemini-2.0-flash';
 
 async function askGemini(userText: string, history: Message[], langNote: string): Promise<string> {
   if (!GEMINI_API_KEY) return '⚠️ Chave API não configurada. Contacte o administrador.';
