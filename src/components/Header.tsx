@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Menu, X, Bell, User, ChevronDown,
-  MapPin, Bot, Sprout, Handshake, Home, LogOut, Shield
+  MapPin, Bot, Sprout, Handshake, Home, LogOut, Shield, Loader2
 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const navItems = [
   { label: "Marketplace", href: "/marketplace", icon: MapPin },
@@ -22,6 +24,32 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, userData, userRole, logout } = useAuth();
+  
+  const [showTypeModal, setShowTypeModal] = useState(false);
+  const [selectedType, setSelectedType] = useState('');
+  const [savingType, setSavingType] = useState(false);
+
+  useEffect(() => {
+    if (userData?.userType === 'pendente') {
+      setShowTypeModal(true);
+    } else {
+      setShowTypeModal(false);
+    }
+  }, [userData]);
+
+  const handleSaveType = async () => {
+    if (!selectedType || !currentUser) return;
+    setSavingType(true);
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), { userType: selectedType });
+      // The auth context listener will naturally pick up the change or we can just hide it
+      window.location.reload(); // Quickest way to refresh user context
+    } catch {
+      alert("Erro ao gravar. Tente de novo.");
+    } finally {
+      setSavingType(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -276,6 +304,48 @@ const Header = () => {
           </div>
         </div>
       </div>
+      
+      {/* ─── PENDENTE GOOGLE LOGIN MODAL ─── */}
+      {showTypeModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-card border border-border/80 rounded-2xl shadow-strong p-6 fade-in-up">
+            <h2 className="text-2xl font-black font-['Outfit'] mb-2">Completar Perfil</h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              Como fez login com Google, precisamos saber que tipo de utilizador você é.
+            </p>
+            <div className="space-y-4">
+              <label className="flex items-start gap-3 p-4 rounded-xl border border-border/60 hover:bg-muted/50 cursor-pointer transition-colors">
+                <input type="radio" name="profileType" className="mt-1" onChange={() => setSelectedType('agricultor')} />
+                <div>
+                  <p className="font-semibold text-sm">Agricultor (Experiente)</p>
+                  <p className="text-xs text-muted-foreground">Procura espaço para cultivar os seus projetos.</p>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 p-4 rounded-xl border border-border/60 hover:bg-muted/50 cursor-pointer transition-colors">
+                <input type="radio" name="profileType" className="mt-1" onChange={() => setSelectedType('proprietario')} />
+                <div>
+                  <p className="font-semibold text-sm">Dono de Terreno</p>
+                  <p className="text-xs text-muted-foreground">Tem terra disponível mas pouca ou nenhuma experiência na agricultura.</p>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 p-4 rounded-xl border border-border/60 hover:bg-muted/50 cursor-pointer transition-colors">
+                <input type="radio" name="profileType" className="mt-1" onChange={() => setSelectedType('vendedor')} />
+                <div>
+                  <p className="font-semibold text-sm">Vendedor de Produtos</p>
+                  <p className="text-xs text-muted-foreground">Procura colocar as suas colheitas no mercado.</p>
+                </div>
+              </label>
+              <Button 
+                onClick={handleSaveType} 
+                className="w-full h-12 gradient-primary text-white border-0 font-bold rounded-xl shadow-medium"
+                disabled={!selectedType || savingType}
+              >
+                {savingType ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirmar o Meu Perfil'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

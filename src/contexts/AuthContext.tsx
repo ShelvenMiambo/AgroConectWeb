@@ -55,7 +55,7 @@ const syncUserToFirestore = async (user: User, extraData?: Partial<UserData>): P
         email: user.email || '',
         phone: extraData?.phone || '',
         role: isAdmin ? 'admin' : 'user',
-        userType: extraData?.userType || 'agricultor',
+        userType: extraData?.userType || 'pendente',
         plan: 'gratuito', // default plan
         photoURL: user.photoURL || '',
         createdAt: serverTimestamp(),

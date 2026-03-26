@@ -417,11 +417,11 @@ const Login = () => {
                     <Label htmlFor="reg-type" className="text-sm font-medium">Perfil de Utilizador</Label>
                     <div className="relative">
                       <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <select id="reg-type" className="w-full pl-10 pr-3 h-12 rounded-xl border border-border/70 bg-transparent text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring appearance-none" {...registerForm.register('userType')}>
-                        <option value="">Selecione o seu perfil...</option>
-                        <option value="agricultor">Agricultor sem terreno (Experiente)</option>
-                        <option value="proprietario">Dono de Terreno (Sem experiência)</option>
-                        <option value="vendedor">Vendedor de Produtos Agrícolas</option>
+                      <select id="reg-type" className="w-full pl-10 pr-3 h-12 rounded-xl border border-border/70 bg-background text-foreground text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring appearance-none" {...registerForm.register('userType')}>
+                        <option value="" className="text-muted-foreground">Selecione o seu perfil...</option>
+                        <option value="agricultor" className="text-foreground">Agricultor sem terreno (Experiente)</option>
+                        <option value="proprietario" className="text-foreground">Dono de Terreno (Sem experiência)</option>
+                        <option value="vendedor" className="text-foreground">Vendedor de Produtos Agrícolas</option>
                       </select>
                     </div>
                     {registerForm.formState.errors.userType && <p className="text-xs text-destructive">{registerForm.formState.errors.userType.message}</p>}
