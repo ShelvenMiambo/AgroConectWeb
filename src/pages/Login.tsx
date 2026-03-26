@@ -20,6 +20,7 @@ const registerSchema = z.object({
   name: z.string().min(2, 'Nome muito curto'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional().or(z.literal('')),
+  userType: z.enum(['agricultor', 'proprietario', 'vendedor'], { required_error: 'Selecione um tipo' }),
   password: z.string().min(6, 'Mínimo 6 caracteres'),
   confirmPassword: z.string(),
 }).refine(d => d.password === d.confirmPassword, {
@@ -89,7 +90,7 @@ const Login = () => {
 
   const handleRegister = async (data: RegisterData) => {
     try { clearMessages(); setLoading(true);
-      await register(data.email, data.password, data.name, data.phone);
+      await register(data.email, data.password, data.name, data.phone, data.userType);
       navigate('/');
     } catch (e: any) { setError(errorMap[e.code] || 'Erro ao criar conta. Tente novamente.');
     } finally { setLoading(false); }
@@ -411,6 +412,19 @@ const Login = () => {
                       <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input id="reg-phone" placeholder="+258 84 000 0000" className="pl-10 h-12 rounded-xl border-border/70" {...registerForm.register('phone')} />
                     </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="reg-type" className="text-sm font-medium">Perfil de Utilizador</Label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <select id="reg-type" className="w-full pl-10 pr-3 h-12 rounded-xl border border-border/70 bg-transparent text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring appearance-none" {...registerForm.register('userType')}>
+                        <option value="">Selecione o seu perfil...</option>
+                        <option value="agricultor">Agricultor sem terreno (Experiente)</option>
+                        <option value="proprietario">Dono de Terreno (Sem experiência)</option>
+                        <option value="vendedor">Vendedor de Produtos Agrícolas</option>
+                      </select>
+                    </div>
+                    {registerForm.formState.errors.userType && <p className="text-xs text-destructive">{registerForm.formState.errors.userType.message}</p>}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">

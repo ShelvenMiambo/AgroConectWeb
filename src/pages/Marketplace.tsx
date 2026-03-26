@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  MapPin, Search, Heart, MessageCircle,
+  MapPin, Search, Heart, MessageCircle, Lock,
   ArrowLeft, Droplets, Ruler, TreePine, SlidersHorizontal,
   CheckCircle, X, ChevronDown, Plus, Loader2, Leaf,
   ImagePlus, Trash2, ChevronLeft, ChevronRight
@@ -243,7 +243,7 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 
 /* ── Main Component ─────────────────────────────────── */
 const Marketplace = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [searchTerm, setSearchTerm]   = useState('');
@@ -318,32 +318,56 @@ const Marketplace = () => {
                   <MapPin className="h-4 w-4" /><span>{p.localizacao}</span>
                   {p.verificado && <Badge className="bg-success text-white border-0 gap-1 ml-2"><CheckCircle className="h-3 w-3" /> Verificado</Badge>}
                 </div>
-                <p className="text-foreground/80 leading-relaxed">{p.descricao}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: Ruler,    label: 'Área',  value: `${p.area} hectares`, color: 'text-primary' },
-                  { icon: TreePine, label: 'Solo',   value: p.tipo_solo,          color: 'text-accent' },
-                  { icon: Droplets, label: 'Água',   value: p.disponibilidade_agua ? 'Disponível' : 'Indisponível', color: p.disponibilidade_agua ? 'text-success' : 'text-muted-foreground' },
-                ].map(({ icon: Ic, label, value, color }) => (
-                  <div key={label} className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border/60">
-                    <Ic className={`h-5 w-5 flex-shrink-0 ${color}`} />
-                    <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-semibold capitalize text-sm">{value}</p></div>
+
+                {userData?.plan === 'gratuito' && !isOwner ? (
+                  <div className="relative overflow-hidden rounded-2xl bg-muted/30 border border-border/60 p-8 text-center mt-6">
+                    <div className="absolute inset-0 bg-gradient-to-b from-background/10 to-background/90 backdrop-blur-[2px]" />
+                    <div className="relative z-10 flex flex-col items-center max-w-md mx-auto">
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                        <Lock className="h-8 w-8 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Acesso Exclusivo Premium</h3>
+                      <p className="text-muted-foreground text-sm mb-6">
+                        Desbloqueie todos os detalhes, como a descrição técnica do terreno, disponibilidade de recursos, e contacte diretamente o proprietário.
+                      </p>
+                      <div className="w-full space-y-3">
+                         <Button className="w-full h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal — 200 MT</Button>
+                         <Button className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral — 580 MT (Poupa 10%)</Button>
+                         <Button className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual — 2000 MT (Melhor Valor)</Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-4">Pagamentos seguros integrados com PaySuite.</p>
+                    </div>
                   </div>
-                ))}
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
-                  <span className="text-primary font-black text-xs">MT</span>
-                  <div><p className="text-xs text-muted-foreground">Preço</p><p className="font-bold text-primary text-sm">{p.preco.toLocaleString('pt-MZ')} MT/mês</p></div>
-                </div>
+                ) : (
+                  <>
+                    <p className="text-foreground/80 leading-relaxed">{p.descricao}</p>
+                    <div className="grid grid-cols-2 gap-3 mt-6">
+                      {[
+                        { icon: Ruler,    label: 'Área',  value: `${p.area} hectares`, color: 'text-primary' },
+                        { icon: TreePine, label: 'Solo',   value: p.tipo_solo,          color: 'text-accent' },
+                        { icon: Droplets, label: 'Água',   value: p.disponibilidade_agua ? 'Disponível' : 'Indisponível', color: p.disponibilidade_agua ? 'text-success' : 'text-muted-foreground' },
+                      ].map(({ icon: Ic, label, value, color }) => (
+                        <div key={label} className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border/60">
+                          <Ic className={`h-5 w-5 flex-shrink-0 ${color}`} />
+                          <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-semibold capitalize text-sm">{value}</p></div>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                        <span className="text-primary font-black text-xs">MT</span>
+                        <div><p className="text-xs text-muted-foreground">Preço</p><p className="font-bold text-primary text-sm">{p.preco.toLocaleString('pt-MZ')} MT/mês</p></div>
+                      </div>
+                    </div>
+                    {(p.culturas ?? []).length > 0 && (
+                      <div className="mt-6">
+                        <p className="text-sm font-semibold mb-3">Culturas recomendadas</p>
+                        <div className="flex flex-wrap gap-2">
+                          {p.culturas.map(c => <Badge key={c} variant="secondary" className="px-3 py-1">{c}</Badge>)}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              {(p.culturas ?? []).length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold mb-3">Culturas recomendadas</p>
-                  <div className="flex flex-wrap gap-2">
-                    {p.culturas.map(c => <Badge key={c} variant="secondary" className="px-3 py-1">{c}</Badge>)}
-                  </div>
-                </div>
-              )}
             </div>
             <div className="lg:col-span-2">
               <Card className="shadow-medium border-border/60 sticky top-20">
@@ -352,26 +376,37 @@ const Marketplace = () => {
                     <p className="text-sm text-muted-foreground mb-1">Arrendamento mensal</p>
                     <p className="text-3xl font-black text-primary font-['Outfit']">{p.preco.toLocaleString('pt-MZ')} MT</p>
                   </div>
-                  <div className="border rounded-xl p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-sm">{p.donoNome.charAt(0)}</div>
-                      <div>
-                        <p className="font-semibold text-sm">{p.donoNome}</p>
-                        <p className="text-xs text-muted-foreground">{p.verificado ? '✓ Verificado' : 'Proprietário'}</p>
+
+                  {userData?.plan === 'gratuito' && !isOwner ? (
+                     <div className="border rounded-xl p-4 bg-muted/30 text-center space-y-3">
+                       <Lock className="h-6 w-6 text-muted-foreground mx-auto" />
+                       <p className="text-sm font-semibold">Proprietário Oculto</p>
+                       <p className="text-xs text-muted-foreground">O contacto é uma funcionalidade premium.</p>
+                     </div>
+                  ) : (
+                    <>
+                      <div className="border rounded-xl p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-sm">{p.donoNome.charAt(0)}</div>
+                          <div>
+                            <p className="font-semibold text-sm">{p.donoNome}</p>
+                            <p className="text-xs text-muted-foreground">{p.verificado ? '✓ Verificado' : 'Proprietário'}</p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <Button className="w-full h-12 gradient-primary text-white border-0 font-semibold rounded-xl shadow-medium hover:-translate-y-0.5 transition-spring">
-                      <MessageCircle className="h-4 w-4 mr-2" /> Contactar via Negociações
-                    </Button>
-                    <Button variant="outline"
-                      className={`w-full h-12 rounded-xl font-semibold transition-spring ${p.id && saved.includes(p.id) ? 'border-destructive text-destructive' : ''}`}
-                      onClick={() => p.id && toggleSave(p.id)}>
-                      <Heart className={`h-4 w-4 mr-2 ${p.id && saved.includes(p.id) ? 'fill-current' : ''}`} />
-                      {p.id && saved.includes(p.id) ? 'Guardado' : 'Guardar'}
-                    </Button>
-                  </div>
+                      <div className="space-y-3">
+                        <Button className="w-full h-12 gradient-primary text-white border-0 font-semibold rounded-xl shadow-medium hover:-translate-y-0.5 transition-spring">
+                          <MessageCircle className="h-4 w-4 mr-2" /> Contactar via Negociações
+                        </Button>
+                        <Button variant="outline"
+                          className={`w-full h-12 rounded-xl font-semibold transition-spring ${p.id && saved.includes(p.id) ? 'border-destructive text-destructive' : ''}`}
+                          onClick={() => p.id && toggleSave(p.id)}>
+                          <Heart className={`h-4 w-4 mr-2 ${p.id && saved.includes(p.id) ? 'fill-current' : ''}`} />
+                          {p.id && saved.includes(p.id) ? 'Guardado' : 'Guardar'}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>

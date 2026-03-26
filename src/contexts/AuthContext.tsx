@@ -15,6 +15,8 @@ export interface UserData {
   email: string;
   phone?: string;
   role: 'user' | 'admin';
+  userType?: 'agricultor' | 'proprietario' | 'vendedor';
+  plan?: 'gratuito' | 'mensal' | 'trimestral' | 'anual';
   createdAt: any;
   photoURL?: string;
 }
@@ -25,7 +27,7 @@ interface AuthContextType {
   userRole: 'user' | 'admin' | null;
   loading: boolean;
   login: (email: string, pass: string) => Promise<any>;
-  register: (email: string, pass: string, name: string, phone?: string) => Promise<any>;
+  register: (email: string, pass: string, name: string, phone?: string, userType?: string) => Promise<any>;
   logout: () => Promise<void>;
   loginWithGoogle: () => Promise<any>;
   resetPassword: (email: string) => Promise<void>;
@@ -53,6 +55,8 @@ const syncUserToFirestore = async (user: User, extraData?: Partial<UserData>): P
         email: user.email || '',
         phone: extraData?.phone || '',
         role: isAdmin ? 'admin' : 'user',
+        userType: extraData?.userType || 'agricultor',
+        plan: 'gratuito', // default plan
         photoURL: user.photoURL || '',
         createdAt: serverTimestamp(),
       });
@@ -88,10 +92,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const userRole = userData?.role ?? null;
 
   // Register — saves to Firebase Auth + Firestore
-  const register = async (email: string, pass: string, name: string, phone?: string) => {
+  const register = async (email: string, pass: string, name: string, phone?: string, userType?: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(cred.user, { displayName: name });
-    const data = await syncUserToFirestore(cred.user, { name, phone });
+    const data = await syncUserToFirestore(cred.user, { name, phone, userType: userType as any });
     setUserData(data);
     return cred;
   };
