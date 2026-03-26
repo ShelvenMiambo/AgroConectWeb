@@ -32,21 +32,19 @@ Ajude agricultores com: culturas locais (milho, feijão, arroz, mandioca, caju, 
 Seja direto, prático e use emojis. Dê sempre recomendações acionáveis adaptadas a Moçambique.`;
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const MODEL = 'gemini-1.5-flash-latest';
+// Use gemini-1.5-flash — stable free tier model
+const MODEL = 'gemini-1.5-flash';
 
 async function askGemini(userText: string, history: Message[], langNote: string): Promise<string> {
   if (!GEMINI_API_KEY) return '⚠️ Chave API não configurada. Contacte o administrador.';
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
-  // Keep only last 4 exchanges to stay well within rate limits
-  const recent = history.slice(-8);
-
   const contents = [
-    { role: 'user', parts: [{ text: `${SYSTEM}\nIdioma: ${langNote}` }] },
-    { role: 'model', parts: [{ text: 'Olá! Estou pronto para ajudar. Qual é a sua dúvida agrícola?' }] },
-    ...recent.map(m => ({ role: m.sender === 'user' ? 'user' : 'model', parts: [{ text: m.content }] })),
-    { role: 'user', parts: [{ text: userText }] },
+    { role: 'user',  parts: [{ text: `${SYSTEM}\nIdioma: ${langNote}` }] },
+    { role: 'model', parts: [{ text: 'Olá! Estou pronto para ajudar os agricultores moçambicanos.' }] },
+    ...history.slice(-8).map(m => ({ role: m.sender === 'user' ? 'user' : 'model', parts: [{ text: m.content }] })),
+    { role: 'user',  parts: [{ text: userText }] },
   ];
 
   const res = await fetch(url, {
@@ -59,16 +57,16 @@ async function askGemini(userText: string, history: Message[], langNote: string)
   });
 
   if (!res.ok) {
-    const status = res.status;
-    if (status === 429) return '⏳ Limite de pedidos atingido. Aguarde 30 segundos e tente novamente.';
-    if (status === 401 || status === 403) return '🔑 Chave API inválida. Contacte o administrador.';
-    if (status === 503) return '🔧 Serviço temporariamente indisponível. Tente mais tarde.';
-    return `❌ Erro ${status}. Tente novamente.`;
+    if (res.status === 429) return '⏳ Limite atingido. Aguarde 30 segundos e tente novamente.';
+    if (res.status === 401 || res.status === 403) return '🔑 Chave API inválida. Contacte o administrador.';
+    if (res.status === 503) return '🔧 Serviço temporariamente indisponível. Tente mais tarde.';
+    const err = await res.json().catch(() => ({}));
+    console.error('[Gemini]', res.status, err);
+    return `❌ Erro ${res.status}. Tente novamente.`;
   }
 
   const data = await res.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text
-    ?? '🤔 Sem resposta. Reformule a pergunta.';
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '🤔 Sem resposta. Reformule a pergunta.';
 }
 
 const AssistenteIA = () => {
@@ -76,14 +74,14 @@ const AssistenteIA = () => {
     id: 1, sender: 'ai', timestamp: new Date(),
     content: 'Olá! 👋 Sou o AgroBot — assistente agrícola especializado em Moçambique.\n\nPosso ajudá-lo com cultivo, pragas, clima, solo e preços. Qual é a sua dúvida?',
   }]);
-  const [input, setInput]           = useState('');
-  const [typing, setTyping]         = useState(false);
-  const [recording, setRecording]   = useState(false);
-  const [audio, setAudio]           = useState(false);
-  const [lang, setLang]             = useState('pt');
-  const endRef  = useRef<HTMLDivElement>(null);
+  const [input, setInput]         = useState('');
+  const [typing, setTyping]       = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [audio, setAudio]         = useState(false);
+  const [lang, setLang]           = useState('pt');
+  const endRef   = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const recRef  = useRef<any>(null);
+  const recRef   = useRef<any>(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, typing]);
 
@@ -95,7 +93,6 @@ const AssistenteIA = () => {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setTyping(true);
-
     try {
       const reply = await askGemini(text.trim(), messages, getLang().note);
       const aiMsg: Message = { id: Date.now() + 1, sender: 'ai', content: reply, timestamp: new Date() };
@@ -129,7 +126,6 @@ const AssistenteIA = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 container mx-auto px-4 lg:px-8 py-8 max-w-3xl">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex p-4 rounded-2xl gradient-hero shadow-glow mb-5">
             <Bot className="h-8 w-8 text-white" />
@@ -154,7 +150,6 @@ const AssistenteIA = () => {
           </div>
         </div>
 
-        {/* Controls */}
         <div className="flex items-center justify-between mb-4 gap-3">
           <div className="flex items-center gap-2 bg-muted/60 rounded-xl px-3 py-2">
             <Languages className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -165,12 +160,11 @@ const AssistenteIA = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={toggleAudio}
-              className={`rounded-xl gap-2 ${audio ? 'text-primary' : 'text-muted-foreground'}`}
-              title={audio ? 'Desativar áudio' : 'Ativar leitura em voz alta'}>
+              className={`rounded-xl gap-2 ${audio ? 'text-primary' : 'text-muted-foreground'}`}>
               {audio ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
               <span className="text-xs hidden sm:inline">{audio ? 'Áudio' : 'Mudo'}</span>
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setMessages(msgs => [msgs[0]])}
+            <Button variant="ghost" size="sm" onClick={() => setMessages(m => [m[0]])}
               className="rounded-xl gap-2 text-muted-foreground" title="Limpar conversa">
               <RefreshCw className="h-4 w-4" />
               <span className="text-xs hidden sm:inline">Limpar</span>
@@ -178,7 +172,6 @@ const AssistenteIA = () => {
           </div>
         </div>
 
-        {/* Chat */}
         <Card className="mb-4 border-border/60 shadow-medium rounded-2xl overflow-hidden">
           <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60 bg-muted/30">
             <div className="relative">
@@ -204,9 +197,7 @@ const AssistenteIA = () => {
                   </div>
                 )}
                 <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.sender === 'user'
-                    ? 'gradient-primary text-white rounded-tr-sm'
-                    : 'bg-muted rounded-tl-sm'
+                  msg.sender === 'user' ? 'gradient-primary text-white rounded-tr-sm' : 'bg-muted rounded-tl-sm'
                 }`}>
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                   <p className={`text-[10px] mt-1.5 ${msg.sender === 'user' ? 'text-white/60 text-right' : 'text-muted-foreground'}`}>
@@ -244,7 +235,7 @@ const AssistenteIA = () => {
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}
                   className="pr-10 rounded-xl border-border/70 h-11" disabled={typing} />
                 <Button variant="ghost" size="sm" onClick={toggleRec}
-                  className={`absolute right-1 top-1 h-9 w-9 p-0 rounded-lg ${recording ? 'text-destructive animate-pulse' : 'text-muted-foreground hover:text-foreground'}`}>
+                  className={`absolute right-1 top-1 h-9 w-9 p-0 rounded-lg ${recording ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}>
                   {recording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                 </Button>
               </div>
@@ -261,7 +252,6 @@ const AssistenteIA = () => {
           </div>
         </Card>
 
-        {/* Suggestions */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           {topicSuggestions.map(({ icon: Ic, text, category, color }, i) => (
             <button key={i} onClick={() => send(text)} disabled={typing}
@@ -275,7 +265,6 @@ const AssistenteIA = () => {
           ))}
         </div>
 
-        {/* Feature cards */}
         <div className="grid md:grid-cols-3 gap-4">
           {[
             { icon: Languages, title: '4 Idiomas Locais',  desc: 'Português, Makua, Sena e Changana', color: 'text-primary', bg: 'bg-primary/8' },

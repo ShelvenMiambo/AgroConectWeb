@@ -1,386 +1,455 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
 import {
-  Sprout, Calendar, AlertTriangle, CheckCircle,
-  Clock, TrendingUp, Plus, X, LayoutDashboard,
-  ChevronRight, Leaf, Loader2, Trash2, Edit3
+    Sprout,
+    Calendar,
+    AlertTriangle,
+    CheckCircle,
+    Clock,
+    Camera,
+    TrendingUp,
+    Droplets,
+    Thermometer,
+    Plus,
+    Eye
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useAuth } from "@/contexts/AuthContext";
-import { getPlanos, addPlano, updatePlanoProgresso, deletePlano, PlanoProducao } from "@/lib/firestoreService";
 
-const CULTURA_EMOJI: Record<string, string> = {
-  milho: '🌽', feijão: '🫘', tomate: '🍅', arroz: '🌾', mandioca: '🥔',
-  batata: '🥔', caju: '🌰', algodão: '🌸', banana: '🍌', horticultura: '🥬',
-};
-const getEmoji = (c: string) => CULTURA_EMOJI[c.toLowerCase()] ?? '🌱';
+// Mock data para planos de cultivo
+const mockPlanos = [
+    {
+        id: 1,
+        cultura: 'Milho',
+        propriedade: 'Quinta da Esperança',
+        area: 10,
+        dataInicio: '2024-10-15',
+        dataColheita: '2025-02-15',
+        progresso: 65,
+        status: 'Em Andamento',
+        proximaAtividade: 'Aplicação de fertilizante',
+        alertas: 2
+    },
+    {
+        id: 2,
+        cultura: 'Feijão',
+        propriedade: 'Campos do Sul',
+        area: 5,
+        dataInicio: '2024-11-01',
+        dataColheita: '2025-01-30',
+        progresso: 30,
+        status: 'Em Andamento',
+        proximaAtividade: 'Controlo de pragas',
+        alertas: 1
+    },
+    {
+        id: 3,
+        cultura: 'Tomate',
+        propriedade: 'Terra dos Baobás',
+        area: 3,
+        dataInicio: '2024-09-01',
+        dataColheita: '2024-12-01',
+        progresso: 95,
+        status: 'Quase Pronto',
+        proximaAtividade: 'Preparar colheita',
+        alertas: 0
+    }
+];
 
-const statusConfig: Record<string, { badge: string }> = {
-  'Em Andamento': { badge: 'bg-primary/15 text-primary' },
-  'Quase Pronto': { badge: 'bg-success/15 text-success' },
-  'Finalizado':   { badge: 'bg-muted-foreground/15 text-muted-foreground' },
-};
+const mockAlertas = [
+    {
+        id: 1,
+        tipo: 'Clima',
+        titulo: 'Chuva Prevista',
+        descricao: 'Possibilidade de chuva forte nos próximos 3 dias',
+        urgencia: 'media',
+        plano: 'Milho - Quinta da Esperança'
+    },
+    {
+        id: 2,
+        tipo: 'Pragas',
+        titulo: 'Risco de Lagarta',
+        descricao: 'Condições favoráveis para aparecimento de lagartas',
+        urgencia: 'alta',
+        plano: 'Milho - Quinta da Esperança'
+    },
+    {
+        id: 3,
+        tipo: 'Irrigação',
+        titulo: 'Tempo de Regar',
+        descricao: 'Solo com baixa humidade, necessita irrigação',
+        urgencia: 'media',
+        plano: 'Feijão - Campos do Sul'
+    }
+];
 
-/* ── New Plan Modal ───────────────────────────────────── */
-const NewPlanModal = ({ uid, onClose, onSaved }: { uid: string; onClose: () => void; onSaved: () => void }) => {
-  const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [form, setForm] = useState({ cultura: '', propriedade: '', area: '', dataInicio: '', dataColheita: '' });
-  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+const mockOcorrencias = [
+    {
+        id: 1,
+        data: '2024-12-01',
+        tipo: 'Aplicação',
+        descricao: 'Aplicado fertilizante NPK',
+        plano: 'Milho',
+        fotos: 1
+    },
+    {
+        id: 2,
+        data: '2024-11-28',
+        tipo: 'Observação',
+        descricao: 'Crescimento saudável das plantas',
+        plano: 'Feijão',
+        fotos: 2
+    },
+    {
+        id: 3,
+        data: '2024-11-25',
+        tipo: 'Problema',
+        descricao: 'Identificadas algumas pragas no tomateiro',
+        plano: 'Tomate',
+        fotos: 3
+    }
+];
 
-  const handleCreate = async () => {
-    setLoading(true); setError('');
-    try {
-      await addPlano({
-        uid, cultura: form.cultura.trim(), propriedade: form.propriedade.trim(),
-        area: Number(form.area), dataInicio: form.dataInicio, dataColheita: form.dataColheita,
-        progresso: 0, status: 'Em Andamento',
-      });
-      onSaved(); onClose();
-    } catch { setError('Erro ao criar plano. Tente novamente.'); }
-    finally { setLoading(false); }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <Card className="relative w-full max-w-md shadow-strong rounded-2xl border-border/60 fade-in-up">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="font-['Outfit'] text-xl">Novo Plano de Cultivo</CardTitle>
-              <CardDescription>Passo {step} de 2</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg" onClick={onClose}><X className="h-4 w-4" /></Button>
-          </div>
-          <Progress value={step * 50} className="h-1.5 mt-2" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-xl">{error}</p>}
-          {step === 1 ? (
-            <>
-              {[
-                { key: 'cultura', label: 'Cultura *', placeholder: 'Ex: Milho, Tomate, Feijão...' },
-                { key: 'propriedade', label: 'Propriedade / Local *', placeholder: 'Ex: Quinta da Esperança' },
-                { key: 'area', label: 'Área (hectares) *', placeholder: 'Ex: 5', type: 'number' },
-              ].map(f => (
-                <div key={f.key} className="space-y-1">
-                  <label className="text-sm font-medium">{f.label}</label>
-                  <Input type={f.type ?? 'text'} placeholder={f.placeholder}
-                    value={(form as any)[f.key]} onChange={e => set(f.key, e.target.value)} className="rounded-xl" />
-                </div>
-              ))}
-              <Button className="w-full h-11 rounded-xl gradient-primary text-white border-0 font-semibold"
-                disabled={!form.cultura || !form.propriedade || !form.area} onClick={() => setStep(2)}>
-                Continuar <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className="p-4 rounded-xl bg-muted/50 border border-border/60 flex items-center gap-3">
-                <span className="text-2xl">{getEmoji(form.cultura)}</span>
-                <div><p className="font-semibold">{form.cultura} — {form.area} ha</p><p className="text-xs text-muted-foreground">{form.propriedade}</p></div>
-              </div>
-              {[
-                { key: 'dataInicio', label: 'Data de Início *' },
-                { key: 'dataColheita', label: 'Data Prevista de Colheita *' },
-              ].map(f => (
-                <div key={f.key} className="space-y-1">
-                  <label className="text-sm font-medium">{f.label}</label>
-                  <Input type="date" value={(form as any)[f.key]} onChange={e => set(f.key, e.target.value)} className="rounded-xl" />
-                </div>
-              ))}
-              <div className="flex gap-3 pt-2">
-                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setStep(1)}>Voltar</Button>
-                <Button className="flex-1 h-11 rounded-xl gradient-primary text-white border-0 font-semibold"
-                  disabled={!form.dataInicio || !form.dataColheita || loading} onClick={handleCreate}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sprout className="mr-2 h-4 w-4" /> Criar Plano</>}
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-/* ── Edit Progress Modal ──────────────────────────────── */
-const EditProgressModal = ({ plano, onClose, onSaved }: { plano: PlanoProducao; onClose: () => void; onSaved: () => void }) => {
-  const [progresso, setProgresso] = useState(plano.progresso);
-  const [loading, setLoading] = useState(false);
-
-  const handleSave = async () => {
-    setLoading(true);
-    try { await updatePlanoProgresso(plano.id!, progresso); onSaved(); onClose(); }
-    catch { } finally { setLoading(false); }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <Card className="relative w-full max-w-sm shadow-strong rounded-2xl border-border/60 fade-in-up">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="font-['Outfit'] text-lg">Atualizar Progresso</CardTitle>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg" onClick={onClose}><X className="h-4 w-4" /></Button>
-          </div>
-          <CardDescription>{getEmoji(plano.cultura)} {plano.cultura} — {plano.propriedade}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="text-center">
-            <span className="text-4xl font-black text-primary font-['Outfit']">{progresso}%</span>
-          </div>
-          <input type="range" min="0" max="100" value={progresso} onChange={e => setProgresso(Number(e.target.value))}
-            className="w-full accent-primary" />
-          <Progress value={progresso} className="h-2" />
-          <Button className="w-full h-11 rounded-xl gradient-primary text-white border-0 font-semibold" onClick={handleSave} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Guardar Progresso'}
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-/* ── Main Page ────────────────────────────────────────── */
 const Producao = () => {
-  const { currentUser } = useAuth();
-  const [planos, setPlanos] = useState<PlanoProducao[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'planos'>('dashboard');
-  const [showNewPlan, setShowNewPlan] = useState(false);
-  const [editPlano, setEditPlano] = useState<PlanoProducao | null>(null);
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'planos' | 'alertas' | 'historico'>('dashboard');
+    const [selectedPlano, setSelectedPlano] = useState<any>(null);
 
-  const load = async () => {
-    if (!currentUser) return;
-    setLoading(true);
-    try { setPlanos(await getPlanos(currentUser.uid)); }
-    catch { setPlanos([]); }
-    finally { setLoading(false); }
-  };
+    const getUrgenciaColor = (urgencia: string) => {
+        switch (urgencia) {
+            case 'alta': return 'text-red-500 bg-red-50 border-red-200';
+            case 'media': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+            case 'baixa': return 'text-green-600 bg-green-50 border-green-200';
+            default: return 'text-muted-foreground bg-muted border-border';
+        }
+    };
 
-  useEffect(() => { load(); }, [currentUser]);
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Em Andamento': return 'bg-blue-500';
+            case 'Quase Pronto': return 'bg-green-500';
+            case 'Finalizado': return 'bg-gray-500';
+            default: return 'bg-muted-foreground';
+        }
+    };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Eliminar este plano?')) return;
-    await deletePlano(id);
-    setPlanos(prev => prev.filter(p => p.id !== id));
-  };
-
-  const ativos = planos.filter(p => p.status !== 'Finalizado');
-  const totalArea = planos.reduce((s, p) => s + p.area, 0);
-  const proxColheita = planos.filter(p => p.dataColheita).sort((a, b) => a.dataColheita.localeCompare(b.dataColheita))[0];
-  const diasProxColheita = proxColheita
-    ? Math.max(0, Math.ceil((new Date(proxColheita.dataColheita).getTime() - Date.now()) / 86400000))
-    : null;
-
-  const tabs = [
-    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { key: 'planos',    label: 'Meus Planos', icon: Sprout },
-  ] as const;
-
-  const stats = [
-    { label: 'Planos Ativos',  value: ativos.length.toString(),              icon: Sprout,     color: 'text-primary', bg: 'bg-primary/10' },
-    { label: 'Área Total',     value: `${totalArea}ha`,                       icon: TrendingUp, color: 'text-accent',  bg: 'bg-accent/10' },
-    { label: 'Total Planos',   value: planos.length.toString(),               icon: CheckCircle,color: 'text-success', bg: 'bg-success/10' },
-    { label: 'Próx. Colheita', value: diasProxColheita !== null ? `${diasProxColheita}d` : '—', icon: Calendar, color: 'text-warning', bg: 'bg-warning/10' },
-  ];
-
-  return (
-    <div className="min-h-screen bg-background">
-      {showNewPlan && currentUser && <NewPlanModal uid={currentUser.uid} onClose={() => setShowNewPlan(false)} onSaved={load} />}
-      {editPlano && <EditProgressModal plano={editPlano} onClose={() => setEditPlano(null)} onSaved={load} />}
-      <Header />
-      <main>
-        <div className="relative overflow-hidden bg-gradient-to-br from-success/8 via-background to-primary/5 border-b border-border/60 py-12">
-          <div className="absolute inset-0 dot-pattern opacity-40" />
-          <div className="relative container mx-auto px-4 lg:px-8 text-center">
-            <div className="inline-flex p-3.5 rounded-2xl bg-success/15 mb-5 shadow-soft">
-              <Leaf className="h-7 w-7 text-success" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-black mb-3 font-['Outfit']">
-              <span className="text-gradient-primary">Gestão de</span> Produção
-            </h1>
-            <p className="text-muted-foreground max-w-md mx-auto">Planeie e acompanhe os seus cultivos.</p>
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 lg:px-8 py-8">
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {stats.map(({ label, value, icon: Ic, color, bg }, i) => (
-              <Card key={i} className="border-border/60 shadow-xs fade-in-up" style={{ animationDelay: `${i * 80}ms` }}>
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">{label}</p>
-                      <p className={`text-2xl font-black font-['Outfit'] ${color}`}>{value}</p>
-                    </div>
-                    <div className={`p-2.5 rounded-xl ${bg}`}><Ic className={`h-5 w-5 ${color}`} /></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-1 p-1 bg-muted/60 rounded-xl mb-8 w-fit mx-auto border border-border/60">
-            {tabs.map(({ key, label, icon: Ic }) => (
-              <button key={key} onClick={() => setActiveTab(key)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  activeTab === key ? 'bg-background text-primary shadow-soft' : 'text-muted-foreground hover:text-foreground'
-                }`}>
-                <Ic className="h-4 w-4" /><span className="hidden sm:inline">{label}</span>
-              </button>
-            ))}
-          </div>
-
-          {loading ? (
-            <div className="flex flex-col items-center py-20 gap-4">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-muted-foreground">A carregar planos...</p>
-            </div>
-          ) : (
-            <>
-              {/* DASHBOARD */}
-              {activeTab === 'dashboard' && (
-                <div className="space-y-6">
-                  <Card className="border-border/60 shadow-soft rounded-2xl">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 font-['Outfit']">
-                          <Sprout className="h-5 w-5 text-primary" /> Planos Activos
-                        </CardTitle>
-                        <Button size="sm" className="rounded-lg gradient-primary text-white border-0 gap-1.5 text-xs font-semibold" onClick={() => setShowNewPlan(true)}>
-                          <Plus className="h-3.5 w-3.5" /> Novo Plano
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {planos.length === 0 ? (
-                        <div className="text-center py-10">
-                          <Sprout className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-                          <p className="font-semibold mb-1">Nenhum plano criado</p>
-                          <p className="text-sm text-muted-foreground mb-4">Comece por adicionar o seu primeiro plano de cultivo.</p>
-                          <Button size="sm" className="rounded-xl gradient-primary text-white border-0 gap-2 font-semibold" onClick={() => setShowNewPlan(true)}>
-                            <Plus className="h-4 w-4" /> Criar Primeiro Plano
-                          </Button>
+    const renderDashboard = () => (
+        <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="border-border/50">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Planos Ativos</p>
+                                <p className="text-2xl font-bold text-primary">3</p>
+                            </div>
+                            <Sprout className="h-8 w-8 text-primary" />
                         </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {planos.map(plano => {
-                            const sc = statusConfig[plano.status] || statusConfig['Em Andamento'];
-                            return (
-                              <div key={plano.id} className="p-4 border border-border/60 rounded-xl hover:bg-muted/30 transition-colors">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2.5">
-                                    <span className="text-xl">{getEmoji(plano.cultura)}</span>
-                                    <div>
-                                      <p className="font-semibold text-sm">{plano.cultura} — {plano.propriedade}</p>
-                                      <p className="text-xs text-muted-foreground">{plano.area}ha · Colheita: {new Date(plano.dataColheita).toLocaleDateString('pt-MZ')}</p>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Badge className={`text-xs ${sc.badge}`}>{plano.status}</Badge>
-                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg" onClick={() => setEditPlano(plano)} title="Editar progresso">
-                                      <Edit3 className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg text-destructive hover:bg-destructive/10" onClick={() => handleDelete(plano.id!)} title="Eliminar">
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </div>
-                                </div>
-                                <div className="space-y-1">
-                                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                                    <span>Progresso</span><span className="font-semibold">{plano.progresso}%</span>
-                                  </div>
-                                  <Progress value={plano.progresso} className="h-1.5" />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
                     </CardContent>
-                  </Card>
-                </div>
-              )}
+                </Card>
 
-              {/* PLANOS */}
-              {activeTab === 'planos' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-black font-['Outfit']">Meus Planos</h2>
-                    <Button className="rounded-xl gradient-primary text-white border-0 gap-2 font-semibold" onClick={() => setShowNewPlan(true)}>
-                      <Plus className="h-4 w-4" /> Novo Plano
-                    </Button>
-                  </div>
-                  {planos.length === 0 ? (
-                    <div className="text-center py-20">
-                      <Sprout className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
-                      <p className="font-bold text-lg mb-2">Nenhum plano ainda</p>
-                      <p className="text-muted-foreground mb-6">Crie o seu primeiro plano de cultivo para começar.</p>
-                      <Button className="rounded-xl gradient-primary text-white border-0 gap-2 font-semibold" onClick={() => setShowNewPlan(true)}>
-                        <Plus className="h-4 w-4" /> Criar Plano
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {planos.map((plano, i) => {
-                        const sc = statusConfig[plano.status] || statusConfig['Em Andamento'];
-                        return (
-                          <Card key={plano.id} className="border-border/60 shadow-xs card-hover fade-in-up rounded-2xl overflow-hidden" style={{ animationDelay: `${i * 100}ms` }}>
-                            <div className="h-2 gradient-primary" />
-                            <CardHeader className="pb-3">
-                              <div className="flex items-center justify-between mb-1">
-                                <Badge className={`text-xs ${sc.badge}`}>{plano.status}</Badge>
-                                <div className="flex gap-1">
-                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg" onClick={() => setEditPlano(plano)}><Edit3 className="h-3.5 w-3.5" /></Button>
-                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg text-destructive hover:bg-destructive/10" onClick={() => handleDelete(plano.id!)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <Card className="border-border/50">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Área Total</p>
+                                <p className="text-2xl font-bold text-accent">18ha</p>
+                            </div>
+                            <TrendingUp className="h-8 w-8 text-accent" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-border/50">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Alertas</p>
+                                <p className="text-2xl font-bold text-warning">3</p>
+                            </div>
+                            <AlertTriangle className="h-8 w-8 text-warning" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-border/50">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Próxima Colheita</p>
+                                <p className="text-2xl font-bold text-success">15</p>
+                                <p className="text-xs text-muted-foreground">dias</p>
+                            </div>
+                            <Calendar className="h-8 w-8 text-success" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Active Plans */}
+            <Card className="border-border/50">
+                <CardHeader>
+                    <CardTitle className="flex items-center">
+                        <Sprout className="h-5 w-5 mr-2 text-primary" />
+                        Planos de Cultivo Ativos
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        {mockPlanos.map((plano) => (
+                            <div key={plano.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center space-x-3">
+                                        <Badge className={getStatusColor(plano.status)}>
+                                            {plano.status}
+                                        </Badge>
+                                        <h3 className="font-semibold">{plano.cultura} - {plano.propriedade}</h3>
+                                        {plano.alertas > 0 && (
+                                            <Badge variant="destructive" className="text-xs">
+                                                {plano.alertas} alertas
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <Button variant="ghost" size="sm">
+                                        <Eye className="h-4 w-4" />
+                                    </Button>
                                 </div>
-                              </div>
-                              <CardTitle className="flex items-center gap-2 font-['Outfit']">
-                                <span>{getEmoji(plano.cultura)}</span> {plano.cultura}
-                              </CardTitle>
-                              <CardDescription>{plano.propriedade} · {plano.area} ha</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                                <div><span className="block text-foreground font-medium">{new Date(plano.dataInicio).toLocaleDateString('pt-MZ')}</span>Início</div>
-                                <div><span className="block text-foreground font-medium">{new Date(plano.dataColheita).toLocaleDateString('pt-MZ')}</span>Colheita</div>
-                              </div>
-                              <div>
-                                <div className="flex justify-between text-xs mb-1.5">
-                                  <span className="text-muted-foreground">Progresso</span>
-                                  <span className="font-bold text-primary">{plano.progresso}%</span>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground mb-3">
+                                    <div>Área: {plano.area}ha</div>
+                                    <div>Início: {new Date(plano.dataInicio).toLocaleDateString('pt-MZ')}</div>
+                                    <div>Colheita: {new Date(plano.dataColheita).toLocaleDateString('pt-MZ')}</div>
+                                    <div>Próximo: {plano.proximaAtividade}</div>
                                 </div>
-                                <Progress value={plano.progresso} className="h-1.5" />
-                              </div>
-                              <Button variant="outline" size="sm" className="w-full rounded-lg text-xs" onClick={() => setEditPlano(plano)}>
-                                <Edit3 className="h-3.5 w-3.5 mr-1.5" /> Atualizar Progresso
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span>Progresso</span>
+                                        <span>{plano.progresso}%</span>
+                                    </div>
+                                    <Progress value={plano.progresso} className="h-2" />
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+                </CardContent>
+            </Card>
+
+            {/* Recent Alerts */}
+            <Card className="border-border/50">
+                <CardHeader>
+                    <CardTitle className="flex items-center">
+                        <AlertTriangle className="h-5 w-5 mr-2 text-warning" />
+                        Alertas Recentes
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-3">
+                        {mockAlertas.slice(0, 3).map((alerta) => (
+                            <div key={alerta.id} className={`border rounded-lg p-3 ${getUrgenciaColor(alerta.urgencia)}`}>
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                        <div className="flex items-center space-x-2 mb-1">
+                                            <Badge variant="outline" className="text-xs">
+                                                {alerta.tipo}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">{alerta.plano}</span>
+                                        </div>
+                                        <h4 className="font-semibold text-sm">{alerta.titulo}</h4>
+                                        <p className="text-xs opacity-80">{alerta.descricao}</p>
+                                    </div>
+                                    <Button variant="ghost" size="sm">
+                                        Ver
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
-      </main>
-      <Footer />
-    </div>
-  );
+    );
+
+    return (
+        <div className="min-h-screen bg-background">
+            <Header />
+            <main className="container mx-auto px-4 py-8">
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                        <span className="text-primary">Gestão de</span> Produção
+                    </h1>
+                    <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                        Planeie, monitorize e otimize os seus cultivos com ferramentas intuitivas e alertas inteligentes.
+                    </p>
+                </div>
+
+                {/* Navigation Tabs */}
+                <div className="flex flex-wrap gap-2 mb-8 justify-center">
+                    {[
+                        { key: 'dashboard', label: 'Dashboard', icon: TrendingUp },
+                        { key: 'planos', label: 'Meus Planos', icon: Sprout },
+                        { key: 'alertas', label: 'Alertas', icon: AlertTriangle },
+                        { key: 'historico', label: 'Histórico', icon: Clock }
+                    ].map(({ key, label, icon: Icon }) => (
+                        <Button
+                            key={key}
+                            variant={activeTab === key ? "default" : "outline"}
+                            onClick={() => setActiveTab(key as any)}
+                            className="flex items-center space-x-2"
+                        >
+                            <Icon className="h-4 w-4" />
+                            <span>{label}</span>
+                        </Button>
+                    ))}
+                </div>
+
+                {/* Content */}
+                {activeTab === 'dashboard' && renderDashboard()}
+
+                {activeTab === 'planos' && (
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-2xl font-bold">Meus Planos de Cultivo</h2>
+                            <Button>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Novo Plano
+                            </Button>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {mockPlanos.map((plano) => (
+                                <Card key={plano.id} className="border-border/50 hover:shadow-medium transition-spring">
+                                    <CardHeader className="pb-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <Badge className={getStatusColor(plano.status)}>
+                                                {plano.status}
+                                            </Badge>
+                                            {plano.alertas > 0 && (
+                                                <Badge variant="destructive" className="text-xs">
+                                                    {plano.alertas}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <CardTitle className="text-lg">{plano.cultura}</CardTitle>
+                                        <CardDescription>{plano.propriedade} • {plano.area}ha</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                                                <div>Início: {new Date(plano.dataInicio).toLocaleDateString('pt-MZ')}</div>
+                                                <div>Colheita: {new Date(plano.dataColheita).toLocaleDateString('pt-MZ')}</div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-sm">
+                                                    <span>Progresso</span>
+                                                    <span>{plano.progresso}%</span>
+                                                </div>
+                                                <Progress value={plano.progresso} className="h-2" />
+                                            </div>
+
+                                            <div className="pt-2 border-t">
+                                                <p className="text-sm text-muted-foreground mb-2">Próxima atividade:</p>
+                                                <p className="text-sm font-medium">{plano.proximaAtividade}</p>
+                                            </div>
+
+                                            <Button variant="outline" className="w-full">
+                                                Ver Detalhes
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'alertas' && (
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-bold">Alertas e Lembretes</h2>
+
+                        <div className="space-y-4">
+                            {mockAlertas.map((alerta) => (
+                                <Card key={alerta.id} className={`border-l-4 ${getUrgenciaColor(alerta.urgencia)}`}>
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center space-x-2 mb-2">
+                                                    <Badge variant="outline">
+                                                        {alerta.tipo}
+                                                    </Badge>
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {alerta.urgencia === 'alta' ? 'Urgente' :
+                                                            alerta.urgencia === 'media' ? 'Moderado' : 'Baixo'}
+                                                    </Badge>
+                                                </div>
+                                                <h3 className="font-semibold text-lg mb-1">{alerta.titulo}</h3>
+                                                <p className="text-muted-foreground mb-2">{alerta.descricao}</p>
+                                                <p className="text-sm text-muted-foreground">Plano: {alerta.plano}</p>
+                                            </div>
+                                            <div className="flex space-x-2">
+                                                <Button variant="outline" size="sm">
+                                                    Marcar como Lido
+                                                </Button>
+                                                <Button size="sm">
+                                                    Ver Detalhes
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'historico' && (
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-bold">Histórico de Ocorrências</h2>
+
+                        <div className="space-y-4">
+                            {mockOcorrencias.map((ocorrencia) => (
+                                <Card key={ocorrencia.id} className="border-border/50">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center space-x-2 mb-2">
+                                                    <Badge variant="outline">
+                                                        {ocorrencia.tipo}
+                                                    </Badge>
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {ocorrencia.plano}
+                                                    </Badge>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {new Date(ocorrencia.data).toLocaleDateString('pt-MZ')}
+                                                    </span>
+                                                </div>
+                                                <p className="text-muted-foreground">{ocorrencia.descricao}</p>
+                                                {ocorrencia.fotos > 0 && (
+                                                    <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                                                        <Camera className="h-4 w-4 mr-1" />
+                                                        {ocorrencia.fotos} foto{ocorrencia.fotos > 1 ? 's' : ''}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <Button variant="ghost" size="sm">
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </main>
+            <Footer />
+        </div>
+    );
 };
 
 export default Producao;

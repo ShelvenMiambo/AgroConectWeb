@@ -1,10 +1,13 @@
-// Firestore service — AgroConecta
+// Firestore + Storage service — AgroConecta
 import {
-  collection, doc, addDoc, getDocs, getDoc,
+  collection, doc, addDoc, getDocs,
   updateDoc, deleteDoc, query, where, orderBy,
-  serverTimestamp, onSnapshot, Unsubscribe
+  serverTimestamp
 } from 'firebase/firestore';
-import { db } from './firebase';
+import {
+  ref as storageRef, uploadBytes, getDownloadURL, deleteObject
+} from 'firebase/storage';
+import { db, storage } from './firebase';
 
 /* ─── TYPES ──────────────────────────────────────────── */
 export interface Property {
@@ -20,6 +23,7 @@ export interface Property {
   donoNome: string;
   verificado: boolean;
   culturas: string[];
+  imageUrls?: string[];   // Firebase Storage download URLs
   createdAt?: any;
 }
 
@@ -50,19 +54,55 @@ export interface Negociacao {
   createdAt?: any;
 }
 
+/* ─── STORAGE ─────────────────────────────────────────── */
+export const uploadPropertyImages = async (propertyId: string, files: File[]): Promise<string[]> => {
+  const urls: string[] = [];
+  for (const file of files) {
+    const path = `properties/${propertyId}/${Date.now()}_${file.name}`;
+    const sRef = storageRef(storage, path);
+    const snap = await uploadBytes(sRef, file);
+    urls.push(await getDownloadURL(snap.ref));
+  }
+  return urls;
+};
+
+const deleteImagesFromStorage = async (imageUrls: string[]) => {
+  for (const url of imageUrls) {
+    try {
+      // Extract path from URL to create a storage ref
+      const decodedUrl = decodeURIComponent(url);
+      const pathMatch = decodedUrl.match(/\/o\/(.+?)\?/);
+      if (pathMatch) {
+        const sRef = storageRef(storage, pathMatch[1]);
+        await deleteObject(sRef);
+      }
+    } catch { /* ignore if already deleted */ }
+  }
+};
+
 /* ─── PROPERTIES ─────────────────────────────────────── */
 export const getProperties = async (): Promise<Property[]> => {
   const snap = await getDocs(query(collection(db, 'properties'), orderBy('createdAt', 'desc')));
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Property));
 };
 
-export const addProperty = async (data: Omit<Property, 'id' | 'createdAt'>): Promise<string> => {
-  const ref = await addDoc(collection(db, 'properties'), { ...data, verificado: false, createdAt: serverTimestamp() });
-  return ref.id;
+export const addProperty = async (
+  data: Omit<Property, 'id' | 'createdAt'>,
+  imageFiles?: File[]
+): Promise<string> => {
+  const docRef = await addDoc(collection(db, 'properties'), {
+    ...data, verificado: false, imageUrls: [], createdAt: serverTimestamp()
+  });
+  if (imageFiles && imageFiles.length > 0) {
+    const urls = await uploadPropertyImages(docRef.id, imageFiles);
+    await updateDoc(doc(db, 'properties', docRef.id), { imageUrls: urls });
+  }
+  return docRef.id;
 };
 
-export const deleteProperty = async (id: string) => {
+export const deleteProperty = async (id: string, imageUrls: string[] = []) => {
   await deleteDoc(doc(db, 'properties', id));
+  if (imageUrls.length > 0) await deleteImagesFromStorage(imageUrls);
 };
 
 /* ─── PRODUCAO ───────────────────────────────────────── */
@@ -76,13 +116,15 @@ export const getPlanos = async (uid: string): Promise<PlanoProducao[]> => {
 };
 
 export const addPlano = async (data: Omit<PlanoProducao, 'id' | 'createdAt'>): Promise<string> => {
-  const ref = await addDoc(collection(db, 'producao'), { ...data, progresso: 0, status: 'Em Andamento', createdAt: serverTimestamp() });
+  const ref = await addDoc(collection(db, 'producao'), {
+    ...data, progresso: 0, status: 'Em Andamento', createdAt: serverTimestamp()
+  });
   return ref.id;
 };
 
 export const updatePlanoProgresso = async (id: string, progresso: number) => {
   const status: PlanoProducao['status'] =
-    progresso >= 90 ? 'Quase Pronto' : progresso >= 100 ? 'Finalizado' : 'Em Andamento';
+    progresso >= 100 ? 'Finalizado' : progresso >= 90 ? 'Quase Pronto' : 'Em Andamento';
   await updateDoc(doc(db, 'producao', id), { progresso, status });
 };
 
@@ -106,7 +148,9 @@ export const getNegociacoes = async (uid: string): Promise<Negociacao[]> => {
 };
 
 export const createNegociacao = async (data: Omit<Negociacao, 'id' | 'createdAt' | 'status'>): Promise<string> => {
-  const ref = await addDoc(collection(db, 'negociacoes'), { ...data, status: 'pendente', createdAt: serverTimestamp() });
+  const ref = await addDoc(collection(db, 'negociacoes'), {
+    ...data, status: 'pendente', createdAt: serverTimestamp()
+  });
   return ref.id;
 };
 
