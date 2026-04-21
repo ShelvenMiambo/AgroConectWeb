@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ──────────────────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+    function isAdmin() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function validUserType() {
+      return request.resource.data.userType in ['agricultor', 'proprietario', 'vendedor', 'pendente'];
+    }
+    function validPlan() {
+      return request.resource.data.plan in ['gratuito', 'mensal', 'trimestral', 'anual'];
+    }
+
+    // ─── USERS ────────────────────────────────────────────────────────────
+    // Any authenticated user can read their own profile; admin reads all
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Create: only the user themselves (on first sign-up via AuthContext)
+      allow create: if isOwner(uid);
+
+      // Update: own doc only, restricted fields
+      allow update: if isOwner(uid)
+        && (!request.resource.data.keys().hasAny(['role']))   // can't self-promote
+        && (!('userType' in request.resource.data.diff(resource.data)) || validUserType())
+        && (!('plan' in request.resource.data.diff(resource.data)) || validPlan());
+
+      // Admin can update anything (e.g. toggle roles)
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // ─── PROPERTIES (Marketplace) ─────────────────────────────────────────
+    match /properties/{propertyId} {
+      // All logged-in users can list/read
+      allow read: if isAuth();
+
+      // Any logged-in user can create a property
+      allow create: if isAuth()
+        && request.resource.data.donoUid == request.auth.uid
+        && request.resource.data.keys().hasAll(['nome','area','localizacao','tipo_solo','preco','donoUid','donoNome'])
+        && request.resource.data.nome.size() >= 3
+        && request.resource.data.area > 0;
+
+      // Only the owner or an admin can update/delete
+      allow update: if (isOwner(resource.data.donoUid) || isAdmin());
+      allow delete: if (isOwner(resource.data.donoUid) || isAdmin());
+    }
+
+    // ─── PRODUCAO (Planos de Cultivo) ──────────────────────────────────────
+    match /producao/{planoId} {
+      // Only the owner can read/write their own plans
+      allow read:   if isOwner(resource.data.uid) || isAdmin();
+      allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
+      allow update: if isOwner(resource.data.uid) || isAdmin();
+      allow delete: if isOwner(resource.data.uid) || isAdmin();
+    }
+
+    // ─── ALERTAS ──────────────────────────────────────────────────────────
+    match /alertas/{alertaId} {
+      allow read:   if isOwner(resource.data.uid) || isAdmin();
+      allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
+      allow update: if isOwner(resource.data.uid) || isAdmin();
+      allow delete: if isOwner(resource.data.uid) || isAdmin();
+    }
+
+    // ─── OCORRENCIAS ──────────────────────────────────────────────────────
+    match /ocorrencias/{ocorrenciaId} {
+      allow read:   if isOwner(resource.data.uid) || isAdmin();
+      allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
+      allow update: if isOwner(resource.data.uid) || isAdmin();
+      allow delete: if isOwner(resource.data.uid) || isAdmin();
+    }
+
+    // ─── NEGOCIACOES ───────────────────────────────────────────────────────
+    // Both parties (arrendatario and proprietario) can read the negotiation
+    match /negociacoes/{negociacaoId} {
+      allow read: if isAuth() && (
+        request.auth.uid == resource.data.arrendatarioUid ||
+        request.auth.uid == resource.data.proprietarioUid ||
+        isAdmin()
+      );
+
+      // Only an authenticated renter can propose (arrendatarioUid must be self)
+      allow create: if isAuth()
+        && request.resource.data.arrendatarioUid == request.auth.uid
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.keys().hasAll([
+          'propertyId','propertyNome','arrendatarioUid','arrendatarioNome',
+          'proprietarioUid','proprietarioNome','mensagem','status'
+        ]);
+
+      // Only the property owner can accept/reject; only status field changes allowed
+      allow update: if isAuth()
+        && request.auth.uid == resource.data.proprietarioUid
+        && request.resource.data.status in ['aceite', 'recusada']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+
+      allow delete: if isAdmin();
+    }
+
+    // ─── Deny everything else ──────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

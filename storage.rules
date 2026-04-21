@@ -1,14 +1,29 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Property images: authenticated users can read all, only owner can write/delete
+
+    // ─── Property images ───────────────────────────────────────────────────
+    // Any authenticated user can view (for displaying in marketplace)
+    // Only the document owner can upload/delete their images
     match /properties/{propertyId}/{fileName} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024  // max 5 MB per image
+        && request.resource.contentType.matches('image/.*');
       allow delete: if request.auth != null;
     }
-    // Deny all other paths
-    match /{allOtherPaths=**} {
+
+    // ─── User avatars (future feature) ────────────────────────────────────
+    match /avatars/{uid}/{fileName} {
+      allow read:   if request.auth != null;
+      allow write:  if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 2 * 1024 * 1024  // max 2 MB
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // ─── Deny everything else ─────────────────────────────────────────────
+    match /{allPaths=**} {
       allow read, write: if false;
     }
   }

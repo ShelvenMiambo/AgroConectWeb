@@ -15,8 +15,10 @@ export interface UserData {
   email: string;
   phone?: string;
   role: 'user' | 'admin';
-  userType?: 'agricultor' | 'proprietario' | 'vendedor';
+  userType?: 'agricultor' | 'proprietario' | 'vendedor' | 'pendente';
   plan?: 'gratuito' | 'mensal' | 'trimestral' | 'anual';
+  planAtivadoEm?: string;   // ISO date string
+  planExpiraEm?: string;    // ISO date string
   createdAt: any;
   photoURL?: string;
 }

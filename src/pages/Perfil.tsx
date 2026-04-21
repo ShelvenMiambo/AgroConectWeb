@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,13 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   User, Mail, Phone, Leaf, Shield, CheckCircle,
   Crown, Handshake, MapPin, LogOut, Edit3, Save,
-  Loader2, Sprout, Star, Zap, Camera, X
+  Loader2, Sprout, Star, Zap, Camera, X, AlertCircle, Calendar
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import {
+  initiatePayment, checkPaymentStatus, activatePlan,
+  isValidPhone, formatPhone, type PlanId, type PaymentMethod
+} from '@/lib/paysuiteService';
 
 /* ─── Plan Config ──────────────────────────────────── */
 const plans = [
@@ -81,28 +85,59 @@ const userTypeLabel: Record<string, string> = {
 /* ─── Payment Modal (M-Pesa / eMola) ───────────────── */
 const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () => void }) => {
   const { currentUser } = useAuth();
-  const [step, setStep]     = useState<'method' | 'mpesa' | 'emola' | 'success'>('method');
-  const [phone, setPhone]   = useState('');
-  const [processing, setProcessing] = useState(false);
+  const [step, setStep]         = useState<'method' | 'mpesa' | 'emola' | 'waiting' | 'success' | 'error'>('method');
+  const [phone, setPhone]       = useState('');
+  const [processing, setProcessing]   = useState(false);
+  const [errorMsg, setErrorMsg]       = useState('');
+  const [method, setMethod]           = useState<PaymentMethod>('mpesa');
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Clean up polling on unmount
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const handlePayment = async () => {
-    if (!phone.trim() || !currentUser) return;
+    if (!currentUser || !isValidPhone(phone)) return;
     setProcessing(true);
-    // Simulate payment processing (replace with real PaySuite/M-Pesa API)
-    await new Promise(r => setTimeout(r, 2500));
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), { plan: plan.id });
-      setStep('success');
-    } catch (e) {
-      alert('Erro ao processar pagamento. Tente novamente.');
-    } finally {
+    setStep('waiting');
+
+    const result = await initiatePayment({
+      uid: currentUser.uid,
+      plan: plan.id as PlanId,
+      amount: plan.price,
+      phone: formatPhone(phone),
+      method,
+    });
+
+    if (!result.success || !result.transactionId) {
+      setErrorMsg(result.error || 'Erro ao iniciar pagamento.');
+      setStep('error');
       setProcessing(false);
+      return;
     }
+
+    // Poll every 4 seconds for up to 2 minutes
+    const txId = result.transactionId;
+    let attempts = 0;
+    pollRef.current = setInterval(async () => {
+      attempts++;
+      const status = await checkPaymentStatus(txId);
+      if (status === 'success') {
+        clearInterval(pollRef.current!);
+        await activatePlan(currentUser.uid, plan.id as PlanId);
+        setStep('success');
+        setProcessing(false);
+      } else if (status === 'failed' || attempts > 30) {
+        clearInterval(pollRef.current!);
+        setErrorMsg('Pagamento não confirmado. Verifique o seu telemóvel e tente novamente.');
+        setStep('error');
+        setProcessing(false);
+      }
+    }, 4000);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={step === 'success' ? undefined : onClose} />
       <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 fade-in-up overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/30">
@@ -110,7 +145,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
             <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Pagamento Seguro</p>
             <h3 className="font-black text-xl font-['Outfit']">Plano {plan.label}</h3>
           </div>
-          {step !== 'success' && <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>}
+          {step !== 'success' && step !== 'waiting' && <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>}
         </div>
 
         <div className="p-6 space-y-5">
@@ -125,6 +160,39 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
                 <CheckCircle className="h-4 w-4 mr-2" /> Continuar para o AgroConecta
               </Button>
             </div>
+          ) : step === 'waiting' ? (
+            <div className="text-center space-y-6 py-6">
+              <div className="relative w-20 h-20 mx-auto">
+                <div className="absolute inset-0 rounded-full border-4 border-primary/30 animate-ping" />
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-black font-['Outfit'] mb-1">Aguardando Confirmação</h3>
+                <p className="text-sm text-muted-foreground">
+                  Um pedido foi enviado para <strong>{formatPhone(phone)}</strong>.
+                  <br />Confirme o pagamento no seu telemóvel.
+                </p>
+              </div>
+              <div className="bg-muted/40 rounded-xl p-3 text-xs text-muted-foreground">
+                Não feche esta janela enquanto aguarda a confirmação.
+              </div>
+            </div>
+          ) : step === 'error' ? (
+            <div className="text-center space-y-4 py-4">
+              <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+                <AlertCircle className="h-10 w-10 text-destructive" />
+              </div>
+              <h3 className="text-xl font-black font-['Outfit']">Pagamento Falhado</h3>
+              <p className="text-sm text-muted-foreground">{errorMsg}</p>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
+                <Button className="flex-1 rounded-xl gradient-primary text-white border-0" onClick={() => { setStep('method'); setPhone(''); }}>
+                  Tentar Novamente
+                </Button>
+              </div>
+            </div>
           ) : step === 'method' ? (
             <>
               <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/40 border border-border/50">
@@ -134,7 +202,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               <p className="text-sm font-semibold text-center text-muted-foreground">Escolha o método de pagamento</p>
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => setStep('mpesa')}
+                  onClick={() => { setStep('mpesa'); setMethod('mpesa'); }}
                   className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-border/50 hover:border-primary/50 hover:bg-muted/50 transition-all group"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg group-hover:scale-110 transition-transform">M</div>
@@ -144,7 +212,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
                   </div>
                 </button>
                 <button
-                  onClick={() => setStep('emola')}
+                  onClick={() => { setStep('emola'); setMethod('emola'); }}
                   className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-border/50 hover:border-primary/50 hover:bg-muted/50 transition-all group"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center font-black text-blue-600 text-lg group-hover:scale-110 transition-transform">e</div>
@@ -183,6 +251,9 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
                     className="pl-10 h-12 rounded-xl border-border/70"
                   />
                 </div>
+                {phone.length >= 9 && !isValidPhone(phone) && (
+                  <p className="text-xs text-destructive">Número inválido. Use M-Pesa (84/86) ou eMola (86/87).</p>
+                )}
               </div>
               <div className="bg-muted/40 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
                 <p>1. Introduza o seu número acima</p>
@@ -191,14 +262,10 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               </div>
               <Button
                 onClick={handlePayment}
-                disabled={phone.length < 9 || processing}
+                disabled={!isValidPhone(phone) || processing}
                 className="w-full h-12 rounded-xl font-bold gap-2 text-white border-0 gradient-primary"
               >
-                {processing ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> A processar pagamento...</>
-                ) : (
-                  <>Pagar {plan.price} MT agora</>
-                )}
+                Pagar {plan.price} MT agora
               </Button>
             </>
           )}
@@ -277,6 +344,12 @@ const Perfil = () => {
                     <Crown className="h-3 w-3 mr-1" />
                     Plano {currentPlan.label}
                   </Badge>
+                  {userData?.planExpiraEm && isPremium && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1">
+                      <Calendar className="h-3 w-3" />
+                      Expira em {new Date(userData.planExpiraEm).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
