@@ -15,6 +15,7 @@ import AssistenteIA from "./pages/AssistenteIA";
 import Producao from "./pages/Producao";
 import Negociacoes from "./pages/Negociacoes";
 import Admin from "./pages/Admin";
+import Perfil from "./pages/Perfil";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/assistente-ia" element={<ProtectedRoute><AssistenteIA /></ProtectedRoute>} />
               <Route path="/producao"      element={<ProtectedRoute><Producao /></ProtectedRoute>} />
               <Route path="/negociacoes"   element={<ProtectedRoute><Negociacoes /></ProtectedRoute>} />
+              <Route path="/perfil"        element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
 
               {/* Admin Route — require login + admin role */}
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />

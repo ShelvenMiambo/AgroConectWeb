@@ -41,6 +41,31 @@ export interface PlanoProducao {
   createdAt?: any;
 }
 
+export interface Alerta {
+  id?: string;
+  uid: string;
+  planoId: string;
+  planoNome: string;
+  tipo: 'Clima' | 'Pragas' | 'Irrigação' | 'Outro';
+  titulo: string;
+  descricao: string;
+  urgencia: 'alta' | 'media' | 'baixa';
+  lido: boolean;
+  createdAt?: any;
+}
+
+export interface Ocorrencia {
+  id?: string;
+  uid: string;
+  planoId: string;
+  planoNome: string;
+  tipo: 'Aplicação' | 'Observação' | 'Problema';
+  descricao: string;
+  data: string;
+  fotos?: number;
+  createdAt?: any;
+}
+
 export interface Negociacao {
   id?: string;
   propertyId: string;
@@ -69,7 +94,6 @@ export const uploadPropertyImages = async (propertyId: string, files: File[]): P
 const deleteImagesFromStorage = async (imageUrls: string[]) => {
   for (const url of imageUrls) {
     try {
-      // Extract path from URL to create a storage ref
       const decodedUrl = decodeURIComponent(url);
       const pathMatch = decodedUrl.match(/\/o\/(.+?)\?/);
       if (pathMatch) {
@@ -117,7 +141,7 @@ export const getPlanos = async (uid: string): Promise<PlanoProducao[]> => {
 
 export const addPlano = async (data: Omit<PlanoProducao, 'id' | 'createdAt'>): Promise<string> => {
   const ref = await addDoc(collection(db, 'producao'), {
-    ...data, progresso: 0, status: 'Em Andamento', createdAt: serverTimestamp()
+    ...data, progresso: data.progresso ?? 0, createdAt: serverTimestamp()
   });
   return ref.id;
 };
@@ -130,6 +154,38 @@ export const updatePlanoProgresso = async (id: string, progresso: number) => {
 
 export const deletePlano = async (id: string) => {
   await deleteDoc(doc(db, 'producao', id));
+};
+
+/* ─── ALERTAS ────────────────────────────────────────── */
+export const getAlertas = async (uid: string): Promise<Alerta[]> => {
+  const snap = await getDocs(query(
+    collection(db, 'alertas'),
+    where('uid', '==', uid),
+    orderBy('createdAt', 'desc')
+  ));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Alerta));
+};
+
+export const addAlerta = async (data: Omit<Alerta, 'id' | 'createdAt'>) => {
+  return await addDoc(collection(db, 'alertas'), { ...data, lido: false, createdAt: serverTimestamp() });
+};
+
+export const markAlertaAsRead = async (id: string) => {
+  await updateDoc(doc(db, 'alertas', id), { lido: true });
+};
+
+/* ─── OCORRENCIAS ────────────────────────────────────── */
+export const getOcorrencias = async (uid: string): Promise<Ocorrencia[]> => {
+  const snap = await getDocs(query(
+    collection(db, 'ocorrencias'),
+    where('uid', '==', uid),
+    orderBy('createdAt', 'desc')
+  ));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Ocorrencia));
+};
+
+export const addOcorrencia = async (data: Omit<Ocorrencia, 'id' | 'createdAt'>) => {
+  return await addDoc(collection(db, 'ocorrencias'), { ...data, createdAt: serverTimestamp() });
 };
 
 /* ─── NEGOCIACOES ────────────────────────────────────── */

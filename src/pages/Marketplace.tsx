@@ -8,12 +8,13 @@ import {
   MapPin, Search, Heart, MessageCircle, Lock,
   ArrowLeft, Droplets, Ruler, TreePine, SlidersHorizontal,
   CheckCircle, X, ChevronDown, Plus, Loader2, Leaf,
-  ImagePlus, Trash2, ChevronLeft, ChevronRight
+  ImagePlus, Trash2, ChevronLeft, ChevronRight, Send
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
-import { getProperties, addProperty, deleteProperty, Property } from "@/lib/firestoreService";
+import { getProperties, addProperty, deleteProperty, Property, createNegociacao } from "@/lib/firestoreService";
+import { useNavigate } from 'react-router-dom';
 
 const soilColors: Record<string, string> = {
   argiloso: "from-amber-600/20 to-amber-700/10",
@@ -241,6 +242,94 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   );
 };
 
+/* ── Contact Modal ──────────────────────────────────── */
+const ContactModal = ({
+  property, onClose
+}: { property: Property; onClose: () => void }) => {
+  const { currentUser, userData } = useAuth();
+  const navigate = useNavigate();
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSend = async () => {
+    if (!currentUser || !userData || !message.trim()) return;
+    setSending(true);
+    try {
+      await createNegociacao({
+        propertyId: property.id!,
+        propertyNome: property.nome,
+        arrendatarioUid: currentUser.uid,
+        arrendatarioNome: userData.name || currentUser.email || 'Anónimo',
+        proprietarioUid: property.donoUid,
+        proprietarioNome: property.donoNome,
+        mensagem: message.trim(),
+      });
+      setSent(true);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao enviar. Tente novamente.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 p-6 fade-in-up">
+        {sent ? (
+          <div className="text-center py-6 space-y-4">
+            <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto">
+              <CheckCircle className="h-8 w-8 text-success" />
+            </div>
+            <h3 className="text-xl font-black font-['Outfit']">Proposta Enviada!</h3>
+            <p className="text-sm text-muted-foreground">O proprietário será notificado. Pode acompanhar o estado em <strong>Negociações</strong>.</p>
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
+              <Button className="flex-1 rounded-xl gradient-primary text-white border-0" onClick={() => { onClose(); navigate('/negociacoes'); }}>Ver Negociações</Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-between items-start mb-5">
+              <div>
+                <h3 className="text-lg font-black font-['Outfit']">Contactar Proprietário</h3>
+                <p className="text-sm text-muted-foreground">{property.nome} · {property.localizacao}</p>
+              </div>
+              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="bg-muted/40 rounded-xl p-3 mb-4">
+              <p className="text-xs text-muted-foreground font-semibold">Proprietário</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-black">{property.donoNome.charAt(0)}</div>
+                <p className="font-semibold text-sm">{property.donoNome}</p>
+              </div>
+            </div>
+            <div className="space-y-2 mb-4">
+              <label className="text-sm font-semibold">A sua mensagem / proposta</label>
+              <textarea
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                placeholder={`Olá ${property.donoNome}, tenho interesse em arrendar ${property.nome}...`}
+                rows={4}
+                className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <Button
+              onClick={handleSend}
+              disabled={!message.trim() || sending}
+              className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-bold shadow-medium gap-2"
+            >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4" /> Enviar Proposta</>}
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ── Main Component ─────────────────────────────────── */
 const Marketplace = () => {
   const { currentUser, userData } = useAuth();
@@ -253,6 +342,7 @@ const Marketplace = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
   const [deletingId, setDeletingId]   = useState<string | null>(null);
+  const [contactProperty, setContactProperty] = useState<Property | null>(null);
 
   const load = async () => {
     setLoadingData(true);
@@ -395,7 +485,10 @@ const Marketplace = () => {
                         </div>
                       </div>
                       <div className="space-y-3">
-                        <Button className="w-full h-12 gradient-primary text-white border-0 font-semibold rounded-xl shadow-medium hover:-translate-y-0.5 transition-spring">
+                        <Button
+                          className="w-full h-12 gradient-primary text-white border-0 font-semibold rounded-xl shadow-medium hover:-translate-y-0.5 transition-spring"
+                          onClick={() => setContactProperty(p)}
+                        >
                           <MessageCircle className="h-4 w-4 mr-2" /> Contactar via Negociações
                         </Button>
                         <Button variant="outline"
@@ -421,6 +514,7 @@ const Marketplace = () => {
   return (
     <div className="min-h-screen bg-background">
       {showPublish && <PublishModal onClose={() => setShowPublish(false)} onSaved={load} />}
+      {contactProperty && <ContactModal property={contactProperty} onClose={() => setContactProperty(null)} />}
       <Header />
       <main>
         <div className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/5 border-b border-border/60 py-14">
