@@ -32,40 +32,62 @@ Ajude agricultores com: culturas locais (milho, feijão, arroz, mandioca, caju, 
 Seja direto, prático e use emojis. Dê sempre recomendações acionáveis adaptadas a Moçambique.`;
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const MODEL = 'gemini-2.0-flash';
+const MODEL = 'gemini-1.5-flash';
 
 async function askGemini(userText: string, history: Message[], langNote: string): Promise<string> {
   if (!GEMINI_API_KEY) return '⚠️ Chave API não configurada. Contacte o administrador.';
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
-  const contents = [
-    { role: 'user',  parts: [{ text: `${SYSTEM}\nIdioma: ${langNote}` }] },
-    { role: 'model', parts: [{ text: 'Olá! Estou pronto para ajudar os agricultores moçambicanos.' }] },
-    ...history.slice(-8).map(m => ({ role: m.sender === 'user' ? 'user' : 'model', parts: [{ text: m.content }] })),
-    { role: 'user',  parts: [{ text: userText }] },
-  ];
+  // Build alternating user/model history — skip the initial AI greeting (index 0)
+  // Only include messages after the first greeting to avoid double-model sequences
+  const historyMsgs = history
+    .filter(m => m.id !== 1)  // skip the initial greeting message
+    .slice(-10);
+
+  // Ensure strictly alternating roles (Gemini requirement)
+  const alternating: { role: string; parts: { text: string }[] }[] = [];
+  for (const m of historyMsgs) {
+    const role = m.sender === 'user' ? 'user' : 'model';
+    if (alternating.length > 0 && alternating[alternating.length - 1].role === role) continue;
+    alternating.push({ role, parts: [{ text: m.content }] });
+  }
+
+  // Final message must always be from user
+  if (alternating.length > 0 && alternating[alternating.length - 1].role === 'user') {
+    alternating.pop(); // remove last user to avoid double-user before appending
+  }
+  alternating.push({ role: 'user', parts: [{ text: userText }] });
 
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents,
-      generationConfig: { temperature: 0.65, maxOutputTokens: 600, topP: 0.85 },
+      systemInstruction: { parts: [{ text: `${SYSTEM}\nIdioma: ${langNote}` }] },
+      contents: alternating,
+      generationConfig: { temperature: 0.7, maxOutputTokens: 800, topP: 0.9 },
     }),
   });
 
   if (!res.ok) {
-    if (res.status === 429) return '⏳ Limite atingido. Aguarde 30 segundos e tente novamente.';
-    if (res.status === 401 || res.status === 403) return '🔑 Chave API inválida. Contacte o administrador.';
-    if (res.status === 503) return '🔧 Serviço temporariamente indisponível. Tente mais tarde.';
     const err = await res.json().catch(() => ({}));
     console.error('[Gemini]', res.status, err);
+    if (res.status === 429) return '⏳ Limite de pedidos atingido. Aguarde 30 segundos e tente novamente.';
+    if (res.status === 400) return `❌ Pedido inválido: ${err?.error?.message || 'verifique os parâmetros.'}`;
+    if (res.status === 401 || res.status === 403) return '🔑 Chave API inválida ou sem permissão. Contacte o administrador.';
+    if (res.status === 503) return '🔧 Serviço temporariamente indisponível. Tente mais tarde.';
     return `❌ Erro ${res.status}. Tente novamente.`;
   }
 
   const data = await res.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '🤔 Sem resposta. Reformule a pergunta.';
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    const reason = data?.candidates?.[0]?.finishReason;
+    if (reason === 'SAFETY') return '⚠️ Resposta bloqueada por filtros de segurança. Reformule a pergunta.';
+    console.error('[Gemini] resposta vazia:', JSON.stringify(data));
+    return '🤔 Sem resposta. Reformule a pergunta.';
+  }
+  return text;
 }
 
 const AssistenteIA = () => {
