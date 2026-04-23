@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
   User, onAuthStateChanged, signInWithEmailAndPassword,
-  createUserWithEmailAndPassword, signOut, signInWithPopup,
+  createUserWithEmailAndPassword, signOut, signInWithPopup, signInWithRedirect,
   sendPasswordResetEmail, updateProfile
 } from 'firebase/auth';
 import {
@@ -112,10 +112,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Login with Google — creates or syncs Firestore profile
   const loginWithGoogle = async () => {
-    const cred = await signInWithPopup(auth, googleProvider);
-    const data = await syncUserToFirestore(cred.user);
-    setUserData(data);
-    return cred;
+    // Usamos signInWithRedirect em vez de popup para evitar bloqueios em browsers mobile (ex: in-app browsers)
+    await signInWithRedirect(auth, googleProvider);
   };
 
   // Logout — clears local state
