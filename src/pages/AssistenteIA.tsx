@@ -32,7 +32,7 @@ Ajude agricultores com: culturas locais (milho, feijão, arroz, mandioca, caju, 
 Seja direto, prático e use emojis. Dê sempre recomendações acionáveis adaptadas a Moçambique.`;
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const MODEL = 'gemini-1.5-flash-latest';
+const MODEL = 'gemini-2.5-flash';
 
 async function askGemini(userText: string, history: Message[], langNote: string): Promise<string> {
   if (!GEMINI_API_KEY) return '⚠️ Chave API não configurada. Contacte o administrador.';
@@ -203,8 +203,8 @@ const AssistenteIA = () => {
             </div>
             <div>
               <p className="font-semibold text-sm">AgroBot</p>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Sparkles className="h-3 w-3 text-accent" /> Google Gemini 1.5 Flash
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-accent" /> Google Gemini 2.5 Flash
               </p>
             </div>
           </div>
