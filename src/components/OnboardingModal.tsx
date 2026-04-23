@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Loader2, User, Phone, CheckCircle, Leaf, Sparkles } from 'lucide-react';
+import { Loader2, User, Phone, CheckCircle, Leaf, Sparkles, Sprout, AlertTriangle } from 'lucide-react';
 
 const OnboardingModal = () => {
   const { currentUser, userData } = useAuth();
@@ -13,7 +13,8 @@ const OnboardingModal = () => {
   const [selectedType, setSelectedType] = useState<'agricultor' | 'proprietario' | 'vendedor' | ''>('');
   const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState(1); // 1: Welcome, 2: Selection
+  const [saveError, setSaveError] = useState('');
+  const [step, setStep] = useState(1);
 
   useEffect(() => {
     if (userData?.userType === 'pendente') {
@@ -28,16 +29,16 @@ const OnboardingModal = () => {
   const handleSave = async () => {
     if (!selectedType || !currentUser) return;
     setSaving(true);
+    setSaveError('');
     try {
-      await updateDoc(doc(db, 'users', currentUser.uid), { 
+      await updateDoc(doc(db, 'users', currentUser.uid), {
         userType: selectedType,
         phone: phone || userData?.phone || ''
       });
-      // Context will update automatically through onAuthStateChanged listener or force reload
-      window.location.reload(); 
+      window.location.reload();
     } catch (err) {
-      console.error("Error updating profile:", err);
-      alert("Erro ao gravar o seu perfil. Por favor, tente novamente.");
+      console.error('Error updating profile:', err);
+      setSaveError('Erro ao gravar o seu perfil. Por favor, tente novamente.');
     } finally {
       setSaving(false);
     }
@@ -129,12 +130,17 @@ const OnboardingModal = () => {
               />
             </div>
 
-            <Button 
-              onClick={handleSave} 
+            {saveError && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/25 text-destructive text-sm">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />{saveError}
+              </div>
+            )}
+            <Button
+              onClick={handleSave}
               disabled={!selectedType || saving}
               className="w-full h-14 rounded-2xl gradient-primary text-white border-0 font-bold text-lg shadow-medium disabled:opacity-50 mt-4 transition-spring"
             >
-              {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Finalizar Configuração'}
+              {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Finalizar Configuracao'}
             </Button>
           </div>
         )}

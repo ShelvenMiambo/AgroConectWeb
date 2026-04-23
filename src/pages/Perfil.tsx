@@ -223,7 +223,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
                 </button>
               </div>
               <p className="text-[11px] text-center text-muted-foreground">
-                🔒 Pagamentos processados via PaySuite. Os seus dados estão seguros.
+                Pagamentos processados via PaySuite. Os seus dados estao seguros.
               </p>
             </>
           ) : (

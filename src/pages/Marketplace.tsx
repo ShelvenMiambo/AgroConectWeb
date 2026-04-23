@@ -208,9 +208,9 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
             <Select value={form.tipo_solo} onValueChange={v => set('tipo_solo', v)}>
               <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="argiloso">🟤 Argiloso</SelectItem>
-                <SelectItem value="arenoso">🟡 Arenoso</SelectItem>
-                <SelectItem value="franco">🟢 Franco</SelectItem>
+                <SelectItem value="argiloso">Argiloso</SelectItem>
+                <SelectItem value="arenoso">Arenoso</SelectItem>
+                <SelectItem value="franco">Franco</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -480,7 +480,7 @@ const Marketplace = () => {
                           <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-sm">{p.donoNome.charAt(0)}</div>
                           <div>
                             <p className="font-semibold text-sm">{p.donoNome}</p>
-                            <p className="text-xs text-muted-foreground">{p.verificado ? '✓ Verificado' : 'Proprietário'}</p>
+                            <p className="text-xs text-muted-foreground">{p.verificado ? 'Conta Verificada' : 'Proprietário'}</p>
                           </div>
                         </div>
                       </div>
@@ -563,16 +563,16 @@ const Marketplace = () => {
                 <Select value={filters.tipoSolo} onValueChange={v => setFilters(f => ({ ...f, tipoSolo: v }))}>
                   <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Tipo de Solo" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="argiloso">🟤 Argiloso</SelectItem>
-                    <SelectItem value="arenoso">🟡 Arenoso</SelectItem>
-                    <SelectItem value="franco">🟢 Franco</SelectItem>
+                    <SelectItem value="argiloso">Argiloso</SelectItem>
+                    <SelectItem value="arenoso">Arenoso</SelectItem>
+                    <SelectItem value="franco">Franco</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={filters.temAgua} onValueChange={v => setFilters(f => ({ ...f, temAgua: v }))}>
                   <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Água Disponível" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sim">💧 Com Água</SelectItem>
-                    <SelectItem value="nao">🌵 Sem Água</SelectItem>
+                    <SelectItem value="sim">Com Água</SelectItem>
+                    <SelectItem value="nao">Sem Água</SelectItem>
                   </SelectContent>
                 </Select>
                 <Input placeholder="Área mínima (ha)" value={filters.areaMin}

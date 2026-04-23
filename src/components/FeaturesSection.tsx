@@ -12,45 +12,41 @@ const features = [
   {
     icon: MapPin,
     title: "Marketplace de Terras",
-    description: "Encontre e arrende terrenos agrícolas com características detalhadas, fotos e localização GPS.",
-    benefits: ["Filtros inteligentes", "Mapa interativo", "Comunicação direta"],
+    description: "Encontre e arrende terrenos agricolas com caracteristicas detalhadas, fotos e localizacao GPS.",
+    benefits: ["Filtros inteligentes", "Mapa interativo", "Comunicacao direta"],
     color: "text-primary",
     gradient: "gradient-primary",
     href: "/marketplace",
-    emoji: "🏞️",
     accentColor: "hsl(128 48% 28%)"
   },
   {
     icon: Bot,
-    title: "Assistente IA Agrícola",
-    description: "Receba conselhos personalizados sobre cultivo, pragas, clima e melhores práticas agrícolas.",
-    benefits: ["Suporte em 4 idiomas", "Respostas por voz", "Conteúdo técnico"],
+    title: "Assistente IA Agricola",
+    description: "Receba conselhos personalizados sobre cultivo, pragas, clima e melhores praticas agricolas.",
+    benefits: ["Suporte em 4 idiomas", "Respostas por voz", "Conteudo tecnico"],
     color: "text-accent",
     gradient: "gradient-hero",
     href: "/assistente-ia",
-    emoji: "🤖",
     accentColor: "hsl(42 90% 52%)"
   },
   {
     icon: Sprout,
-    title: "Gestão de Produção",
+    title: "Gestao de Producao",
     description: "Planeie, monitorize e otimize os seus cultivos com ferramentas intuitivas e alertas inteligentes.",
-    benefits: ["Planos de cultivo", "Alertas personalizados", "Histórico detalhado"],
+    benefits: ["Planos de cultivo", "Alertas personalizados", "Historico detalhado"],
     color: "text-success",
     gradient: "gradient-card",
     href: "/producao",
-    emoji: "🌱",
     accentColor: "hsl(145 55% 38%)"
   },
   {
     icon: Handshake,
-    title: "Negociações Seguras",
-    description: "Crie contratos digitais, gerencie pagamentos e faça transações seguras com outros utilizadores.",
-    benefits: ["Contratos digitais", "Pagamentos via M-Pesa", "Histórico completo"],
+    title: "Negociacoes Seguras",
+    description: "Crie contratos digitais, gerencie pagamentos e faca transacoes seguras com outros utilizadores.",
+    benefits: ["Contratos digitais", "Pagamentos via M-Pesa", "Historico completo"],
     color: "text-warning",
     gradient: "gradient-earth",
     href: "/negociacoes",
-    emoji: "🤝",
     accentColor: "hsl(38 90% 52%)"
   }
 ];
@@ -133,7 +129,6 @@ const FeaturesSection = () => {
                     <feature.icon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <div className="text-2xl mb-1">{feature.emoji}</div>
                     <h3 className="text-xl font-bold font-['Outfit']">{feature.title}</h3>
                   </div>
                 </div>
@@ -208,8 +203,12 @@ const FeaturesSection = () => {
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-muted-foreground">
-              ✓ Sem cartão de crédito &nbsp;·&nbsp; ✓ Configure em 2 minutos &nbsp;·&nbsp; ✓ Cancele quando quiser
+            <p className="text-sm text-muted-foreground flex items-center gap-3 flex-wrap justify-center">
+              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Sem cartao de credito</span>
+              <span className="text-muted-foreground/40">·</span>
+              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Configure em 2 minutos</span>
+              <span className="text-muted-foreground/40">·</span>
+              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Cancele quando quiser</span>
             </p>
           </div>
         </div>

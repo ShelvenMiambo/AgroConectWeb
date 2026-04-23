@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Leaf, Mail, Lock, Eye, EyeOff, User, Phone,
-  Loader2, ArrowRight, CheckCircle, ArrowLeft, Send
+  Loader2, ArrowRight, CheckCircle, ArrowLeft, Send, AlertTriangle
 } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -18,13 +18,15 @@ const loginSchema = z.object({
 });
 const registerSchema = z.object({
   name: z.string().min(2, 'Nome muito curto'),
-  email: z.string().email('Email inválido'),
+  email: z.string().email('Email invalido'),
   phone: z.string().optional().or(z.literal('')),
-  userType: z.enum(['agricultor', 'proprietario', 'vendedor'], { required_error: 'Selecione um tipo' }),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  userType: z.string({ required_error: 'Selecione um tipo de perfil' })
+    .min(1, 'Selecione um tipo de perfil')
+    .refine(v => ['agricultor', 'proprietario', 'vendedor'].includes(v), 'Tipo de perfil invalido'),
+  password: z.string().min(6, 'Minimo 6 caracteres'),
   confirmPassword: z.string(),
 }).refine(d => d.password === d.confirmPassword, {
-  message: 'As palavras-passe não coincidem',
+  message: 'As palavras-passe nao coincidem',
   path: ['confirmPassword'],
 });
 const resetSchema = z.object({
@@ -297,7 +299,7 @@ const Login = () => {
                 </p>
               </div>
 
-              {error   && <div className="mb-4 p-4 rounded-xl bg-destructive/10 border border-destructive/25 text-destructive text-sm">⚠️ {error}</div>}
+              {error && <div className="mb-4 p-4 rounded-xl bg-destructive/10 border border-destructive/25 text-destructive text-sm flex items-start gap-2"><AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />{error}</div>}
               {success && <div className="mb-4 p-4 rounded-xl bg-success/10 border border-success/25 text-success text-sm flex items-start gap-2"><CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0"/>{success}</div>}
 
               <form onSubmit={resetForm.handleSubmit(handleReset)} className="space-y-4">
@@ -330,7 +332,7 @@ const Login = () => {
                 </p>
               </div>
 
-              {error && <div className="mb-5 p-4 rounded-xl bg-destructive/10 border border-destructive/25 text-destructive text-sm font-medium flex items-start gap-2"><span>⚠️</span>{error}</div>}
+              {error && <div className="mb-5 p-4 rounded-xl bg-destructive/10 border border-destructive/25 text-destructive text-sm font-medium flex items-start gap-2"><AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />{error}</div>}
 
               {/* Google */}
               <Button type="button" variant="outline" className="w-full h-12 rounded-xl font-semibold mb-5 gap-3 border-border/70 hover:bg-muted transition-spring" onClick={handleGoogle} disabled={loading}>

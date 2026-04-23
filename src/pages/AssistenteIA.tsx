@@ -35,7 +35,7 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined
 const MODEL = 'gemini-2.5-flash';
 
 async function askGemini(userText: string, history: Message[], langNote: string): Promise<string> {
-  if (!GEMINI_API_KEY) return '⚠️ Chave API não configurada. Contacte o administrador.';
+  if (!GEMINI_API_KEY) return 'Chave API nao configurada. Contacte o administrador.';
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
@@ -72,20 +72,20 @@ async function askGemini(userText: string, history: Message[], langNote: string)
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     console.error('[Gemini]', res.status, err);
-    if (res.status === 429) return '⏳ Limite de pedidos atingido. Aguarde 30 segundos e tente novamente.';
-    if (res.status === 400) return `❌ Pedido inválido: ${err?.error?.message || 'verifique os parâmetros.'}`;
-    if (res.status === 401 || res.status === 403) return '🔑 Chave API inválida ou sem permissão. Contacte o administrador.';
-    if (res.status === 503) return '🔧 Serviço temporariamente indisponível. Tente mais tarde.';
-    return `❌ Erro ${res.status}. Tente novamente.`;
+    if (res.status === 429) return 'Limite de pedidos atingido. Aguarde 30 segundos e tente novamente.';
+    if (res.status === 400) return `Pedido invalido: ${err?.error?.message || 'verifique os parametros.'}`;
+    if (res.status === 401 || res.status === 403) return 'Chave API invalida ou sem permissao. Contacte o administrador.';
+    if (res.status === 503) return 'Servico temporariamente indisponivel. Tente mais tarde.';
+    return `Erro ${res.status}. Tente novamente.`;
   }
 
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) {
     const reason = data?.candidates?.[0]?.finishReason;
-    if (reason === 'SAFETY') return '⚠️ Resposta bloqueada por filtros de segurança. Reformule a pergunta.';
+    if (reason === 'SAFETY') return 'Resposta bloqueada por filtros de seguranca. Reformule a pergunta.';
     console.error('[Gemini] resposta vazia:', JSON.stringify(data));
-    return '🤔 Sem resposta. Reformule a pergunta.';
+    return 'Sem resposta. Reformule a pergunta.';
   }
   return text;
 }
@@ -124,7 +124,7 @@ const AssistenteIA = () => {
         window.speechSynthesis.speak(u);
       }
     } catch {
-      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', timestamp: new Date(), content: '❌ Erro de rede. Verifique a ligação e tente novamente.' }]);
+      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', timestamp: new Date(), content: 'Erro de rede. Verifique a ligacao e tente novamente.' }]);
     } finally { setTyping(false); }
   };
 
