@@ -30,9 +30,9 @@ service cloud.firestore {
 
       // Update: own doc only, restricted fields
       allow update: if isOwner(uid)
-        && (!request.resource.data.keys().hasAny(['role']))   // can't self-promote
-        && (!('userType' in request.resource.data.diff(resource.data)) || validUserType())
-        && (!('plan' in request.resource.data.diff(resource.data)) || validPlan());
+        && (!('role' in request.resource.data.diff(resource.data).affectedKeys()))   // can't self-promote
+        && (!('userType' in request.resource.data.diff(resource.data).affectedKeys()) || validUserType())
+        && (!('plan' in request.resource.data.diff(resource.data).affectedKeys()) || validPlan());
 
       // Admin can update anything (e.g. toggle roles)
       allow update: if isAdmin();
