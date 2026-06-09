@@ -1,14 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  X, Phone, CheckCircle, AlertCircle, Loader2, ArrowLeft, Shield
-} from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Loader2, ArrowLeft, Shield, ExternalLink, CreditCard } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   initiatePayment, checkPaymentStatus, activatePlan,
-  isValidPhone, formatPhone, type PlanId, type PaymentMethod
+  type PlanId, type PaymentMethod
 } from '@/lib/paysuiteService';
 import type { PlanConfig } from './UpgradeModal';
 
@@ -18,32 +14,37 @@ interface PaymentModalProps {
   onBack?: () => void;
 }
 
-type Step = 'method' | 'phone' | 'waiting' | 'success' | 'error';
+type Step = 'method' | 'confirm' | 'waiting' | 'success' | 'error';
 
 export default function PaymentModal({ plan, onClose, onBack }: PaymentModalProps) {
   const { currentUser } = useAuth();
   const [step, setStep] = useState<Step>('method');
-  const [phone, setPhone] = useState('');
-  const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [method, setMethod] = useState<PaymentMethod>('mpesa');
-  const [countdown, setCountdown] = useState(120);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(300); // 5 min
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Cleanup on unmount
   useEffect(() => () => {
-    if (pollRef.current) clearInterval(pollRef.current);
+    if (pollRef.current)  clearInterval(pollRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 
   // Countdown while waiting
   useEffect(() => {
     if (step === 'waiting') {
-      setCountdown(120);
+      setCountdown(300);
       timerRef.current = setInterval(() => {
         setCountdown(c => {
-          if (c <= 1) { clearInterval(timerRef.current!); return 0; }
+          if (c <= 1) {
+            clearInterval(timerRef.current!);
+            if (pollRef.current) clearInterval(pollRef.current);
+            setErrorMsg('Tempo esgotado. O pagamento não foi confirmado a tempo.');
+            setStep('error');
+            return 0;
+          }
           return c - 1;
         });
       }, 1000);
@@ -54,49 +55,65 @@ export default function PaymentModal({ plan, onClose, onBack }: PaymentModalProp
 
   const handleSelectMethod = (m: PaymentMethod) => {
     setMethod(m);
-    setStep('phone');
+    setStep('confirm');
   };
 
   const handlePayment = async () => {
-    if (!currentUser || !isValidPhone(phone)) return;
-    setProcessing(true);
+    if (!currentUser) return;
     setStep('waiting');
 
     const result = await initiatePayment({
       uid: currentUser.uid,
       plan: plan.id as PlanId,
       amount: plan.price,
-      phone: formatPhone(phone),
       method,
     });
 
-    if (!result.success || !result.transactionId) {
+    if (!result.success) {
       setErrorMsg(result.error || 'Erro ao iniciar pagamento.');
       setStep('error');
-      setProcessing(false);
       return;
     }
 
-    const txId = result.transactionId;
+    // If simulation mode (no real checkout URL), plan was already activated
+    if (!result.checkoutUrl) {
+      setStep('success');
+      return;
+    }
+
+    // Open PaySuite checkout in new tab
+    window.open(result.checkoutUrl, '_blank', 'noopener,noreferrer');
+    setPaymentId(result.paymentId || null);
+
+    // Poll for payment status every 5 seconds
     let attempts = 0;
     pollRef.current = setInterval(async () => {
       attempts++;
-      const status = await checkPaymentStatus(txId);
+      const status = await checkPaymentStatus(result.paymentId!);
+
       if (status === 'success') {
         clearInterval(pollRef.current!);
+        clearInterval(timerRef.current!);
         await activatePlan(currentUser.uid, plan.id as PlanId);
         setStep('success');
-        setProcessing(false);
-      } else if (status === 'failed' || attempts > 30) {
+      } else if (status === 'failed' || attempts > 60) {
         clearInterval(pollRef.current!);
-        setErrorMsg('Pagamento não confirmado. Verifique o seu telemóvel e tente novamente.');
+        clearInterval(timerRef.current!);
+        setErrorMsg('Pagamento não confirmado. Se pagou, aguarde alguns minutos ou contacte o suporte.');
         setStep('error');
-        setProcessing(false);
       }
-    }, 4000);
+    }, 5000);
   };
 
   const Icon = plan.icon;
+
+  const methods = [
+    { id: 'mpesa' as PaymentMethod,       label: 'M-Pesa',      sub: 'Vodacom Moçambique',  letter: 'M', color: 'text-red-600',  bg: 'bg-red-500/10',  border: 'hover:border-red-500/50 hover:bg-red-500/5' },
+    { id: 'emola' as PaymentMethod,       label: 'eMola',       sub: 'Movitel',              letter: 'e', color: 'text-blue-600', bg: 'bg-blue-500/10', border: 'hover:border-blue-500/50 hover:bg-blue-500/5' },
+    { id: 'credit_card' as PaymentMethod, label: 'Cartão',      sub: 'Visa / Mastercard',    letter: '💳', color: 'text-purple-600', bg: 'bg-purple-500/10', border: 'hover:border-purple-500/50 hover:bg-purple-500/5' },
+  ];
+
+  const selectedMethod = methods.find(m => m.id === method)!;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -109,10 +126,12 @@ export default function PaymentModal({ plan, onClose, onBack }: PaymentModalProp
         {/* Header */}
         <div className="flex items-center gap-3 p-5 border-b border-border/50 bg-muted/30">
           {onBack && step !== 'waiting' && step !== 'success' && (
-            <button
-              onClick={onBack}
-              className="p-1.5 rounded-xl hover:bg-muted transition-colors"
-            >
+            <button onClick={onBack} className="p-1.5 rounded-xl hover:bg-muted transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+          )}
+          {step === 'confirm' && (
+            <button onClick={() => setStep('method')} className="p-1.5 rounded-xl hover:bg-muted transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </button>
           )}
@@ -121,7 +140,7 @@ export default function PaymentModal({ plan, onClose, onBack }: PaymentModalProp
               <Icon className={`h-5 w-5 ${plan.color}`} />
             </div>
             <div>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Pagamento Seguro</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Pagamento Seguro · PaySuite</p>
               <h3 className="font-black text-lg font-['Outfit'] leading-tight">Plano {plan.label}</h3>
             </div>
           </div>
@@ -161,37 +180,40 @@ export default function PaymentModal({ plan, onClose, onBack }: PaymentModalProp
 
           {/* ── WAITING ── */}
           {step === 'waiting' && (
-            <div className="text-center space-y-6 py-4">
+            <div className="text-center space-y-5 py-4">
               <div className="relative w-24 h-24 mx-auto">
                 <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-ping" />
-                <div className="absolute inset-2 rounded-full border-4 border-primary/30 animate-pulse" />
                 <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
                   <Loader2 className="h-10 w-10 text-primary animate-spin" />
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-black font-['Outfit'] mb-2">A aguardar confirmação</h3>
+                <h3 className="text-lg font-black font-['Outfit'] mb-2">A aguardar pagamento</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Foi enviado um pedido de pagamento para<br />
-                  <strong className="text-foreground">{formatPhone(phone)}</strong>.
-                  <br />Confirme no seu telemóvel.
+                  Foi aberta uma página de pagamento PaySuite no seu browser.<br />
+                  Complete o pagamento lá e volte aqui.
                 </p>
               </div>
               <div className="bg-muted/50 rounded-2xl p-4 space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Tempo restante</span>
-                  <span className={`font-bold ${countdown < 30 ? 'text-destructive' : 'text-foreground'}`}>
+                  <span className={`font-bold ${countdown < 60 ? 'text-destructive' : 'text-foreground'}`}>
                     {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}
                   </span>
                 </div>
                 <div className="w-full bg-border/50 rounded-full h-1.5">
                   <div
                     className="bg-primary h-1.5 rounded-full transition-all duration-1000"
-                    style={{ width: `${(countdown / 120) * 100}%` }}
+                    style={{ width: `${(countdown / 300) * 100}%` }}
                   />
                 </div>
                 <p className="text-[11px] text-muted-foreground">Não feche esta janela</p>
               </div>
+              {paymentId && (
+                <p className="text-[11px] text-muted-foreground">
+                  Referência: <span className="font-mono font-bold">{paymentId.slice(0, 16)}...</span>
+                </p>
+              )}
             </div>
           )}
 
@@ -211,7 +233,7 @@ export default function PaymentModal({ plan, onClose, onBack }: PaymentModalProp
                 </Button>
                 <Button
                   className="flex-1 rounded-xl gradient-primary text-white border-0"
-                  onClick={() => { setStep('method'); setPhone(''); setErrorMsg(''); }}
+                  onClick={() => { setStep('method'); setErrorMsg(''); setPaymentId(null); }}
                 >
                   Tentar Novamente
                 </Button>
@@ -231,32 +253,22 @@ export default function PaymentModal({ plan, onClose, onBack }: PaymentModalProp
 
               <p className="text-sm font-bold text-center text-muted-foreground">Escolha o método de pagamento</p>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => handleSelectMethod('mpesa')}
-                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-border/50 hover:border-red-500/50 hover:bg-red-500/5 transition-all group"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <span className="font-black text-red-600 text-2xl">M</span>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-bold">M-Pesa</p>
-                    <p className="text-[11px] text-muted-foreground">Vodacom Moçambique</p>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => handleSelectMethod('emola')}
-                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-border/50 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <span className="font-black text-blue-600 text-2xl">e</span>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-bold">eMola</p>
-                    <p className="text-[11px] text-muted-foreground">Movitel</p>
-                  </div>
-                </button>
+              <div className="grid grid-cols-3 gap-3">
+                {methods.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => handleSelectMethod(m.id)}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-border/50 ${m.border} transition-all group`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl ${m.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <span className={`font-black ${m.color} text-xl`}>{m.letter}</span>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-bold text-xs">{m.label}</p>
+                      <p className="text-[10px] text-muted-foreground">{m.sub}</p>
+                    </div>
+                  </button>
+                ))}
               </div>
 
               <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
@@ -266,18 +278,23 @@ export default function PaymentModal({ plan, onClose, onBack }: PaymentModalProp
             </>
           )}
 
-          {/* ── PHONE INPUT ── */}
-          {step === 'phone' && (
+          {/* ── CONFIRM ── */}
+          {step === 'confirm' && (
             <>
-              <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/40 border border-border/50">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${
-                  method === 'mpesa' ? 'bg-red-500/10 text-red-600' : 'bg-blue-500/10 text-blue-600'
-                }`}>
-                  {method === 'mpesa' ? 'M' : 'e'}
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/50 border border-border/50">
+                <span className="text-sm text-muted-foreground font-medium">Total a pagar</span>
+                <span className={`text-3xl font-black font-['Outfit'] ${plan.color}`}>
+                  {plan.price} <span className="text-base font-bold">MT</span>
+                </span>
+              </div>
+
+              <div className={`flex items-center gap-3 p-4 rounded-2xl border-2 border-primary/30 bg-primary/5`}>
+                <div className={`w-10 h-10 rounded-xl ${selectedMethod.bg} flex items-center justify-center`}>
+                  <span className={`font-black ${selectedMethod.color} text-lg`}>{selectedMethod.letter}</span>
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold text-sm">{method === 'mpesa' ? 'M-Pesa' : 'eMola'}</p>
-                  <p className="text-xs text-muted-foreground">Total: <strong>{plan.price} MT</strong></p>
+                  <p className="font-bold text-sm">{selectedMethod.label}</p>
+                  <p className="text-xs text-muted-foreground">{selectedMethod.sub}</p>
                 </div>
                 <button
                   className="text-xs text-primary hover:underline font-semibold"
@@ -287,49 +304,27 @@ export default function PaymentModal({ plan, onClose, onBack }: PaymentModalProp
                 </button>
               </div>
 
-              <div className="space-y-2">
-                <Label className="font-bold">Número {method === 'mpesa' ? 'M-Pesa' : 'eMola'}</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="+258 84 XXX XXXX"
-                    className="pl-10 h-12 rounded-xl border-border/70 text-base"
-                    type="tel"
-                  />
-                </div>
-                {phone.length >= 9 && !isValidPhone(phone) && (
-                  <p className="text-xs text-destructive flex items-center gap-1.5">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    Número inválido. M-Pesa: 84/86, eMola: 86/87.
-                  </p>
-                )}
-                {isValidPhone(phone) && (
-                  <p className="text-xs text-success flex items-center gap-1.5">
-                    <CheckCircle className="h-3.5 w-3.5" />
-                    Número válido — {formatPhone(phone)}
-                  </p>
-                )}
-              </div>
-
               <div className="bg-muted/40 rounded-2xl p-4 space-y-2 text-xs text-muted-foreground">
                 <p className="font-bold text-foreground text-sm">Como funciona:</p>
                 <div className="space-y-1.5">
-                  <p>① Introduza o número acima e clique em Pagar</p>
-                  <p>② Receberá um pedido no seu telemóvel</p>
-                  <p>③ Confirme com o seu PIN — plano activado instantaneamente</p>
+                  <p>① Clique em <strong>Pagar</strong> para ir à página de pagamento PaySuite</p>
+                  <p>② Complete o pagamento com {selectedMethod.label}</p>
+                  <p>③ Volte aqui — o plano é activado automaticamente</p>
                 </div>
               </div>
 
               <Button
                 onClick={handlePayment}
-                disabled={!isValidPhone(phone) || processing}
                 className="w-full h-12 rounded-xl font-bold text-white border-0 gradient-primary hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
-                <Shield className="h-4 w-4 mr-2" />
-                Pagar {plan.price} MT com segurança
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Ir para Pagamento · {plan.price} MT
               </Button>
+
+              <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+                <Shield className="h-3.5 w-3.5" />
+                <span>Será redireccionado para a página segura do PaySuite</span>
+              </div>
             </>
           )}
 
