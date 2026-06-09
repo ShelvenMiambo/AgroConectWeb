@@ -47,7 +47,14 @@ export async function initiatePayment(req: PaymentRequest): Promise<PaymentResul
   }
 
   const reference = `AGRO-${req.uid.slice(0, 8)}-${req.plan.toUpperCase()}-${Date.now()}`.slice(0, 50);
-  const returnUrl = `${window.location.origin}/pagamento-sucesso?plan=${req.plan}&uid=${req.uid}`;
+  // Determinar o domínio base para o redirecionamento.
+  // Evita erros de domínio não autorizado no PaySuite quando em deploys de preview da Cloudflare (*.pages.dev).
+  const appUrl = import.meta.env.VITE_APP_URL || 'https://agroconectweb.pages.dev';
+  const returnUrlOrigin = window.location.hostname.includes('.pages.dev') && !window.location.hostname.startsWith('agroconectweb.pages.dev')
+    ? appUrl
+    : window.location.origin;
+
+  const returnUrl = `${returnUrlOrigin}/pagamento-sucesso?plan=${req.plan}&uid=${req.uid}`;
   const amount = FORCE_TEST_AMOUNT ? 1 : req.amount;
 
   try {
@@ -64,7 +71,7 @@ export async function initiatePayment(req: PaymentRequest): Promise<PaymentResul
         description: `AgroConecta — Plano ${req.plan} (${amount} MT)`,
         method: req.method,
         return_url: returnUrl,
-        callback_url: `${window.location.origin}/api/payment-callback`,
+        callback_url: `${returnUrlOrigin}/api/payment-callback`,
       }),
     });
 
