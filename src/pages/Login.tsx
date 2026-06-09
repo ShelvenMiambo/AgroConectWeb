@@ -46,18 +46,21 @@ const perks = [
 ];
 
 const errorMap: Record<string, string> = {
-  'auth/invalid-credential':     'Email ou palavra-passe incorretos.',
-  'auth/user-not-found':         'Nenhuma conta com este email.',
-  'auth/wrong-password':         'Palavra-passe incorreta.',
-  'auth/too-many-requests':      'Muitas tentativas. Aguarde alguns minutos.',
-  'auth/email-already-in-use':   'Este email já está registado.',
-  'auth/weak-password':          'Palavra-passe demasiado fraca.',
-  'auth/network-request-failed': 'Verifique a sua ligação à internet.',
-  'auth/popup-closed-by-user':   'A janela do Google foi fechada. Tente novamente.',
-  'auth/popup-blocked':          'Popup bloqueado. Permita pop-ups para este site.',
-  'auth/cancelled-popup-request':'A operação foi cancelada. Tente novamente.',
-  'auth/unauthorized-domain':    'Domínio não autorizado. Contacte o administrador.',
-  'auth/operation-not-allowed':  'Login com Google não está ativado.',
+  'auth/invalid-credential':        'Email ou palavra-passe incorretos.',
+  'auth/user-not-found':            'Nenhuma conta com este email.',
+  'auth/wrong-password':            'Palavra-passe incorreta.',
+  'auth/too-many-requests':         'Muitas tentativas. Aguarde alguns minutos.',
+  'auth/email-already-in-use':      'Este email já está registado.',
+  'auth/weak-password':             'Palavra-passe demasiado fraca.',
+  'auth/network-request-failed':    'Verifique a sua ligação à internet.',
+  'auth/popup-closed-by-user':      'A janela do Google foi fechada. Tente novamente.',
+  'auth/popup-blocked':             'Popup bloqueado. Permita pop-ups para este site.',
+  'auth/cancelled-popup-request':   'A operação foi cancelada. Tente novamente.',
+  'auth/unauthorized-domain':       'Domínio não autorizado. Adicione este domínio no Firebase Console → Authentication → Settings.',
+  'auth/operation-not-allowed':     'Login com Google não está ativado.',
+  'auth/invalid-api-key':           'Configuração Firebase inválida. Contacte o administrador.',
+  'auth/configuration-not-found':   'Configuração Firebase em falta. Contacte o administrador.',
+  'auth/app-deleted':               'Sessão expirada. Recarregue a página.',
 };
 
 const Login = () => {
@@ -86,7 +89,9 @@ const Login = () => {
     try { clearMessages(); setLoading(true);
       await login(data.email, data.password);
       navigate('/');
-    } catch (e: any) { setError(errorMap[e.code] || 'Erro ao entrar. Tente novamente.');
+    } catch (e: any) {
+      console.error('[Login Error]', e.code, e.message);
+      setError(errorMap[e.code] || `Erro ao entrar (${e.code || 'desconhecido'}). Tente novamente.`);
     } finally { setLoading(false); }
   };
 
@@ -94,7 +99,9 @@ const Login = () => {
     try { clearMessages(); setLoading(true);
       await register(data.email, data.password, data.name, data.phone, data.userTypes[0], data.userTypes);
       navigate('/');
-    } catch (e: any) { setError(errorMap[e.code] || 'Erro ao criar conta. Tente novamente.');
+    } catch (e: any) {
+      console.error('[Register Error]', e.code, e.message);
+      setError(errorMap[e.code] || `Erro ao criar conta (${e.code || 'desconhecido'}). Tente novamente.`);
     } finally { setLoading(false); }
   };
 
