@@ -28,20 +28,27 @@ export interface PaymentResult {
   error?: string;
 }
 
-const PAYSUITE_API_KEY = import.meta.env.VITE_PAYSUITE_API_KEY as string | undefined;
-const PAYSUITE_BASE_URL = 'https://paysuite.tech/api/v1';
+// Define se o serviço deve usar o modo de simulação (apenas em desenvolvimento se não houver chave de API)
+const IS_SIMULATION = import.meta.env.DEV && !import.meta.env.VITE_PAYSUITE_API_KEY;
+
+// Usamos o caminho do proxy (/api-paysuite) em vez do URL absoluto para evitar CORS e ocultar a API key no backend
+const PAYSUITE_BASE_URL = '/api-paysuite';
+
+// DEFINIR COMO 'true' PARA FORÇAR 1 MT PARA TESTES REAIS (M-Pesa/eMola), OU 'false' PARA VALORES REAIS DOS PLANOS
+const FORCE_TEST_AMOUNT = true;
 
 /**
  * Create a payment request via PaySuite.
  * Returns a checkout_url where the user completes payment.
  */
 export async function initiatePayment(req: PaymentRequest): Promise<PaymentResult> {
-  if (!PAYSUITE_API_KEY) {
+  if (IS_SIMULATION) {
     return simulatePayment(req);
   }
 
   const reference = `AGRO-${req.uid.slice(0, 8)}-${req.plan.toUpperCase()}-${Date.now()}`.slice(0, 50);
   const returnUrl = `${window.location.origin}/pagamento-sucesso?plan=${req.plan}&uid=${req.uid}`;
+  const amount = FORCE_TEST_AMOUNT ? 1 : req.amount;
 
   try {
     const response = await fetch(`${PAYSUITE_BASE_URL}/payments`, {
@@ -49,12 +56,12 @@ export async function initiatePayment(req: PaymentRequest): Promise<PaymentResul
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': `Bearer ${PAYSUITE_API_KEY}`,
+        // O token Authorization é injetado automaticamente pelo proxy (Vite ou Cloudflare)
       },
       body: JSON.stringify({
-        amount: req.amount,
+        amount,
         reference,
-        description: `AgroConecta — Plano ${req.plan}`,
+        description: `AgroConecta — Plano ${req.plan} (${amount} MT)`,
         method: req.method,
         return_url: returnUrl,
         callback_url: `${window.location.origin}/api/payment-callback`,
@@ -84,7 +91,7 @@ export async function initiatePayment(req: PaymentRequest): Promise<PaymentResul
  * Statuses: pending | paid | failed | cancelled
  */
 export async function checkPaymentStatus(paymentId: string): Promise<'pending' | 'success' | 'failed'> {
-  if (!PAYSUITE_API_KEY) {
+  if (IS_SIMULATION) {
     // Simulation: always succeed after first poll
     return 'success';
   }
@@ -93,7 +100,7 @@ export async function checkPaymentStatus(paymentId: string): Promise<'pending' |
     const response = await fetch(`${PAYSUITE_BASE_URL}/payments/${paymentId}`, {
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${PAYSUITE_API_KEY}`,
+        // O token Authorization é injetado automaticamente pelo proxy
       },
     });
 
