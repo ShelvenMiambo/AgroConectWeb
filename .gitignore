@@ -40,3 +40,6 @@ Thumbs.db
 
 # Vite
 vite.config.ts.timestamp-*
+
+# Ficheiros colados no chat — podem conter dados sensíveis
+attached_assets/
