@@ -19,7 +19,7 @@ interface PaymentRequestBody {
   method: 'mpesa' | 'emola';
 }
 
-const PAYSUITE_BASE_URL = 'https://api.paysuite.co.mz/v1';
+const PAYSUITE_BASE_URL = 'https://app.paysuite.co.mz/api/v1';
 
 function corsHeaders(origin: string | null): Record<string, string> {
   return {

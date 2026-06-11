@@ -37,6 +37,7 @@ export interface PaymentResult {
 }
 
 const PAYSUITE_API_KEY = import.meta.env.VITE_PAYSUITE_API_KEY as string | undefined;
+const PAYSUITE_BASE_URL = 'https://app.paysuite.co.mz/api/v1';
 
 /** Format phone number to international format (258XXXXXXXXX) */
 export function formatPhone(phone: string): string {

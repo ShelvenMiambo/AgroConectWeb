@@ -27,7 +27,7 @@ interface FirestoreUpdate {
   fields: Record<string, { stringValue?: string; timestampValue?: string }>;
 }
 
-const PAYSUITE_BASE_URL = 'https://api.paysuite.co.mz/v1';
+const PAYSUITE_BASE_URL = 'https://app.paysuite.co.mz/api/v1';
 
 async function getFirestoreToken(serviceAccountJson: string): Promise<string> {
   const sa = JSON.parse(serviceAccountJson);
