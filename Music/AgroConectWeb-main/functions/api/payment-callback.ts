@@ -10,34 +10,40 @@
  */
 
 interface Env {
-  VITE_PAYSUITE_API_KEY: string;
   VITE_FIREBASE_PROJECT_ID: string;
   FIREBASE_SERVICE_ACCOUNT_KEY: string;
   PAYSUITE_WEBHOOK_SECRET?: string;
 }
 
 interface PaySuiteWebhook {
-  transaction_id?: string;
-  id?: string;
-  status: string;
-  reference: string;
-  amount?: number;
+  event: string;           // "payment.success" | "payment.failed"
+  data: {
+    id: string;
+    amount: number;
+    reference: string;
+    error?: string;
+    transaction?: {
+      id: string;
+      method: string;
+      paid_at: string;
+    };
+  };
+  created_at: number;
+  request_id: string;
 }
 
 interface FirestoreUpdate {
   fields: Record<string, { stringValue?: string; timestampValue?: string }>;
 }
 
-const PAYSUITE_BASE_URL = 'https://app.paysuite.co.mz/api/v1';
 
 async function verifyWebhookSignature(
   request: Request,
   rawBody: string,
   secret: string
 ): Promise<boolean> {
-  const signature = request.headers.get('x-paysuite-signature') ||
-                    request.headers.get('x-signature') ||
-                    request.headers.get('x-webhook-signature');
+  // PaySuite sends HMAC-SHA256 hex digest in X-Webhook-Signature header
+  const signature = request.headers.get('x-webhook-signature');
   if (!signature) return false;
 
   const encoder = new TextEncoder();
@@ -53,7 +59,7 @@ async function verifyWebhookSignature(
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
 
-  return signature === expected || signature === `sha256=${expected}`;
+  return signature === expected;
 }
 
 async function getFirestoreToken(serviceAccountJson: string): Promise<string> {
@@ -117,20 +123,6 @@ async function getFirestoreToken(serviceAccountJson: string): Promise<string> {
   return tokenData.access_token;
 }
 
-async function verifyPaySuiteTransaction(
-  transactionId: string,
-  apiKey: string
-): Promise<'success' | 'pending' | 'failed'> {
-  const res = await fetch(`${PAYSUITE_BASE_URL}/payments/${transactionId}`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
-  if (!res.ok) return 'failed';
-  const data = await res.json() as { status: string };
-  const s = data.status?.toLowerCase();
-  if (s === 'completed' || s === 'success') return 'success';
-  if (s === 'failed' || s === 'cancelled') return 'failed';
-  return 'pending';
-}
 
 async function activatePlanFirestore(
   uid: string,
@@ -194,17 +186,16 @@ export async function onRequestPost(context: { request: Request; env: Env; waitU
     return new Response('Bad Request: invalid JSON', { status: 400 });
   }
 
-  const transactionId = body.transaction_id || body.id;
-  const { status, reference } = body;
+  const { event, data } = body;
 
-  if (!transactionId || !reference) {
-    return new Response('Bad Request: missing transaction_id or reference', { status: 400 });
+  if (!event || !data?.reference) {
+    return new Response('Bad Request: missing event or data.reference', { status: 400 });
   }
 
   // Respond immediately to PaySuite so it doesn't retry
   // Process the activation in the background via waitUntil
   context.waitUntil(
-    processPayment(transactionId, status, reference, env).catch(err =>
+    processPayment(event, data.reference, env).catch(err =>
       console.error('[Webhook] Background processing error:', err)
     )
   );
@@ -213,21 +204,13 @@ export async function onRequestPost(context: { request: Request; env: Env; waitU
 }
 
 async function processPayment(
-  transactionId: string,
-  status: string,
+  event: string,
   reference: string,
   env: Env
 ): Promise<void> {
-  // Only process completed payments
-  if (status?.toLowerCase() !== 'completed' && status?.toLowerCase() !== 'success') {
-    console.log(`[Webhook] Ignoring status: ${status}`);
-    return;
-  }
-
-  // Double-check with PaySuite API to prevent replay attacks
-  const verified = await verifyPaySuiteTransaction(transactionId, env.VITE_PAYSUITE_API_KEY);
-  if (verified !== 'success') {
-    console.error(`[Webhook] Transaction ${transactionId} not confirmed by PaySuite`);
+  // Only process successful payments
+  if (event !== 'payment.success') {
+    console.log(`[Webhook] Ignoring event: ${event}`);
     return;
   }
 
@@ -247,6 +230,7 @@ async function processPayment(
   }
 
   const accessToken = await getFirestoreToken(env.FIREBASE_SERVICE_ACCOUNT_KEY);
+
 
   // Query Firestore for user with matching uidPrefix field
   const queryUrl = `https://firestore.googleapis.com/v1/projects/${env.VITE_FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
