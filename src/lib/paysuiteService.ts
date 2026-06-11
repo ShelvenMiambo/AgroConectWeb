@@ -146,7 +146,10 @@ export async function activatePlan(uid: string, plan: PlanId): Promise<void> {
  * Mimics the 2-3 second STK push delay and activates the plan.
  */
 async function simulatePayment(req: PaymentRequest): Promise<PaymentResult> {
-  console.warn('[PaySuite] SIMULAÇÃO — configure VITE_PAYSUITE_API_KEY para produção');
+  if (import.meta.env.PROD) {
+    return { success: false, error: 'Pagamentos não configurados. Contacte o suporte.' };
+  }
+  console.warn('[PaySuite] SIMULAÇÃO — apenas em desenvolvimento');
   await new Promise(r => setTimeout(r, 2500));
   await activatePlan(req.uid, req.plan);
   return { success: true, transactionId: `SIM-${Date.now()}` };

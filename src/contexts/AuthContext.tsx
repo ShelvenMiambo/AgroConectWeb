@@ -54,6 +54,7 @@ const syncUserToFirestore = async (user: User, extraData?: Partial<UserData>): P
       // First time: create user document
       await setDoc(ref, {
         uid: user.uid,
+        uidPrefix: user.uid.slice(0, 8), // used by payment webhook to locate user
         name: extraData?.name || user.displayName || user.email?.split('@')[0] || 'Utilizador',
         email: user.email || '',
         phone: extraData?.phone || '',

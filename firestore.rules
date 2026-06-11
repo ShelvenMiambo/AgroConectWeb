@@ -26,7 +26,8 @@ service cloud.firestore {
       allow read: if isOwner(uid) || isAdmin();
 
       // Create: only the user themselves (on first sign-up via AuthContext)
-      allow create: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && (!('uidPrefix' in request.resource.data) || request.resource.data.uidPrefix == request.auth.uid.slice(0, 8));
 
       // Update: own doc only, restricted fields
       allow update: if isOwner(uid)
