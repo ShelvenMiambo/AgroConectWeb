@@ -1,0 +1,42 @@
+2026-06-11T14:50:10.403327Z	Cloning repository...
+2026-06-11T14:50:11.521012Z	From https://github.com/ShelvenMiambo/AgroConectWeb
+2026-06-11T14:50:11.521406Z	 * branch            5c48fe5397814710c05f0d1237acc07b12d7ec80 -> FETCH_HEAD
+2026-06-11T14:50:11.521515Z	
+2026-06-11T14:50:11.546718Z	HEAD is now at 5c48fe5 Add build output directory configuration for Cloudflare deployments
+2026-06-11T14:50:11.547077Z	
+2026-06-11T14:50:11.600341Z	
+2026-06-11T14:50:11.600735Z	Using v2 root directory strategy
+2026-06-11T14:50:11.617004Z	Success: Finished cloning repository files
+2026-06-11T14:50:13.434463Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-06-11T14:50:13.434978Z	
+2026-06-11T14:50:13.436005Z	Found wrangler.toml file. Reading build configuration...
+2026-06-11T14:50:13.444977Z	pages_build_output_dir: dist
+2026-06-11T14:50:13.445664Z	Build environment variables: (none found)
+2026-06-11T14:50:13.684926Z	Successfully read the Wrangler configuration file.
+2026-06-11T14:50:13.992772Z	Detected the following tools from environment: nodejs@20.18.0, npm@10.9.2
+2026-06-11T14:50:13.993194Z	Installing nodejs 20.18.0
+2026-06-11T14:50:14.974747Z	Trying to update node-build... ok
+2026-06-11T14:50:15.049042Z	To follow progress, use 'tail -f /tmp/node-build.20260611145015.805.log' or pass --verbose
+2026-06-11T14:50:15.10769Z	Downloading node-v20.18.0-linux-x64.tar.gz...
+2026-06-11T14:50:15.233873Z	-> https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.gz
+2026-06-11T14:50:17.694006Z	
+2026-06-11T14:50:17.694369Z	WARNING: node-v20.18.0-linux-x64 is past its end of life and is now unsupported.
+2026-06-11T14:50:17.694443Z	It no longer receives bug fixes or security updates.
+2026-06-11T14:50:17.694496Z	
+2026-06-11T14:50:17.694554Z	Installing node-v20.18.0-linux-x64...
+2026-06-11T14:50:18.248384Z	Installed node-v20.18.0-linux-x64 to /opt/buildhome/.asdf/installs/nodejs/20.18.0
+2026-06-11T14:50:18.248737Z	
+2026-06-11T14:50:19.052641Z	Installing project dependencies: npm clean-install --progress=false
+2026-06-11T14:52:16.060406Z	npm error Exit handler never called!
+2026-06-11T14:52:16.061041Z	npm error This is an error with npm itself. Please report this error at:
+2026-06-11T14:52:16.061155Z	npm error   <https://github.com/npm/cli/issues>
+2026-06-11T14:52:16.061229Z	npm error A complete log of this run can be found in: /opt/buildhome/.npm/_logs/2026-06-11T14_50_19_317Z-debug-0.log
+2026-06-11T14:52:16.167409Z	Executing user command: npm run build
+2026-06-11T14:52:16.554544Z	
+2026-06-11T14:52:16.554851Z	> vite_react_shadcn_ts@0.0.0 build
+2026-06-11T14:52:16.555025Z	> vite build
+2026-06-11T14:52:16.555109Z	
+2026-06-11T14:52:16.561658Z	sh: 1: vite: not found
+2026-06-11T14:52:16.574222Z	Failed: Error while executing user command. Exited with error code: 127
+2026-06-11T14:52:16.58355Z	Failed: build command exited with code: 1
+2026-06-11T14:52:17.268323Z	Failed: error occurred while running build command
