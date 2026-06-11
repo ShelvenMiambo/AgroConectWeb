@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3a8a3a"/>
+      <stop offset="100%" stop-color="#1e5c1e"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7ed87e"/>
+      <stop offset="100%" stop-color="#4db84d"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="32" height="32" rx="8" fill="url(#bg)"/>
+  <!-- Leaf shape -->
+  <path d="M16 6 C10 6 7 10 7 14 C7 19 11 22 16 24 C21 22 25 19 25 14 C25 10 22 6 16 6 Z" fill="url(#leaf)" opacity="0.9"/>
+  <!-- Stem -->
+  <line x1="16" y1="24" x2="16" y2="28" stroke="#7ed87e" stroke-width="2" stroke-linecap="round"/>
+  <!-- Center vein -->
+  <line x1="16" y1="8" x2="16" y2="23" stroke="#1e5c1e" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+</svg>
