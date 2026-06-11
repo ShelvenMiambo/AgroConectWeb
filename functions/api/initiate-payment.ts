@@ -71,7 +71,15 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       body: JSON.stringify({ amount, phone, reference, description, callback_url }),
     });
 
-    const data = await res.json();
+    let data: unknown;
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      console.error('[PaySuite initiate] non-JSON response:', res.status, text.slice(0, 300));
+      data = { message: `PaySuite status ${res.status}: ${text.slice(0, 100)}` };
+    }
 
     if (!res.ok) {
       console.error('[PaySuite initiate]', res.status, data);
@@ -81,8 +89,11 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     }
 
     return new Response(JSON.stringify(data), { status: 200, headers });
-  } catch (err) {
-    console.error('[PaySuite initiate] network error', err);
-    return new Response(JSON.stringify({ error: 'Erro de rede ao contactar PaySuite.' }), { status: 502, headers });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[PaySuite initiate] network error:', message);
+    return new Response(JSON.stringify({
+      error: `Não foi possível contactar a PaySuite. Verifique se a chave API está correta. (${message})`,
+    }), { status: 502, headers });
   }
 }

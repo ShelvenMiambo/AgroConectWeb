@@ -60,8 +60,8 @@ export function isValidPhone(phone: string): boolean {
  * Returns a transactionId to use for polling status.
  */
 export async function initiatePayment(req: PaymentRequest): Promise<PaymentResult> {
-  if (!PAYSUITE_API_KEY) {
-    // Simulate payment for demo/dev when no key is configured
+  // In local dev, always simulate (the /api proxy only exists on Cloudflare)
+  if (!PAYSUITE_API_KEY || import.meta.env.DEV) {
     return simulatePayment(req);
   }
 
