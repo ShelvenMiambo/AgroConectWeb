@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { IS_PROMOTION_FREE } from "@/lib/utils";
+import { usePlanConfig } from "@/hooks/usePlanConfig";
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getNegociacoes, updateNegociacaoStatus, Negociacao
@@ -163,6 +164,8 @@ const EmptyState = () => (
 /* ── Main Component ─────────────────────────────────── */
 const Negociacoes = () => {
   const { currentUser, userData } = useAuth();
+  const navigate = useNavigate();
+  const { config } = usePlanConfig();
   const [negociacoes, setNegociacoes] = useState<Negociacao[]>([]);
   const [loading, setLoading]         = useState(true);
   const [updating, setUpdating]       = useState<string | null>(null);
@@ -208,7 +211,7 @@ const Negociacoes = () => {
     recusada: negociacoes.filter(n => n.status === 'recusada').length,
   };
 
-  if (userData?.plan === 'gratuito' && !IS_PROMOTION_FREE) {
+  if (userData?.plan === 'gratuito' && !config.isPromotionActive) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
@@ -221,9 +224,9 @@ const Negociacoes = () => {
             A gestão de negociações e o contacto direto com proprietários/agricultores são funcionalidades exclusivas para utilizadores premium. Atualize o seu plano para desbloquear as negociações reais.
           </p>
           <div className="w-full max-w-md space-y-3">
-             <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal — 200 MT</Button>
-             <Button className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral — 580 MT (Poupa 10%)</Button>
-             <Button className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual — 2000 MT (Melhor Valor)</Button>
+             <Button onClick={() => navigate('/perfil')} className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal — {config.prices.mensal} MT</Button>
+             <Button onClick={() => navigate('/perfil')} className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral — {config.prices.trimestral} MT (Poupa 10%)</Button>
+             <Button onClick={() => navigate('/perfil')} className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual — {config.prices.anual} MT (Melhor Valor)</Button>
           </div>
         </main>
         <Footer />
@@ -235,7 +238,7 @@ const Negociacoes = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 lg:px-8 py-10 max-w-5xl">
-        {IS_PROMOTION_FREE && userData?.plan === 'gratuito' && (
+        {config.isPromotionActive && userData?.plan === 'gratuito' && (
           <div className="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 p-4 rounded-xl flex items-center gap-3 mb-8 animate-pulse shadow-soft">
             <Crown className="h-6 w-6 text-amber-500 flex-shrink-0 animate-bounce" />
             <div className="text-xs">

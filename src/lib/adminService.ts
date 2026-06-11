@@ -1,4 +1,4 @@
-import { collection, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, writeBatch, setDoc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { UserData } from '@/contexts/AuthContext';
 import { Property, Negociacao, PlanoProducao } from './firestoreService';
@@ -38,11 +38,36 @@ export const adminVerifyProperty = async (id: string, verified: boolean) => {
   await updateDoc(doc(db, 'properties', id), { verificado: verified });
 };
 
-/**
- * Delete all Firestore data for a user (profile, properties, negotiations, production plans).
- * Note: Firebase Auth account deletion requires server-side Admin SDK.
- * A `blocked: true` flag is written to prevent re-access on next login.
- */
+/* ─── PLAN CONFIG ─────────────────────────────────────── */
+export interface PlanPriceConfig {
+  mensal: number;
+  trimestral: number;
+  anual: number;
+}
+export interface AppSettings {
+  isPromotionActive: boolean;
+}
+
+export const adminGetPlanPrices = async (): Promise<PlanPriceConfig> => {
+  const snap = await getDoc(doc(db, 'config', 'plans'));
+  if (snap.exists()) return snap.data() as PlanPriceConfig;
+  return { mensal: 1, trimestral: 1, anual: 1 };
+};
+
+export const adminSetPlanPrices = async (prices: PlanPriceConfig): Promise<void> => {
+  await setDoc(doc(db, 'config', 'plans'), prices);
+};
+
+export const adminGetAppSettings = async (): Promise<AppSettings> => {
+  const snap = await getDoc(doc(db, 'config', 'settings'));
+  if (snap.exists()) return snap.data() as AppSettings;
+  return { isPromotionActive: true };
+};
+
+export const adminSetAppSettings = async (settings: AppSettings): Promise<void> => {
+  await setDoc(doc(db, 'config', 'settings'), settings);
+};
+
 export const adminDeleteUser = async (uid: string): Promise<void> => {
   const batch = writeBatch(db);
 

@@ -5,10 +5,21 @@ import { useAuth, UserData } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Property, Negociacao, PlanoProducao } from '@/lib/firestoreService';
-import { adminGetUsers, adminGetProperties, adminGetNegociacoes, adminGetPlanos, adminToggleRole, adminVerifyProperty, adminDeleteUser } from '@/lib/adminService';
-import { Shield, Users, Crown, User, Activity, MapPin, Handshake, Sprout, Home, LogOut, RefreshCw, UserCheck, UserX, Search, CheckCircle, XCircle, Clock, Loader2, TrendingUp, DollarSign, Trash2, AlertTriangle } from 'lucide-react';
+import {
+  adminGetUsers, adminGetProperties, adminGetNegociacoes, adminGetPlanos,
+  adminToggleRole, adminVerifyProperty, adminDeleteUser,
+  adminGetPlanPrices, adminSetPlanPrices, adminGetAppSettings, adminSetAppSettings,
+  type PlanPriceConfig,
+} from '@/lib/adminService';
+import {
+  Shield, Users, Crown, User, Activity, MapPin, Handshake, Sprout, Home,
+  LogOut, RefreshCw, UserCheck, UserX, Search, CheckCircle, XCircle,
+  Clock, Loader2, TrendingUp, DollarSign, Trash2, AlertTriangle, Settings,
+  Tag, ToggleLeft, ToggleRight, Save, Info
+} from 'lucide-react';
 
 const fmt = (ts: any) => {
   if (!ts) return '—';
@@ -29,7 +40,7 @@ const statusColor: Record<string, string> = {
   recusada: 'text-red-600 bg-red-500/10',
 };
 
-type Tab = 'dashboard' | 'users' | 'properties' | 'negotiations' | 'production';
+type Tab = 'dashboard' | 'users' | 'properties' | 'negotiations' | 'production' | 'pricing';
 
 const Th = ({ c }: { c: string }) => <th className="text-left px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{c}</th>;
 const Td = ({ children, cls = '' }: { children: React.ReactNode; cls?: string }) => <td className={`px-4 py-3 text-sm ${cls}`}>{children}</td>;
@@ -48,12 +59,56 @@ export default function Admin() {
   const [confirmDelete, setConfirmDelete] = useState<UserData | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  /* ── Pricing config state ── */
+  const [prices, setPrices] = useState<PlanPriceConfig>({ mensal: 1, trimestral: 1, anual: 1 });
+  const [priceInputs, setPriceInputs] = useState<PlanPriceConfig>({ mensal: 1, trimestral: 1, anual: 1 });
+  const [isPromotionActive, setIsPromotionActive] = useState(true);
+  const [savingPrices, setSavingPrices] = useState(false);
+  const [priceSaved, setPriceSaved] = useState(false);
+
   const load = async () => {
     setLoading(true);
     try {
-      const [u, p, n, pl] = await Promise.all([adminGetUsers(), adminGetProperties(), adminGetNegociacoes(), adminGetPlanos()]);
+      const [u, p, n, pl] = await Promise.all([
+        adminGetUsers(), adminGetProperties(), adminGetNegociacoes(), adminGetPlanos()
+      ]);
       setUsers(u); setProperties(p); setNegotiations(n); setPlans(pl);
     } finally { setLoading(false); }
+  };
+
+  const loadPricing = async () => {
+    try {
+      const [p, s] = await Promise.all([adminGetPlanPrices(), adminGetAppSettings()]);
+      setPrices(p);
+      setPriceInputs(p);
+      setIsPromotionActive(s.isPromotionActive);
+    } catch (e) {
+      console.error('Failed to load pricing config:', e);
+    }
+  };
+
+  const handleSavePrices = async () => {
+    const validated: PlanPriceConfig = {
+      mensal:     Math.max(1, Math.round(priceInputs.mensal)),
+      trimestral: Math.max(1, Math.round(priceInputs.trimestral)),
+      anual:      Math.max(1, Math.round(priceInputs.anual)),
+    };
+    setSavingPrices(true);
+    try {
+      await Promise.all([
+        adminSetPlanPrices(validated),
+        adminSetAppSettings({ isPromotionActive }),
+      ]);
+      setPrices(validated);
+      setPriceInputs(validated);
+      setPriceSaved(true);
+      setTimeout(() => setPriceSaved(false), 3000);
+    } catch (e) {
+      console.error('Failed to save pricing:', e);
+      alert('Erro ao guardar. Tente novamente.');
+    } finally {
+      setSavingPrices(false);
+    }
   };
 
   const handleDeleteUser = async () => {
@@ -70,14 +125,17 @@ export default function Admin() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    loadPricing();
+  }, []);
 
   const filteredUsers = users.filter(u => (u.name + u.email).toLowerCase().includes(search.toLowerCase()));
 
   const revenue = {
-    mensal: users.filter(u => u.plan === 'mensal').length * 200,
-    trimestral: users.filter(u => u.plan === 'trimestral').length * 580,
-    anual: users.filter(u => u.plan === 'anual').length * 2000,
+    mensal:     users.filter(u => u.plan === 'mensal').length * prices.mensal,
+    trimestral: users.filter(u => u.plan === 'trimestral').length * prices.trimestral,
+    anual:      users.filter(u => u.plan === 'anual').length * prices.anual,
   };
   const totalRevenue = revenue.mensal + revenue.trimestral + revenue.anual;
   const premiumUsers = users.filter(u => u.plan && u.plan !== 'gratuito').length;
@@ -88,6 +146,7 @@ export default function Admin() {
     { key: 'properties',   label: 'Propriedades', icon: MapPin },
     { key: 'negotiations', label: 'Negociações',  icon: Handshake },
     { key: 'production',   label: 'Produção',     icon: Sprout },
+    { key: 'pricing',      label: 'Preços',       icon: Tag },
   ];
 
   return (
@@ -177,7 +236,7 @@ export default function Admin() {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar — desktop only (mobile uses the tab bar above) */}
+        {/* Topbar — desktop only */}
         <header className="hidden lg:flex sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/60 px-4 lg:px-6 py-3 items-center justify-between gap-4">
           <h1 className="text-lg font-black font-['Outfit']">{navItems.find(n => n.key === tab)?.label}</h1>
           <div className="flex items-center gap-2">
@@ -218,14 +277,14 @@ export default function Admin() {
                   <h3 className="font-bold font-['Outfit'] mb-4 flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" />Subscrições</h3>
                   <div className="space-y-3">
                     {[
-                      { label: 'Gratuito', count: users.filter(u => !u.plan || u.plan === 'gratuito').length, color: 'bg-muted-foreground/30' },
-                      { label: 'Mensal (200MT)', count: users.filter(u => u.plan === 'mensal').length, color: 'bg-orange-400' },
-                      { label: 'Trimestral (580MT)', count: users.filter(u => u.plan === 'trimestral').length, color: 'bg-primary' },
-                      { label: 'Anual (2000MT)', count: users.filter(u => u.plan === 'anual').length, color: 'bg-emerald-500' },
+                      { label: 'Gratuito', count: users.filter(u => !u.plan || u.plan === 'gratuito').length, color: 'bg-muted-foreground/30', price: null },
+                      { label: 'Mensal',     count: users.filter(u => u.plan === 'mensal').length,     color: 'bg-orange-400', price: prices.mensal },
+                      { label: 'Trimestral', count: users.filter(u => u.plan === 'trimestral').length, color: 'bg-primary',    price: prices.trimestral },
+                      { label: 'Anual',      count: users.filter(u => u.plan === 'anual').length,      color: 'bg-emerald-500', price: prices.anual },
                     ].map(s => (
                       <div key={s.label} className="flex items-center gap-3">
-                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color.replace('bg-', '') }} />
-                        <span className="text-sm flex-1">{s.label}</span>
+                        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${s.color}`} />
+                        <span className="text-sm flex-1">{s.label}{s.price !== null ? ` (${s.price}MT)` : ''}</span>
                         <span className="font-black text-sm">{loading ? '—' : s.count}</span>
                       </div>
                     ))}
@@ -369,6 +428,116 @@ export default function Admin() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {/* PRICING */}
+          {tab === 'pricing' && (
+            <div className="space-y-6 max-w-2xl">
+
+              {/* Prices card */}
+              <div className="rounded-2xl border border-border/60 bg-card shadow-soft overflow-hidden">
+                <div className="p-5 border-b border-border/60 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center"><Tag className="h-4 w-4 text-primary" /></div>
+                  <div>
+                    <h2 className="font-bold font-['Outfit']">Preços dos Planos</h2>
+                    <p className="text-xs text-muted-foreground">Valores em Meticais (MT). Alterações aplicam-se imediatamente a todos os utilizadores.</p>
+                  </div>
+                </div>
+                <div className="p-5 space-y-5">
+                  {/* Plan price rows */}
+                  {[
+                    { key: 'mensal' as const, label: 'Mensal', icon: '⚡', desc: 'Subscrição mensal renovável', color: 'text-orange-500 bg-orange-500/10', original: 200 },
+                    { key: 'trimestral' as const, label: 'Trimestral', icon: '⭐', desc: 'Subscrição trimestral (3 meses)', color: 'text-primary bg-primary/10', original: 580 },
+                    { key: 'anual' as const, label: 'Anual', icon: '👑', desc: 'Subscrição anual — melhor valor', color: 'text-emerald-500 bg-emerald-500/10', original: 2000 },
+                  ].map(plan => (
+                    <div key={plan.key} className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-muted/20">
+                      <div className={`w-10 h-10 rounded-xl ${plan.color} flex items-center justify-center text-xl flex-shrink-0`}>{plan.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm">{plan.label}</p>
+                        <p className="text-xs text-muted-foreground">{plan.desc}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={priceInputs[plan.key]}
+                            onChange={e => setPriceInputs(prev => ({ ...prev, [plan.key]: Number(e.target.value) }))}
+                            className="w-28 h-10 rounded-xl text-right font-bold pr-10"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-bold">MT</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                    <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      Os preços originais de produção são: Mensal 200 MT · Trimestral 580 MT · Anual 2000 MT.
+                      Valores mínimos de 1 MT (apenas para testes). Garanta que os preços de teste são revertidos antes de ir a produção.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Promotion Mode card */}
+              <div className="rounded-2xl border border-border/60 bg-card shadow-soft overflow-hidden">
+                <div className="p-5 border-b border-border/60 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center"><Crown className="h-4 w-4 text-amber-500" /></div>
+                  <div>
+                    <h2 className="font-bold font-['Outfit']">Modo Promoção de Lançamento</h2>
+                    <p className="text-xs text-muted-foreground">Quando ativo, todos os utilizadores gratuitos têm acesso premium durante o período de lançamento.</p>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <button
+                    onClick={() => setIsPromotionActive(v => !v)}
+                    className={`flex items-center justify-between w-full p-4 rounded-xl border-2 transition-all ${isPromotionActive ? 'border-amber-500/40 bg-amber-500/5' : 'border-border/60 bg-muted/20'}`}
+                  >
+                    <div className="text-left">
+                      <p className={`font-bold text-sm ${isPromotionActive ? 'text-amber-600' : 'text-foreground'}`}>
+                        {isPromotionActive ? 'Promoção ATIVA' : 'Promoção INATIVA'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {isPromotionActive
+                          ? 'Todos os utilizadores gratuitos têm acesso a funcionalidades premium.'
+                          : 'Apenas utilizadores com plano pago têm acesso premium.'}
+                      </p>
+                    </div>
+                    {isPromotionActive
+                      ? <ToggleRight className="h-8 w-8 text-amber-500 flex-shrink-0" />
+                      : <ToggleLeft className="h-8 w-8 text-muted-foreground flex-shrink-0" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Save button */}
+              <div className="flex items-center justify-between gap-4">
+                <button
+                  onClick={loadPricing}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" /> Recarregar valores guardados
+                </button>
+                <Button
+                  onClick={handleSavePrices}
+                  disabled={savingPrices}
+                  className={`h-10 px-6 rounded-xl font-bold gap-2 border-0 transition-all ${
+                    priceSaved ? 'bg-success text-white' : 'gradient-primary text-white'
+                  }`}
+                >
+                  {savingPrices ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> A guardar...</>
+                  ) : priceSaved ? (
+                    <><CheckCircle className="h-4 w-4" /> Guardado!</>
+                  ) : (
+                    <><Save className="h-4 w-4" /> Guardar Alterações</>
+                  )}
+                </Button>
+              </div>
+
             </div>
           )}
 

@@ -10,70 +10,70 @@
 @layer base {
   :root {
     /* ── Core Backgrounds ── */
-    --background: 45 20% 98%;
-    --foreground: 120 25% 7%;
+    --background: 40 18% 93%;      /* Warm cream — visible contrast with white cards */
+    --foreground: 120 30% 8%;      /* Deep forest — max readability */
 
-    /* ── Cards ── */
+    /* ── Cards — pure white for clear elevation above background ── */
     --card: 0 0% 100%;
-    --card-foreground: 120 25% 7%;
+    --card-foreground: 120 30% 8%;
 
     /* ── Popovers ── */
     --popover: 0 0% 100%;
-    --popover-foreground: 120 25% 7%;
+    --popover-foreground: 120 28% 8%;
 
     /* ── Primary — Deep Forest Green ── */
-    --primary: 128 48% 28%;
+    --primary: 128 50% 26%;
     --primary-foreground: 45 30% 97%;
-    --primary-hover: 128 48% 22%;
+    --primary-hover: 128 50% 20%;
     --primary-light: 128 38% 40%;
-    --primary-glow: 128 60% 35%;
+    --primary-glow: 128 62% 33%;
 
     /* ── Secondary — Warm Parchment ── */
-    --secondary: 38 30% 88%;
-    --secondary-foreground: 120 20% 8%;
-    --secondary-hover: 38 30% 82%;
+    --secondary: 38 28% 82%;
+    --secondary-foreground: 120 22% 8%;
+    --secondary-hover: 38 28% 75%;
 
     /* ── Muted ── */
-    --muted: 45 20% 93%;
-    --muted-foreground: 120 12% 16%; /* Melhora o contraste de leitura */
+    --muted: 40 14% 87%;           /* More visible muted areas */
+    --muted-foreground: 120 18% 28%; /* Darker — WCAG AA pass on white & muted */
 
     /* ── Accent — Golden Harvest ── */
-    --accent: 42 90% 52%;
-    --accent-foreground: 120 20% 8%;
-    --accent-hover: 42 90% 46%;
+    --accent: 42 90% 48%;
+    --accent-foreground: 120 22% 8%;
+    --accent-hover: 42 90% 42%;
 
     /* ── Status ── */
-    --success: 145 55% 38%;
+    --success: 145 58% 34%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 90% 52%;
-    --warning-foreground: 120 20% 12%;
-    --destructive: 4 74% 48%;
+    --warning: 38 90% 48%;
+    --warning-foreground: 120 20% 10%;
+    --destructive: 4 76% 46%;
     --destructive-foreground: 0 0% 100%;
 
-    /* ── Borders & Rings ── */
-    --border: 128 18% 75%; /* Mais escuro para contraste */
-    --input: 128 18% 80%; /* Mais escuro para os campos */
-    --ring: 128 48% 28%;
+    /* ── Borders & Rings — more defined in light mode ── */
+    --border: 128 20% 66%;         /* Clearly visible border lines */
+    --input: 128 18% 72%;          /* Visible input borders */
+    --ring: 128 50% 26%;
 
     /* ── Radius ── */
     --radius: 0.875rem;
 
     /* ── Gradients ── */
-    --gradient-primary: linear-gradient(135deg, hsl(128 48% 28%), hsl(128 38% 40%));
-    --gradient-hero: linear-gradient(135deg, hsl(128 48% 28%) 0%, hsl(42 90% 52%) 100%);
-    --gradient-card: linear-gradient(160deg, hsl(0 0% 100%), hsl(45 20% 95%));
+    --gradient-primary: linear-gradient(135deg, hsl(128 50% 26%), hsl(128 38% 40%));
+    --gradient-hero: linear-gradient(135deg, hsl(128 50% 26%) 0%, hsl(42 90% 48%) 100%);
+    --gradient-card: linear-gradient(160deg, hsl(0 0% 100%), hsl(40 14% 96%));
     --gradient-earth: linear-gradient(135deg, hsl(32 55% 48%), hsl(22 65% 38%));
     --gradient-sky: linear-gradient(135deg, hsl(200 70% 45%), hsl(210 75% 55%));
-    --gradient-gold: linear-gradient(135deg, hsl(42 90% 52%), hsl(35 85% 60%));
-    --gradient-landing: linear-gradient(160deg, hsl(128 48% 28%) 0%, hsl(140 45% 20%) 50%, hsl(42 90% 35%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(42 90% 48%), hsl(35 85% 56%));
+    --gradient-landing: linear-gradient(160deg, hsl(128 50% 26%) 0%, hsl(140 45% 18%) 50%, hsl(42 90% 33%) 100%);
 
-    /* ── Shadows — Premium Layered ── */
-    --shadow-xs:   0 1px 3px -1px hsl(128 20% 15% / 0.06);
-    --shadow-soft: 0 4px 24px -4px hsl(128 20% 15% / 0.10);
-    --shadow-medium: 0 8px 36px -8px hsl(128 20% 15% / 0.14);
-    --shadow-strong: 0 20px 60px -12px hsl(128 20% 15% / 0.18);
-    --shadow-glow: 0 0 40px -8px hsl(128 60% 35% / 0.30);
-    --shadow-gold: 0 0 30px -6px hsl(42 90% 52% / 0.35);
+    /* ── Shadows — stronger in light mode for depth ── */
+    --shadow-xs:   0 1px 4px -1px hsl(128 22% 15% / 0.10);
+    --shadow-soft: 0 4px 24px -4px hsl(128 22% 15% / 0.14);
+    --shadow-medium: 0 8px 36px -8px hsl(128 22% 15% / 0.18);
+    --shadow-strong: 0 20px 60px -12px hsl(128 22% 15% / 0.24);
+    --shadow-glow: 0 0 40px -8px hsl(128 62% 33% / 0.32);
+    --shadow-gold: 0 0 30px -6px hsl(42 90% 48% / 0.38);
 
     /* ── Animations ── */
     --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -82,14 +82,14 @@
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     /* ── Sidebar ── */
-    --sidebar-background: 128 25% 96%;
-    --sidebar-foreground: 120 20% 12%;
-    --sidebar-primary: 128 48% 28%;
+    --sidebar-background: 128 20% 90%;
+    --sidebar-foreground: 120 22% 10%;
+    --sidebar-primary: 128 50% 26%;
     --sidebar-primary-foreground: 45 30% 97%;
-    --sidebar-accent: 128 18% 90%;
-    --sidebar-accent-foreground: 120 20% 12%;
-    --sidebar-border: 128 18% 86%;
-    --sidebar-ring: 128 48% 28%;
+    --sidebar-accent: 128 18% 84%;
+    --sidebar-accent-foreground: 120 22% 10%;
+    --sidebar-border: 128 18% 78%;
+    --sidebar-ring: 128 50% 26%;
   }
 
   .dark {

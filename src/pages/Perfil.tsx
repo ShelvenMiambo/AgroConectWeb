@@ -21,7 +21,7 @@ import {
   initiatePayment, checkPaymentStatus, activatePlan,
   isValidPhone, formatPhone, type PlanId, type PaymentMethod
 } from '@/lib/paysuiteService';
-import { IS_PROMOTION_FREE } from '@/lib/utils';
+import { usePlanConfig } from '@/hooks/usePlanConfig';
 
 /* ─── Plan Config ──────────────────────────────────── */
 const plans = [
@@ -41,7 +41,7 @@ const plans = [
   {
     id: 'mensal',
     label: 'Mensal',
-    price: 200,
+    price: 1,
     period: 'mês',
     icon: Zap,
     color: 'text-orange-500',
@@ -54,7 +54,7 @@ const plans = [
   {
     id: 'trimestral',
     label: 'Trimestral',
-    price: 580,
+    price: 1,
     period: 'trimestre',
     icon: Star,
     color: 'text-primary',
@@ -67,7 +67,7 @@ const plans = [
   {
     id: 'anual',
     label: 'Anual',
-    price: 2000,
+    price: 1,
     period: 'ano',
     icon: Crown,
     color: 'text-emerald-500',
@@ -289,6 +289,10 @@ const Perfil = () => {
   const [phone, setPhone]     = useState(userData?.phone || '');
   const [userTypes, setUserTypes] = useState<string[]>(userData?.userTypes || (userData?.userType ? [userData.userType] : []));
   const navigate = useNavigate();
+  const { config } = usePlanConfig();
+  const activePlans = plans.map(p =>
+    p.id === 'gratuito' ? p : { ...p, price: config.prices[p.id as keyof typeof config.prices] ?? p.price }
+  );
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
   
   const [userProperties, setUserProperties] = useState<Property[]>([]);
@@ -385,7 +389,7 @@ const Perfil = () => {
     }
   };
 
-  const currentPlan = plans.find(p => p.id === (userData?.plan || 'gratuito')) || plans[0];
+  const currentPlan = activePlans.find(p => p.id === (userData?.plan || 'gratuito')) || activePlans[0];
   const isPremium   = userData?.plan && userData.plan !== 'gratuito';
 
   return (
@@ -423,7 +427,7 @@ const Perfil = () => {
                       {userTypeLabel[userData?.userType || 'pendente']}
                     </Badge>
                   </div>
-                  {IS_PROMOTION_FREE && (!userData?.plan || userData.plan === 'gratuito') ? (
+                  {config.isPromotionActive && (!userData?.plan || userData.plan === 'gratuito') ? (
                     <Badge variant="outline" className="text-xs font-bold rounded-full px-3 text-amber-600 dark:text-amber-400 border-amber-500/40 bg-amber-500/10 shadow-soft">
                       <Crown className="h-3 w-3 mr-1 text-amber-500 animate-pulse fill-amber-500" />
                       Acesso Premium Gratuito (Promoção)
@@ -626,7 +630,7 @@ const Perfil = () => {
               </CardContent>
             </Card>
 
-            {IS_PROMOTION_FREE && (
+            {config.isPromotionActive && (
               <div className="bg-gradient-to-r from-amber-500/10 via-primary/5 to-emerald-500/10 border border-primary/20 text-foreground p-5 rounded-2xl flex items-start gap-4 mb-4 shadow-soft">
                 <Crown className="h-6 w-6 text-amber-500 animate-pulse mt-0.5 flex-shrink-0" />
                 <div className="space-y-1">
@@ -654,7 +658,7 @@ const Perfil = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  {plans.map(plan => {
+                  {activePlans.map(plan => {
                     const isActive = userData?.plan === plan.id || (plan.id === 'gratuito' && !userData?.plan);
                     return (
                       <div

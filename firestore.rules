@@ -121,6 +121,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ─── CONFIG (Pricing & App Settings) ─────────────────────────────────
+    // Any logged-in user can read; only admin can write
+    match /config/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
     // ─── Deny everything else ──────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;

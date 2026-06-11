@@ -1,0 +1,3 @@
+- [Firebase version pin](firebase-version-pin.md) — Firebase pinned to ^10.14.1; v12 blocked by Replit security policy (protobufjs CVE). Never upgrade.
+- [Dynamic pricing architecture](dynamic-pricing.md) — Prices stored in Firestore config/plans; hook usePlanConfig fetches them. IS_PROMOTION_FREE removed, use config.isPromotionActive.
+- [npm install quirk](npm-install-quirk.md) — ENOTEMPTY errors on npm install require full node_modules removal first (rm -rf node_modules && npm install).

@@ -11,7 +11,8 @@ import {
   ImagePlus, Trash2, ChevronLeft, ChevronRight, Send,
   Home, Sprout, ShoppingBag, Package, Tag, Crown
 } from "lucide-react";
-import { hasPhoneNumber, IS_PROMOTION_FREE } from "@/lib/utils";
+import { hasPhoneNumber } from "@/lib/utils";
+import { usePlanConfig } from "@/hooks/usePlanConfig";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -381,6 +382,7 @@ const ContactModal = ({
 }: { property: Property; onClose: () => void }) => {
   const { currentUser, userData } = useAuth();
   const navigate = useNavigate();
+  const { config } = usePlanConfig();
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -417,7 +419,7 @@ const ContactModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 p-6 fade-in-up">
-        {userData?.plan === 'gratuito' && !IS_PROMOTION_FREE ? (
+        {userData?.plan === 'gratuito' && !config.isPromotionActive ? (
           <div className="text-center py-6 space-y-4">
             <div className="w-16 h-16 rounded-full bg-amber-500/15 flex items-center justify-center mx-auto">
               <Crown className="h-8 w-8 text-amber-500" />
@@ -489,6 +491,8 @@ const ContactModal = ({
 /* ── Main Component ─────────────────────────────────── */
 const Marketplace = () => {
   const { currentUser, userData } = useAuth();
+  const { config } = usePlanConfig();
+  const navigate = useNavigate();
   const userTypes = userData?.userTypes && userData.userTypes.length > 0 ? userData.userTypes : (userData?.userType ? [userData.userType] : []);
   const isProdutosDefault = userTypes.some(t => ['vendedor', 'comprador'].includes(t)) && !userTypes.includes('agricultor') && !userTypes.includes('proprietario');
   const defaultTab: MarketTab = isProdutosDefault ? 'produtos' : 'terrenos';
@@ -587,7 +591,7 @@ const Marketplace = () => {
                   {p.verificado && <Badge className="bg-success text-white border-0 gap-1 ml-2"><CheckCircle className="h-3 w-3" /> Verificado</Badge>}
                 </div>
 
-                {userData?.plan === 'gratuito' && !IS_PROMOTION_FREE && !isOwner ? (
+                {userData?.plan === 'gratuito' && !config.isPromotionActive && !isOwner ? (
                   <div className="relative overflow-hidden rounded-2xl bg-muted/30 border border-border/60 p-8 text-center mt-6">
                     <div className="absolute inset-0 bg-gradient-to-b from-background/10 to-background/90 backdrop-blur-[2px]" />
                     <div className="relative z-10 flex flex-col items-center max-w-md mx-auto">
@@ -599,16 +603,16 @@ const Marketplace = () => {
                         Desbloqueie todos os detalhes, como a descrição técnica do terreno, disponibilidade de recursos, e contacte diretamente o proprietário.
                       </p>
                       <div className="w-full space-y-3">
-                         <Button className="w-full h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal — 200 MT</Button>
-                         <Button className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral — 580 MT (Poupa 10%)</Button>
-                         <Button className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual — 2000 MT (Melhor Valor)</Button>
+                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal — {config.prices.mensal} MT</Button>
+                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral — {config.prices.trimestral} MT (Poupa 10%)</Button>
+                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual — {config.prices.anual} MT (Melhor Valor)</Button>
                       </div>
                       <p className="text-xs text-muted-foreground mt-4">Pagamentos seguros integrados com PaySuite.</p>
                     </div>
                   </div>
                 ) : (
                   <>
-                    {IS_PROMOTION_FREE && userData?.plan === 'gratuito' && !isOwner && (
+                    {config.isPromotionActive && userData?.plan === 'gratuito' && !isOwner && (
                       <div className="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 p-4 rounded-xl flex items-center gap-3 mb-6 animate-pulse">
                         <Crown className="h-5 w-5 text-amber-500 flex-shrink-0 animate-bounce" />
                         <div className="text-xs">
@@ -654,7 +658,7 @@ const Marketplace = () => {
                     <p className="text-3xl font-black text-primary font-['Outfit']">{p.preco.toLocaleString('pt-MZ')} MT</p>
                   </div>
 
-                  {userData?.plan === 'gratuito' && !IS_PROMOTION_FREE && !isOwner ? (
+                  {userData?.plan === 'gratuito' && !config.isPromotionActive && !isOwner ? (
                      <div className="border rounded-xl p-4 bg-muted/30 text-center space-y-3">
                        <Lock className="h-6 w-6 text-muted-foreground mx-auto" />
                        <p className="text-sm font-semibold">Proprietário Oculto</p>
