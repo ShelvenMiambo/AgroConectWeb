@@ -37,7 +37,6 @@ export interface PaymentResult {
 }
 
 const PAYSUITE_API_KEY = import.meta.env.VITE_PAYSUITE_API_KEY as string | undefined;
-const PAYSUITE_BASE_URL = 'https://api.paysuite.co.mz/v1';
 
 /** Format phone number to international format (258XXXXXXXXX) */
 export function formatPhone(phone: string): string {
@@ -69,28 +68,27 @@ export async function initiatePayment(req: PaymentRequest): Promise<PaymentResul
   const phone = formatPhone(req.phone);
 
   try {
-    const response = await fetch(`${PAYSUITE_BASE_URL}/payments/mpesa/push`, {
+    // Use server-side proxy to avoid CORS issues
+    const response = await fetch('/api/initiate-payment', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${PAYSUITE_API_KEY}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         amount: req.amount,
         phone,
+        method: req.method,
         reference: `AGRO-${req.uid.slice(0, 8)}-${req.plan.toUpperCase()}`,
         description: `AgroConecta — Plano ${req.plan}`,
         callback_url: `${window.location.origin}/api/payment-callback`,
       }),
     });
 
+    const data = await response.json() as { transaction_id?: string; id?: string; error?: string; message?: string };
+
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      console.error('[PaySuite]', response.status, err);
-      return { success: false, error: err?.message || 'Erro ao iniciar pagamento.' };
+      console.error('[PaySuite]', response.status, data);
+      return { success: false, error: data?.error || data?.message || 'Erro ao iniciar pagamento.' };
     }
 
-    const data = await response.json();
     return { success: true, transactionId: data.transaction_id || data.id };
   } catch (e: any) {
     console.error('[PaySuite] network error', e);
@@ -109,11 +107,10 @@ export async function checkPaymentStatus(transactionId: string): Promise<'pendin
   }
 
   try {
-    const response = await fetch(`${PAYSUITE_BASE_URL}/payments/${transactionId}`, {
-      headers: { 'Authorization': `Bearer ${PAYSUITE_API_KEY}` },
-    });
+    // Use server-side proxy to avoid CORS issues
+    const response = await fetch(`/api/check-payment?id=${encodeURIComponent(transactionId)}`);
     if (!response.ok) return 'failed';
-    const data = await response.json();
+    const data = await response.json() as { status?: string };
     const status = data.status?.toLowerCase();
     if (status === 'completed' || status === 'success') return 'success';
     if (status === 'failed' || status === 'cancelled') return 'failed';
