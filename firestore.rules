@@ -30,10 +30,13 @@ service cloud.firestore {
         && (!('uidPrefix' in request.resource.data) || request.resource.data.uidPrefix == request.auth.uid.slice(0, 8));
 
       // Update: own doc only, restricted fields
+      // plan and planExpiraEm can ONLY be changed by admin (via webhook or console)
       allow update: if isOwner(uid)
-        && (!('role' in request.resource.data.diff(resource.data).affectedKeys()))   // can't self-promote
-        && (!('userType' in request.resource.data.diff(resource.data).affectedKeys()) || validUserType())
-        && (!('plan' in request.resource.data.diff(resource.data).affectedKeys()) || validPlan());
+        && (!('role'         in request.resource.data.diff(resource.data).affectedKeys()))
+        && (!('plan'         in request.resource.data.diff(resource.data).affectedKeys()))
+        && (!('planAtivadoEm' in request.resource.data.diff(resource.data).affectedKeys()))
+        && (!('planExpiraEm' in request.resource.data.diff(resource.data).affectedKeys()))
+        && (!('userType'     in request.resource.data.diff(resource.data).affectedKeys()) || validUserType());
 
       // Admin can update anything (e.g. toggle roles)
       allow update: if isAdmin();

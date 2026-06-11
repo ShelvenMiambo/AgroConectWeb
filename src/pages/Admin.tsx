@@ -91,7 +91,7 @@ export default function Admin() {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
 
       {/* ── Confirmation Delete Modal ── */}
       {confirmDelete && (
@@ -129,7 +129,30 @@ export default function Admin() {
         </div>
       )}
 
-      {/* Sidebar */}
+      {/* Mobile Tab Bar */}
+      <nav className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/60 flex items-center gap-1 px-3 py-2 overflow-x-auto no-scrollbar">
+        {navItems.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0 ${
+              tab === key ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+        <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+          <ThemeToggle />
+          <Button variant="outline" size="sm" className="rounded-xl gap-1 h-8 text-xs" onClick={load} disabled={loading}>
+            <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Link to="/"><Button variant="outline" size="sm" className="rounded-xl h-8 px-2"><Home className="h-3.5 w-3.5" /></Button></Link>
+        </div>
+      </nav>
+
+      {/* Sidebar — desktop only */}
       <aside className="hidden lg:flex w-60 flex-col border-r border-border/60 bg-card/50">
         <div className="p-5 border-b border-border/60">
           <Link to="/" className="flex items-center gap-2">
@@ -154,8 +177,8 @@ export default function Admin() {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
-        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/60 px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
+        {/* Topbar — desktop only (mobile uses the tab bar above) */}
+        <header className="hidden lg:flex sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/60 px-4 lg:px-6 py-3 items-center justify-between gap-4">
           <h1 className="text-lg font-black font-['Outfit']">{navItems.find(n => n.key === tab)?.label}</h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -163,6 +186,10 @@ export default function Admin() {
             <Link to="/"><Button variant="outline" size="sm" className="rounded-xl gap-1.5 h-8"><Home className="h-3.5 w-3.5" />Site</Button></Link>
           </div>
         </header>
+        {/* Mobile section title */}
+        <div className="lg:hidden px-4 pt-4 pb-2">
+          <h1 className="text-lg font-black font-['Outfit']">{navItems.find(n => n.key === tab)?.label}</h1>
+        </div>
 
         <main className="flex-1 p-4 lg:p-6 space-y-6 overflow-auto">
 

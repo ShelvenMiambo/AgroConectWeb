@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Bot, Send, Mic, MicOff, Volume2, VolumeX,
   Languages, BookOpen, Lightbulb, Bug, Cloud, Sprout,
-  Loader2, Sparkles, AlertTriangle, RefreshCw
+  Loader2, Sparkles, RefreshCw
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -31,63 +31,26 @@ const SYSTEM = `Você é o AgroBot, assistente agrícola da AgroConecta especial
 Ajude agricultores com: culturas locais (milho, feijão, arroz, mandioca, caju, algodão, horticultura), clima (época chuvosa out-mar / seca abr-set), solos (argiloso, arenoso, franco), pragas, irrigação, preços em Meticais (MT) e mercados locais.
 Seja direto, prático e use emojis. Dê sempre recomendações acionáveis adaptadas a Moçambique.`;
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const MODEL = 'gemini-2.5-flash';
-
 async function askGemini(userText: string, history: Message[], langNote: string): Promise<string> {
-  if (!GEMINI_API_KEY) return 'Chave API nao configurada. Contacte o administrador.';
+  const historyForServer = history
+    .filter(m => m.id !== 1)
+    .slice(-10)
+    .map(m => ({ role: m.sender === 'user' ? 'user' as const : 'model' as const, text: m.content }));
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-
-  // Build alternating user/model history — skip the initial AI greeting (index 0)
-  // Only include messages after the first greeting to avoid double-model sequences
-  const historyMsgs = history
-    .filter(m => m.id !== 1)  // skip the initial greeting message
-    .slice(-10);
-
-  // Ensure strictly alternating roles (Gemini requirement)
-  const alternating: { role: string; parts: { text: string }[] }[] = [];
-  for (const m of historyMsgs) {
-    const role = m.sender === 'user' ? 'user' : 'model';
-    if (alternating.length > 0 && alternating[alternating.length - 1].role === role) continue;
-    alternating.push({ role, parts: [{ text: m.content }] });
-  }
-
-  // Final message must always be from user
-  if (alternating.length > 0 && alternating[alternating.length - 1].role === 'user') {
-    alternating.pop(); // remove last user to avoid double-user before appending
-  }
-  alternating.push({ role: 'user', parts: [{ text: userText }] });
-
-  const res = await fetch(url, {
+  const res = await fetch('/api/ai-chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: `${SYSTEM}\nIdioma: ${langNote}` }] },
-      contents: alternating,
-      generationConfig: { temperature: 0.7, maxOutputTokens: 800, topP: 0.9 },
+      message: userText,
+      history: historyForServer,
+      langNote,
+      systemPrompt: SYSTEM,
     }),
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    console.error('[Gemini]', res.status, err);
-    if (res.status === 429) return 'Limite de pedidos atingido. Aguarde 30 segundos e tente novamente.';
-    if (res.status === 400) return `Pedido invalido: ${err?.error?.message || 'verifique os parametros.'}`;
-    if (res.status === 401 || res.status === 403) return 'Chave API invalida ou sem permissao. Contacte o administrador.';
-    if (res.status === 503) return 'Servico temporariamente indisponivel. Tente mais tarde.';
-    return `Erro ${res.status}. Tente novamente.`;
-  }
-
-  const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    const reason = data?.candidates?.[0]?.finishReason;
-    if (reason === 'SAFETY') return 'Resposta bloqueada por filtros de seguranca. Reformule a pergunta.';
-    console.error('[Gemini] resposta vazia:', JSON.stringify(data));
-    return 'Sem resposta. Reformule a pergunta.';
-  }
-  return text;
+  const data = await res.json() as { reply?: string; error?: string };
+  if (data.error) return data.error;
+  return data.reply || 'Sem resposta. Reformule a pergunta.';
 }
 
 const AssistenteIA = () => {
@@ -158,16 +121,10 @@ const AssistenteIA = () => {
             Respostas inteligentes sobre cultivo, pragas, clima e mercado — powered by Google Gemini.
           </p>
           <div className="mt-3">
-            {GEMINI_API_KEY ? (
-              <Badge variant="secondary" className="gap-1.5 text-success border-success/30 bg-success/10">
-                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
-                Gemini AI Ativo
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="gap-1.5 text-destructive border-destructive/30 bg-destructive/10">
-                <AlertTriangle className="h-3 w-3" /> API não configurada
-              </Badge>
-            )}
+            <Badge variant="secondary" className="gap-1.5 text-success border-success/30 bg-success/10">
+              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
+              Gemini AI Ativo
+            </Badge>
           </div>
         </div>
 

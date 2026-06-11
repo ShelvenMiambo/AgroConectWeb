@@ -236,7 +236,7 @@ const Header = () => {
                 </Button>
 
                 {alertsOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-card border border-border/60 rounded-xl shadow-strong overflow-hidden z-50 fade-in-up">
+                  <div className="absolute right-0 mt-2 w-[min(20rem,90vw)] bg-card border border-border/60 rounded-xl shadow-strong overflow-hidden z-50 fade-in-up">
                     <div className="p-3 border-b border-border/50 bg-muted/30">
                       <h4 className="font-bold text-sm">Notificações</h4>
                     </div>
