@@ -26,15 +26,13 @@ export default defineConfig(({ mode }) => ({
       output: {
         // Keep assets in organized folders
         assetFileNames: 'assets/[name]-[hash][extname]',
-        // Separar bibliotecas grandes em chunks próprios para melhorar o cache
-        // entre deploys (o browser só volta a descarregar o que mudou).
+        // Separar apenas o Firebase (grande e sem dependência do React) num chunk
+        // próprio, para melhorar o cache entre deploys. NÃO separar React/UI: dividir
+        // o React das libs que o usam causa erro de ordem de init no build (forwardRef).
         manualChunks(id) {
-          if (!id.includes('node_modules')) return;
-          if (id.includes('firebase') || id.includes('@firebase')) return 'firebase';
-          if (id.includes('react-dom') || id.includes('react-router') || id.includes('/react/')) return 'react-vendor';
-          if (id.includes('@radix-ui')) return 'radix';
-          if (id.includes('recharts') || id.includes('d3-')) return 'charts';
-          return 'vendor';
+          if (id.includes('node_modules') && (id.includes('firebase') || id.includes('@firebase'))) {
+            return 'firebase';
+          }
         },
       }
     }
