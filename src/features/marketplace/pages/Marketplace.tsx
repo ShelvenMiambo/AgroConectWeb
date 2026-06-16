@@ -1,0 +1,1072 @@
+import { useState, useEffect, useRef } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  MapPin, Search, Heart, MessageCircle, Lock,
+  ArrowLeft, Droplets, Ruler, TreePine, SlidersHorizontal,
+  CheckCircle, X, ChevronDown, Plus, Loader2, Leaf,
+  ImagePlus, Trash2, ChevronLeft, ChevronRight, Send,
+  Home, Sprout, ShoppingBag, Package, Tag, Crown
+} from "lucide-react";
+import { hasPhoneNumber } from "@/lib/utils";
+import { usePlanConfig } from "@/hooks/usePlanConfig";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { useAuth } from "@/features/auth/context/AuthContext";
+import { getProperties, addProperty, deleteProperty } from "@/features/marketplace/services/properties";
+import { getListings, addListing, deleteListing } from "@/features/marketplace/services/listings";
+import { toggleFavorito } from "@/features/marketplace/services/favoritos";
+import { createNegociacao } from "@/features/negociacoes/services/negociacoes";
+import type { Property, Listing, ListingType } from "@/types";
+import { useNavigate } from 'react-router-dom';
+
+type MarketTab = 'terrenos' | 'produtos';
+
+const listingMeta: Record<string, { label: string; icon: any; badge: string; color: string }> = {
+  'terra-procura':   { label: 'Procura Terra',    icon: Sprout,     badge: 'Agricultor', color: 'text-green-600 bg-green-500/10 border-green-500/30' },
+  'produto-oferta':  { label: 'Vende Produto',    icon: ShoppingBag, badge: 'Vendedor',   color: 'text-blue-600 bg-blue-500/10 border-blue-500/30' },
+  'produto-procura': { label: 'Procura Produto',  icon: Package,    badge: 'Comprador',  color: 'text-purple-600 bg-purple-500/10 border-purple-500/30' },
+};
+
+const soilColors: Record<string, string> = {
+  argiloso: "from-amber-600/20 to-amber-700/10",
+  arenoso:  "from-yellow-500/15 to-yellow-600/8",
+  franco:   "from-green-600/15 to-green-700/8",
+};
+
+/* ── Image Gallery ─────────────────────────────────── */
+const Gallery = ({ urls, nome }: { urls: string[]; nome: string }) => {
+  const [idx, setIdx] = useState(0);
+  if (!urls || urls.length === 0) {
+    return (
+      <div className="aspect-video rounded-2xl bg-gradient-to-br from-green-600/15 to-green-700/8 border border-border/60 flex items-center justify-center">
+        <MapPin className="h-16 w-16 text-primary/25" />
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <div className="relative aspect-video rounded-2xl overflow-hidden bg-muted">
+        <img src={urls[idx]} alt={nome} className="w-full h-full object-cover" />
+        {urls.length > 1 && (
+          <>
+            <button onClick={() => setIdx(i => (i - 1 + urls.length) % urls.length)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button onClick={() => setIdx(i => (i + 1) % urls.length)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors">
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {urls.map((_, i) => (
+                <button key={i} onClick={() => setIdx(i)}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? 'bg-white scale-125' : 'bg-white/50'}`} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      {urls.length > 1 && (
+        <div className="grid grid-cols-4 gap-2">
+          {urls.map((url, i) => (
+            <button key={i} onClick={() => setIdx(i)}
+              className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${i === idx ? 'border-primary' : 'border-transparent'}`}>
+              <img src={url} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ── Publish Modal ─────────────────────────────────── */
+const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) => {
+  const { currentUser, userData } = useAuth();
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const [images, setImages]     = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const fileInputRef            = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState({
+    nome: '', area: '', localizacao: '', tipo_solo: 'franco' as Property['tipo_solo'],
+    disponibilidade_agua: false, preco: '', descricao: '', culturas: '',
+  });
+  const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleImages = (files: FileList | null) => {
+    if (!files) return;
+    const arr = Array.from(files).slice(0, 5); // max 5 images
+    setImages(prev => [...prev, ...arr].slice(0, 5));
+    arr.forEach(f => {
+      const reader = new FileReader();
+      reader.onload = e => setPreviews(prev => [...prev, e.target?.result as string].slice(0, 5));
+      reader.readAsDataURL(f);
+    });
+  };
+
+  const removeImage = (i: number) => {
+    setImages(prev => prev.filter((_, idx) => idx !== i));
+    setPreviews(prev => prev.filter((_, idx) => idx !== i));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !userData) return;
+    
+    if (hasPhoneNumber(form.nome) || hasPhoneNumber(form.descricao)) {
+      setError('Por razões de segurança, não é permitido colocar números de telemóvel no título ou descrição.');
+      return;
+    }
+
+    setLoading(true); setError('');
+    try {
+      await addProperty({
+        nome: form.nome.trim(),
+        area: Number(form.area),
+        localizacao: form.localizacao.trim(),
+        tipo_solo: form.tipo_solo,
+        disponibilidade_agua: form.disponibilidade_agua,
+        preco: Number(form.preco),
+        descricao: form.descricao.trim(),
+        donoUid: currentUser.uid,
+        donoNome: userData.name || currentUser.email || 'Anónimo',
+        verificado: false,
+        culturas: form.culturas.split(',').map(c => c.trim()).filter(Boolean),
+        imageUrls: [],
+      }, images.length > 0 ? images : undefined);
+      onSaved(); 
+      onClose();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e: any) {
+      setError('Erro ao publicar. Verifique o Firebase Storage e tente novamente.');
+      console.error(e);
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 max-h-[90vh] overflow-y-auto fade-in-up">
+        <div className="flex items-center justify-between p-5 border-b border-border/60">
+          <h2 className="font-black text-xl font-['Outfit'] flex items-center gap-2">
+            <Leaf className="h-5 w-5 text-primary" /> Publicar Terra
+          </h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {error && <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-xl">{error}</p>}
+
+          {/* Image Upload */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-1.5">
+              <ImagePlus className="h-4 w-4 text-primary" /> Fotos do Terreno (máx. 5)
+            </label>
+            {previews.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {previews.map((src, i) => (
+                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removeImage(i)}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {previews.length < 5 && (
+              <>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple
+                  className="hidden" onChange={e => handleImages(e.target.files)} />
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="w-full border-2 border-dashed border-border/60 rounded-xl p-4 text-center text-sm text-muted-foreground hover:border-primary/40 hover:bg-muted/50 transition-all flex items-center justify-center gap-2">
+                  <ImagePlus className="h-4 w-4" />
+                  {previews.length === 0 ? 'Carregar fotos do terreno' : `Adicionar mais (${previews.length}/5)`}
+                </button>
+              </>
+            )}
+          </div>
+
+          {[
+            { key: 'nome',      label: 'Nome da Propriedade *', placeholder: 'Ex: Quinta da Esperança' },
+            { key: 'localizacao',label: 'Localização *',        placeholder: 'Ex: Maputo, Marracuene' },
+            { key: 'descricao', label: 'Descrição *',           placeholder: 'Descreva as características do terreno...' },
+            { key: 'culturas',  label: 'Culturas recomendadas', placeholder: 'Ex: Milho, Feijão, Tomate (vírgulas)' },
+          ].map(f => (
+            <div key={f.key} className="space-y-1">
+              <label className="text-sm font-medium">{f.label}</label>
+              {f.key === 'descricao' ? (
+                <textarea value={(form as any)[f.key]} onChange={e => set(f.key, e.target.value)}
+                  placeholder={f.placeholder} rows={3}
+                  className="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+              ) : (
+                <Input value={(form as any)[f.key]} onChange={e => set(f.key, e.target.value)}
+                  placeholder={f.placeholder} className="rounded-xl" />
+              )}
+            </div>
+          ))}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Área (hectares) *</label>
+              <Input type="number" min="0.1" step="0.1" value={form.area}
+                onChange={e => set('area', e.target.value)} placeholder="Ex: 25" className="rounded-xl" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Preço (MT/mês) *</label>
+              <Input type="number" min="0" value={form.preco}
+                onChange={e => set('preco', e.target.value)} placeholder="Ex: 15000" className="rounded-xl" />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Tipo de Solo *</label>
+            <Select value={form.tipo_solo} onValueChange={v => set('tipo_solo', v)}>
+              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="argiloso">Argiloso</SelectItem>
+                <SelectItem value="arenoso">Arenoso</SelectItem>
+                <SelectItem value="franco">Franco</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <label className="flex items-center gap-3 p-3 rounded-xl border border-border/60 cursor-pointer hover:bg-muted/50 transition-colors">
+            <input type="checkbox" checked={form.disponibilidade_agua}
+              onChange={e => set('disponibilidade_agua', e.target.checked)}
+              className="w-4 h-4 rounded accent-primary" />
+            <div>
+              <p className="text-sm font-medium flex items-center gap-1.5">
+                <Droplets className="h-4 w-4 text-primary" /> Água disponível
+              </p>
+              <p className="text-xs text-muted-foreground">Marque se há acesso a água</p>
+            </div>
+          </label>
+
+          <Button type="submit"
+            disabled={loading || !form.nome || !form.area || !form.localizacao || !form.preco || !form.descricao}
+            className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-semibold shadow-medium">
+            {loading ? (
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {images.length > 0 ? 'A enviar fotos...' : 'A publicar...'}</>
+            ) : (
+              <><MapPin className="h-4 w-4 mr-2" /> Publicar no Marketplace</>
+            )}
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+/* ── Listing Modal (terra-procura / produto-oferta / produto-procura) ── */
+const listingFields: Record<ListingType, { key: string; label: string; placeholder: string; type?: string; rows?: number }[]> = {
+  'terra-procura': [
+    { key: 'titulo',    label: 'Título do Pedido *',        placeholder: 'Ex: Agricultor experiente procura terreno em Maputo' },
+    { key: 'localizacao', label: 'Localização preferida',   placeholder: 'Ex: Maputo, Marracuene, Gaza' },
+    { key: 'area',      label: 'Área necessária (ha)',       placeholder: 'Ex: 5', type: 'number' },
+    { key: 'preco',     label: 'Orçamento máximo (MT/mês)', placeholder: 'Ex: 8000', type: 'number' },
+    { key: 'descricao', label: 'Descrição *',               placeholder: 'Experiência, culturas que planta, condições...', rows: 3 },
+  ],
+  'produto-oferta': [
+    { key: 'titulo',    label: 'Nome do Produto *',          placeholder: 'Ex: Tomates frescos — colheita de Maio' },
+    { key: 'produtos',  label: 'Produtos (por vírgula)',     placeholder: 'Ex: Tomate, Cebola, Alface' },
+    { key: 'quantidade',label: 'Quantidade disponível',      placeholder: 'Ex: 500 kg, 2 toneladas' },
+    { key: 'preco',     label: 'Preço (MT)',                 placeholder: 'Ex: 150', type: 'number' },
+    { key: 'localizacao',label: 'Localização',              placeholder: 'Ex: Beira, Sofala' },
+    { key: 'descricao', label: 'Descrição *',               placeholder: 'Qualidade, condições de venda...', rows: 3 },
+  ],
+  'produto-procura': [
+    { key: 'titulo',    label: 'Título do Pedido *',         placeholder: 'Ex: Procuro milho a granel — Maputo' },
+    { key: 'produtos',  label: 'Produtos necessários (vírgula)', placeholder: 'Ex: Milho, Feijão' },
+    { key: 'quantidade',label: 'Quantidade necessária',      placeholder: 'Ex: 1 tonelada, 200 sacos' },
+    { key: 'preco',     label: 'Orçamento disponível (MT)', placeholder: 'Ex: 50000', type: 'number' },
+    { key: 'localizacao',label: 'Local de entrega',         placeholder: 'Ex: Matola' },
+    { key: 'descricao', label: 'Detalhes adicionais *',     placeholder: 'Prazo, qualidade mínima...', rows: 3 },
+  ],
+};
+
+const listingTitles: Record<ListingType, string> = {
+  'terra-procura':   'Procuro Terra para Cultivar',
+  'produto-oferta':  'Publicar Produto Agrícola',
+  'produto-procura': 'Preciso de Produtos Agrícolas',
+};
+
+const ListingModal = ({ listingType, onClose, onSaved }: { listingType: ListingType; onClose: () => void; onSaved: () => void }) => {
+  const { currentUser, userData } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+  const [form, setForm]       = useState<Record<string, string>>({});
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  const meta = listingMeta[listingType];
+  const fields = listingFields[listingType];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !userData) return;
+    if (!form.titulo || !form.descricao) { setError('Preencha título e descrição.'); return; }
+    
+    if (hasPhoneNumber(form.titulo) || hasPhoneNumber(form.descricao)) {
+      setError('Por razões de segurança, não é permitido colocar números de telemóvel no título ou descrição.');
+      return;
+    }
+
+    setLoading(true); setError('');
+    try {
+      await addListing({
+        listingType,
+        titulo: form.titulo,
+        descricao: form.descricao,
+        localizacao: form.localizacao || '',
+        area: form.area ? Number(form.area) : undefined,
+        preco: form.preco ? Number(form.preco) : undefined,
+        produtos: form.produtos ? form.produtos.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+        quantidade: form.quantidade || undefined,
+        autorUid: currentUser.uid,
+        autorNome: userData.name || currentUser.email || 'Anónimo',
+      });
+      onSaved(); 
+      onClose();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
+      console.error("Listing Error:", err);
+      setError(`Erro ao publicar: ${err.message || 'Tente novamente.'}`);
+    }
+    finally { setLoading(false); }
+  };
+
+  const IconComp = meta.icon;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 max-h-[90vh] overflow-y-auto fade-in-up">
+        <div className="flex items-center justify-between p-5 border-b border-border/60">
+          <h2 className="font-black text-lg font-['Outfit'] flex items-center gap-2">
+            <IconComp className="h-5 w-5 text-primary" /> {listingTitles[listingType]}
+          </h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {error && <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-xl">{error}</p>}
+          {fields.map(f => (
+            <div key={f.key} className="space-y-1">
+              <label className="text-sm font-medium">{f.label}</label>
+              {f.rows ? (
+                <textarea value={form[f.key] || ''} onChange={e => set(f.key, e.target.value)}
+                  placeholder={f.placeholder} rows={f.rows}
+                  className="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+              ) : (
+                <Input value={form[f.key] || ''} onChange={e => set(f.key, e.target.value)}
+                  placeholder={f.placeholder} type={f.type || 'text'} className="rounded-xl" />
+              )}
+            </div>
+          ))}
+          <Button type="submit" disabled={loading || !form.titulo || !form.descricao}
+            className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-semibold shadow-medium">
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />A publicar...</> : <><IconComp className="h-4 w-4 mr-2" />Publicar</>}
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+/* ── Contact Modal ──────────────────────────────────── */
+const ContactModal = ({
+  property, onClose
+}: { property: Property; onClose: () => void }) => {
+  const { currentUser, userData } = useAuth();
+  const navigate = useNavigate();
+  const { config } = usePlanConfig();
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSend = async () => {
+    if (!currentUser || !userData || !message.trim()) return;
+    
+    if (hasPhoneNumber(message)) {
+      alert('Por razões de segurança e protocolo do site, não é permitido colocar números de telemóvel nas mensagens e propostas.');
+      return;
+    }
+
+    setSending(true);
+    try {
+      await createNegociacao({
+        propertyId: property.id!,
+        propertyNome: property.nome,
+        arrendatarioUid: currentUser.uid,
+        arrendatarioNome: userData.name || currentUser.email || 'Anónimo',
+        proprietarioUid: property.donoUid,
+        proprietarioNome: property.donoNome,
+        mensagem: message.trim(),
+      });
+      setSent(true);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao enviar. Tente novamente.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 p-6 fade-in-up">
+        {userData?.plan === 'gratuito' && !config.isPromotionActive ? (
+          <div className="text-center py-6 space-y-4">
+            <div className="w-16 h-16 rounded-full bg-amber-500/15 flex items-center justify-center mx-auto">
+              <Crown className="h-8 w-8 text-amber-500" />
+            </div>
+            <h3 className="text-xl font-black font-['Outfit']">Subscrição Premium Necessária</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              As negociações seguras no AgroConecta exigem uma subscrição ativa.
+              <br />Subscreva a um plano para iniciar negociações ilimitadas e contactar proprietários!
+            </p>
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
+              <Button className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold gap-2" onClick={() => { onClose(); navigate('/perfil'); }}>
+                Ver Planos <Crown className="h-4 w-4 fill-current" />
+              </Button>
+            </div>
+          </div>
+        ) : sent ? (
+          <div className="text-center py-6 space-y-4">
+            <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto">
+              <CheckCircle className="h-8 w-8 text-success" />
+            </div>
+            <h3 className="text-xl font-black font-['Outfit']">Proposta Enviada!</h3>
+            <p className="text-sm text-muted-foreground">O proprietário será notificado. Pode acompanhar o estado em <strong>Negociações</strong>.</p>
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
+              <Button className="flex-1 rounded-xl gradient-primary text-white border-0" onClick={() => { onClose(); navigate('/negociacoes'); }}>Ver Negociações</Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-between items-start mb-5">
+              <div>
+                <h3 className="text-lg font-black font-['Outfit']">Contactar Proprietário</h3>
+                <p className="text-sm text-muted-foreground">{property.nome} · {property.localizacao}</p>
+              </div>
+              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="bg-muted/40 rounded-xl p-3 mb-4">
+              <p className="text-xs text-muted-foreground font-semibold">Proprietário</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-black">{property.donoNome.charAt(0)}</div>
+                <p className="font-semibold text-sm">{property.donoNome}</p>
+              </div>
+            </div>
+            <div className="space-y-2 mb-4">
+              <label className="text-sm font-semibold">A sua mensagem / proposta</label>
+              <textarea
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                placeholder={`Olá ${property.donoNome}, tenho interesse em arrendar ${property.nome}...`}
+                rows={4}
+                className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <Button
+              onClick={handleSend}
+              disabled={!message.trim() || sending}
+              className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-bold shadow-medium gap-2"
+            >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4" /> Enviar Proposta</>}
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ── Main Component ─────────────────────────────────── */
+const Marketplace = () => {
+  const { currentUser, userData } = useAuth();
+  const { config } = usePlanConfig();
+  const navigate = useNavigate();
+  const userTypes = userData?.userTypes && userData.userTypes.length > 0 ? userData.userTypes : (userData?.userType ? [userData.userType] : []);
+  const isProdutosDefault = userTypes.some(t => ['vendedor', 'comprador'].includes(t)) && !userTypes.includes('agricultor') && !userTypes.includes('proprietario');
+  const defaultTab: MarketTab = isProdutosDefault ? 'produtos' : 'terrenos';
+  const [activeTab, setActiveTab]   = useState<MarketTab>(defaultTab);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [listings, setListings]     = useState<Listing[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [searchTerm, setSearchTerm]   = useState('');
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [saved, setSaved]             = useState<string[]>([]);
+  const [filters, setFilters] = useState({ tipoSolo: '', temAgua: '', areaMin: '' });
+  const [showFilters, setShowFilters] = useState(false);
+  const [showPublish, setShowPublish] = useState(false);
+  const [showListingModal, setShowListingModal] = useState<ListingType | null>(null);
+  const [deletingId, setDeletingId]   = useState<string | null>(null);
+  const [contactProperty, setContactProperty] = useState<Property | null>(null);
+
+  const load = async () => {
+    setLoadingData(true);
+    try {
+      const [props, lsts] = await Promise.all([getProperties(), getListings()]);
+      setProperties(props); setListings(lsts);
+    } catch { setProperties([]); setListings([]); }
+    finally { setLoadingData(false); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  // Carregar favoritos persistidos do perfil do utilizador
+  useEffect(() => { setSaved(userData?.favoritos ?? []); }, [userData?.favoritos]);
+
+  const filtered = properties.filter(p => {
+    const q = searchTerm.toLowerCase();
+    const matchSearch = p.nome.toLowerCase().includes(q) || p.localizacao.toLowerCase().includes(q);
+    const matchSolo = !filters.tipoSolo || p.tipo_solo === filters.tipoSolo;
+    const matchAgua = !filters.temAgua || (filters.temAgua === 'sim') === p.disponibilidade_agua;
+    const matchArea = !filters.areaMin || p.area >= Number(filters.areaMin);
+    return matchSearch && matchSolo && matchAgua && matchArea;
+  });
+
+  const filteredListings = listings.filter(l => {
+    const q = searchTerm.toLowerCase();
+    return l.titulo.toLowerCase().includes(q) ||
+      (l.localizacao || '').toLowerCase().includes(q) ||
+      (l.produtos || []).some(p => p.toLowerCase().includes(q));
+  });
+
+  const activeFilters = Object.values(filters).filter(Boolean).length;
+  const clearFilters = () => setFilters({ tipoSolo: '', temAgua: '', areaMin: '' });
+  const toggleSave = async (id: string) => {
+    if (!currentUser) { navigate('/login'); return; }
+    const wasFavorito = saved.includes(id);
+    // Atualização otimista
+    setSaved(prev => wasFavorito ? prev.filter(s => s !== id) : [...prev, id]);
+    try {
+      await toggleFavorito(currentUser.uid, id, wasFavorito);
+    } catch {
+      // Reverter em caso de erro
+      setSaved(prev => wasFavorito ? [...prev, id] : prev.filter(s => s !== id));
+    }
+  };
+
+  const handleDelete = async (p: Property) => {
+    if (!p.id || !confirm(`Eliminar "${p.nome}"? As imagens também serão apagadas.`)) return;
+    setDeletingId(p.id);
+    try {
+      await deleteProperty(p.id, p.imageUrls ?? []);
+      setProperties(prev => prev.filter(x => x.id !== p.id));
+      if (selectedProperty?.id === p.id) setSelectedProperty(null);
+    } catch { alert('Erro ao eliminar. Tente novamente.'); }
+    finally { setDeletingId(null); }
+  };
+
+  const handleDeleteListing = async (id: string) => {
+    if (!confirm('Eliminar esta publicação?')) return;
+    try { await deleteListing(id); setListings(prev => prev.filter(l => l.id !== id)); }
+    catch { alert('Erro ao eliminar.'); }
+  };
+
+
+  /* ── Detail View ─────────────────────────── */
+  if (selectedProperty) {
+    const p = selectedProperty;
+    const isOwner = currentUser?.uid === p.donoUid;
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 lg:px-8 py-8 max-w-5xl">
+          <div className="flex items-center justify-between mb-6">
+            <Button variant="ghost" className="-ml-2 gap-2 hover:text-primary" onClick={() => setSelectedProperty(null)}>
+              <ArrowLeft className="h-4 w-4" /> Voltar ao Marketplace
+            </Button>
+            {isOwner && (
+              <Button variant="outline" size="sm"
+                className="gap-2 rounded-xl text-destructive border-destructive/30 hover:bg-destructive/5"
+                disabled={deletingId === p.id}
+                onClick={() => handleDelete(p)}>
+                {deletingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                Eliminar Anúncio
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-3 space-y-6">
+              <Gallery urls={p.imageUrls ?? []} nome={p.nome} />
+              <div>
+                <h1 className="text-3xl font-black font-['Outfit'] mb-2">{p.nome}</h1>
+                <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                  <MapPin className="h-4 w-4" /><span>{p.localizacao}</span>
+                  {p.verificado && <Badge className="bg-success text-white border-0 gap-1 ml-2"><CheckCircle className="h-3 w-3" /> Verificado</Badge>}
+                </div>
+
+                {userData?.plan === 'gratuito' && !config.isPromotionActive && !isOwner ? (
+                  <div className="relative overflow-hidden rounded-2xl bg-muted/30 border border-border/60 p-8 text-center mt-6">
+                    <div className="absolute inset-0 bg-gradient-to-b from-background/10 to-background/90 backdrop-blur-[2px]" />
+                    <div className="relative z-10 flex flex-col items-center max-w-md mx-auto">
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                        <Lock className="h-8 w-8 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Acesso Exclusivo Premium</h3>
+                      <p className="text-muted-foreground text-sm mb-6">
+                        Desbloqueie todos os detalhes, como a descrição técnica do terreno, disponibilidade de recursos, e contacte diretamente o proprietário.
+                      </p>
+                      <div className="w-full space-y-3">
+                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal — {config.prices.mensal} MT</Button>
+                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral — {config.prices.trimestral} MT (Poupa 10%)</Button>
+                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual — {config.prices.anual} MT (Melhor Valor)</Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-4">Pagamentos seguros integrados com PaySuite.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {config.isPromotionActive && userData?.plan === 'gratuito' && !isOwner && (
+                      <div className="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 p-4 rounded-xl flex items-center gap-3 mb-6 animate-pulse">
+                        <Crown className="h-5 w-5 text-amber-500 flex-shrink-0 animate-bounce" />
+                        <div className="text-xs">
+                          <p className="font-bold">Campanha de Lançamento — 5 Meses Premium Grátis!</p>
+                          <p className="opacity-95">Todas as funcionalidades e detalhes técnicos deste terreno foram desbloqueados para si sem qualquer custo.</p>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-foreground/80 leading-relaxed">{p.descricao}</p>
+                    <div className="grid grid-cols-2 gap-3 mt-6">
+                      {[
+                        { icon: Ruler,    label: 'Área',  value: `${p.area} hectares`, color: 'text-primary' },
+                        { icon: TreePine, label: 'Solo',   value: p.tipo_solo,          color: 'text-accent' },
+                        { icon: Droplets, label: 'Água',   value: p.disponibilidade_agua ? 'Disponível' : 'Indisponível', color: p.disponibilidade_agua ? 'text-success' : 'text-muted-foreground' },
+                      ].map(({ icon: Ic, label, value, color }) => (
+                        <div key={label} className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border/60">
+                          <Ic className={`h-5 w-5 flex-shrink-0 ${color}`} />
+                          <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-semibold capitalize text-sm">{value}</p></div>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                        <span className="text-primary font-black text-xs">MT</span>
+                        <div><p className="text-xs text-muted-foreground">Preço</p><p className="font-bold text-primary text-sm">{p.preco.toLocaleString('pt-MZ')} MT/mês</p></div>
+                      </div>
+                    </div>
+                    {(p.culturas ?? []).length > 0 && (
+                      <div className="mt-6">
+                        <p className="text-sm font-semibold mb-3">Culturas recomendadas</p>
+                        <div className="flex flex-wrap gap-2">
+                          {p.culturas.map(c => <Badge key={c} variant="secondary" className="px-3 py-1">{c}</Badge>)}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="lg:col-span-2">
+              <Card className="shadow-medium border-border/60 sticky top-20">
+                <CardContent className="p-6 space-y-5">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Arrendamento mensal</p>
+                    <p className="text-3xl font-black text-primary font-['Outfit']">{p.preco.toLocaleString('pt-MZ')} MT</p>
+                  </div>
+
+                  {userData?.plan === 'gratuito' && !config.isPromotionActive && !isOwner ? (
+                     <div className="border rounded-xl p-4 bg-muted/30 text-center space-y-3">
+                       <Lock className="h-6 w-6 text-muted-foreground mx-auto" />
+                       <p className="text-sm font-semibold">Proprietário Oculto</p>
+                       <p className="text-xs text-muted-foreground">O contacto é uma funcionalidade premium.</p>
+                     </div>
+                  ) : (
+                    <>
+                      <div className="border rounded-xl p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-sm">{p.donoNome.charAt(0)}</div>
+                          <div>
+                            <p className="font-semibold text-sm">{p.donoNome}</p>
+                            <p className="text-xs text-muted-foreground">{p.verificado ? 'Conta Verificada' : 'Proprietário'}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <Button
+                          className="w-full h-12 gradient-primary text-white border-0 font-semibold rounded-xl shadow-medium hover:-translate-y-0.5 transition-spring"
+                          onClick={() => setContactProperty(p)}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" /> Contactar via Negociações
+                        </Button>
+                        <Button variant="outline"
+                          className={`w-full h-12 rounded-xl font-semibold transition-spring ${p.id && saved.includes(p.id) ? 'border-destructive text-destructive' : ''}`}
+                          onClick={() => p.id && toggleSave(p.id)}>
+                          <Heart className={`h-4 w-4 mr-2 ${p.id && saved.includes(p.id) ? 'fill-current' : ''}`} />
+                          {p.id && saved.includes(p.id) ? 'Guardado' : 'Guardar'}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  /* ── List View ───────────────────────────── */
+  const heroText = () => {
+    if (userTypes.includes('agricultor') && userTypes.includes('proprietario')) return { title: 'Mercado Agrícola', sub: 'Arrende as suas terras ou procure terrenos para cultivar.' };
+    if (userTypes.includes('vendedor') && userTypes.includes('comprador')) return { title: 'Mercado Agrícola', sub: 'Compre ou venda os seus produtos agrícolas.' };
+    if (userTypes.includes('agricultor')) return { title: 'Encontre Terra', sub: 'Procure terras para cultivar ou publique um pedido.' };
+    if (userTypes.includes('vendedor')) return { title: 'Mercado Agrícola', sub: 'Venda os seus produtos diretamente aos compradores.' };
+    if (userTypes.includes('comprador')) return { title: 'Mercado Agrícola', sub: 'Encontre os produtos que precisa.' };
+    return { title: 'Marketplace de Terras', sub: 'Encontre ou arrende terrenos em todo o país.' };
+  };
+
+  const ht = heroText();
+
+  return (
+    <div className="min-h-screen bg-background">
+      {showPublish && <PublishModal onClose={() => setShowPublish(false)} onSaved={load} />}
+      {showListingModal && <ListingModal listingType={showListingModal} onClose={() => setShowListingModal(null)} onSaved={load} />}
+      {contactProperty && <ContactModal property={contactProperty} onClose={() => setContactProperty(null)} />}
+      
+      <Header />
+      <main>
+        {/* HERO */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/5 border-b border-border/60 pt-10 pb-14">
+          <div className="absolute inset-0 dot-pattern opacity-40" />
+          <div className="relative container mx-auto px-4 lg:px-8 text-center">
+            <h1 className="text-4xl md:text-5xl font-black mb-4 font-['Outfit']">
+              <span className="text-gradient-primary">{ht.title.split(' ')[0]}</span> {ht.title.split(' ').slice(1).join(' ')}
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
+              {ht.sub}
+            </p>
+
+            {/* Contextual Action Buttons */}
+            <div className="flex flex-wrap justify-center gap-4">
+              {userTypes.includes('proprietario') && (
+                <Button onClick={() => setShowPublish(true)} className="gradient-primary text-white border-0 rounded-xl gap-2 font-semibold shadow-medium hover:-translate-y-0.5 transition-spring">
+                  <Plus className="h-4 w-4" /> Publicar a Minha Terra
+                </Button>
+              )}
+              {userTypes.includes('agricultor') && (
+                <Button onClick={() => setShowListingModal('terra-procura')} className="bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium hover:-translate-y-0.5 transition-spring">
+                  <Plus className="h-4 w-4" /> Publicar Pedido de Terra
+                </Button>
+              )}
+              {userTypes.includes('vendedor') && (
+                <Button onClick={() => setShowListingModal('produto-oferta')} className="bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium hover:-translate-y-0.5 transition-spring">
+                  <Plus className="h-4 w-4" /> Publicar Produto para Venda
+                </Button>
+              )}
+              {userTypes.includes('comprador') && (
+                <Button onClick={() => setShowListingModal('produto-procura')} className="bg-purple-600 hover:bg-purple-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium hover:-translate-y-0.5 transition-spring">
+                  <Plus className="h-4 w-4" /> Publicar Pedido de Produto
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* TABS */}
+        <div className="container mx-auto px-4 lg:px-8 -mt-6 relative z-10">
+          <div className="bg-card border border-border/60 rounded-2xl shadow-strong p-2 flex gap-2 max-w-md mx-auto">
+            <button
+              onClick={() => setActiveTab('terrenos')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'terrenos' ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:bg-muted'}`}
+            >
+              <MapPin className="h-4 w-4" /> Terrenos
+            </button>
+            <button
+              onClick={() => setActiveTab('produtos')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'produtos' ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:bg-muted'}`}
+            >
+              <ShoppingBag className="h-4 w-4" /> Produtos Agrícolas
+            </button>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 lg:px-8 py-8">
+          {/* FILTERS & SEARCH */}
+          <div className="flex gap-3 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder={`Pesquisar ${activeTab === 'terrenos' ? 'terrenos...' : 'produtos...'}`}
+                value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10 h-11 rounded-xl border-border/70 bg-card" />
+              {searchTerm && <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setSearchTerm('')}><X className="h-4 w-4" /></button>}
+            </div>
+            
+            {activeTab === 'terrenos' && (
+              <Button variant="outline"
+                className={`h-11 px-4 rounded-xl gap-2 flex-shrink-0 bg-card ${showFilters ? 'border-primary text-primary bg-primary/5' : ''}`}
+                onClick={() => setShowFilters(!showFilters)}>
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="hidden sm:inline">Filtros</span>
+                {activeFilters > 0 && <Badge className="h-5 w-5 p-0 text-[10px] gradient-primary text-white border-0">{activeFilters}</Badge>}
+                <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              </Button>
+            )}
+          </div>
+
+          {showFilters && activeTab === 'terrenos' && (
+            <div className="bg-card border border-border/60 rounded-2xl p-5 mb-8 shadow-soft fade-in-up">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Select value={filters.tipoSolo} onValueChange={v => setFilters(f => ({ ...f, tipoSolo: v }))}>
+                  <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Tipo de Solo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="argiloso">Argiloso</SelectItem>
+                    <SelectItem value="arenoso">Arenoso</SelectItem>
+                    <SelectItem value="franco">Franco</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filters.temAgua} onValueChange={v => setFilters(f => ({ ...f, temAgua: v }))}>
+                  <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Água Disponível" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sim">Com Água</SelectItem>
+                    <SelectItem value="nao">Sem Água</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input placeholder="Área mínima (ha)" value={filters.areaMin}
+                  onChange={e => setFilters(f => ({ ...f, areaMin: e.target.value }))}
+                  type="number" className="h-11 rounded-xl" />
+              </div>
+              {activeFilters > 0 && (
+                <div className="mt-4 pt-4 border-t border-border/60 flex justify-end">
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 text-muted-foreground hover:text-destructive">
+                    <X className="h-3.5 w-3.5" /> Limpar filtros
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CONTENT */}
+          {loadingData ? (
+            <div className="flex flex-col items-center py-20 gap-4">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-muted-foreground font-medium">A carregar {activeTab}...</p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              
+              {/* TERRENOS TAB */}
+              {activeTab === 'terrenos' && (
+                <>
+                  {/* Pedidos de Terra (terra-procura) */}
+                  {filteredListings.filter(l => l.listingType === 'terra-procura').length > 0 && (
+                    <div className="mb-10">
+                      <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Sprout className="h-5 w-5 text-green-600" /> Pedidos de Terra</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {filteredListings.filter(l => l.listingType === 'terra-procura').map((l, i) => {
+                          const m = listingMeta[l.listingType];
+                          const Icon = m.icon;
+                          const isOwner = currentUser?.uid === l.autorUid;
+                          return (
+                            <div key={l.id} className={`bg-card rounded-2xl border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
+                              <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
+                              {isOwner && (
+                                <button onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center`}><Icon className="h-5 w-5" /></div>
+                                <div><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground">{l.autorNome}</p></div>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{l.descricao}</p>
+                              <div className="space-y-2 text-xs font-medium">
+                                {l.localizacao && <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {l.localizacao}</div>}
+                                {l.area && <div className="flex items-center gap-2"><Ruler className="h-3.5 w-3.5 text-muted-foreground" /> Precisa de {l.area} ha</div>}
+                                {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Orçamento: {l.preco.toLocaleString()} MT</div>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ofertas de Terra (Properties) */}
+                  <div>
+                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Home className="h-5 w-5 text-primary" /> Terras Disponíveis</h3>
+                    {filtered.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {filtered.map((p, i) => {
+                          const hasImage = (p.imageUrls ?? []).length > 0;
+                          const isOwner = currentUser?.uid === p.donoUid;
+                          return (
+                            <div key={p.id || i} className="group relative bg-card rounded-2xl border border-border/60 overflow-hidden cursor-pointer card-hover shadow-xs fade-in-up"
+                              style={{ animationDelay: `${i * 60}ms` }}
+                              onClick={() => setSelectedProperty(p)}>
+                              <div className={`h-48 overflow-hidden flex items-center justify-center relative ${!hasImage ? `bg-gradient-to-br ${soilColors[p.tipo_solo] || 'from-green-600/20 to-green-700/10'}` : ''}`}>
+                                {hasImage ? (
+                                  <img src={p.imageUrls![0]} alt={p.nome} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                ) : (
+                                  <MapPin className="h-12 w-12 text-primary/25" />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                                <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                  <button onClick={e => { e.stopPropagation(); p.id && toggleSave(p.id); }}
+                                    className={`h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors`}>
+                                    <Heart className={`h-4 w-4 ${p.id && saved.includes(p.id) ? 'fill-current text-red-400' : ''}`} />
+                                  </button>
+                                  {isOwner && (
+                                    <button onClick={e => { e.stopPropagation(); handleDelete(p); }}
+                                      className="h-8 w-8 rounded-full bg-destructive/80 hover:bg-destructive flex items-center justify-center text-white transition-colors"
+                                      disabled={deletingId === p.id}>
+                                      {deletingId === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                                    </button>
+                                  )}
+                                </div>
+                                {p.verificado && (
+                                  <Badge className="absolute bottom-3 left-3 bg-success/90 text-white border-0 text-xs gap-1">
+                                    <CheckCircle className="h-3 w-3" /> Verificado
+                                  </Badge>
+                                )}
+                                {hasImage && (p.imageUrls!.length > 1) && (
+                                  <Badge className="absolute bottom-3 right-3 bg-black/60 text-white border-0 text-xs">
+                                    +{p.imageUrls!.length - 1} fotos
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="p-5">
+                                <h3 className="font-bold text-base group-hover:text-primary transition-colors font-['Outfit'] line-clamp-1 mb-1">{p.nome}</h3>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                                  <MapPin className="h-3 w-3" /> {p.localizacao}
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-2 mb-4">{p.descricao}</p>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
+                                  <span className="flex items-center gap-1"><Ruler className="h-3 w-3" />{p.area}ha</span>
+                                  <span className="flex items-center gap-1"><TreePine className="h-3 w-3" />{p.tipo_solo}</span>
+                                  <span className={`flex items-center gap-1 ${p.disponibilidade_agua ? 'text-success' : ''}`}>
+                                    <Droplets className="h-3 w-3" />{p.disponibilidade_agua ? 'Água' : 'Seco'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-lg font-black text-primary font-['Outfit']">{p.preco.toLocaleString('pt-MZ')} MT</span>
+                                  <span className="text-xs text-muted-foreground">/mês</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-2xl">
+                        <MapPin className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
+                        <p className="text-muted-foreground">Nenhuma terra encontrada.</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* PRODUTOS TAB */}
+              {activeTab === 'produtos' && (
+                <div className="space-y-10">
+                  
+                  {/* Ofertas de Produtos */}
+                  <div>
+                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><ShoppingBag className="h-5 w-5 text-blue-600" /> Produtos à Venda</h3>
+                    {filteredListings.filter(l => l.listingType === 'produto-oferta').length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {filteredListings.filter(l => l.listingType === 'produto-oferta').map((l, i) => {
+                          const m = listingMeta[l.listingType];
+                          const Icon = m.icon;
+                          const isOwner = currentUser?.uid === l.autorUid;
+                          return (
+                            <div key={l.id} className={`bg-card rounded-2xl border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
+                              <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
+                              {isOwner && (
+                                <button onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center`}><Icon className="h-5 w-5" /></div>
+                                <div><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground">{l.autorNome}</p></div>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{l.descricao}</p>
+                              <div className="space-y-2 text-xs font-medium">
+                                {l.produtos && l.produtos.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-2">
+                                    {l.produtos.map(prod => <Badge key={prod} variant="secondary" className="text-[10px]">{prod}</Badge>)}
+                                  </div>
+                                )}
+                                {l.quantidade && <div className="flex items-center gap-2"><Package className="h-3.5 w-3.5 text-muted-foreground" /> {l.quantidade}</div>}
+                                {l.localizacao && <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {l.localizacao}</div>}
+                                {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Preço: {l.preco.toLocaleString()} MT</div>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-2xl">
+                        <ShoppingBag className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
+                        <p className="text-muted-foreground">Nenhum produto à venda no momento.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pedidos de Produtos */}
+                  <div>
+                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Package className="h-5 w-5 text-purple-600" /> Pedidos de Compradores</h3>
+                    {filteredListings.filter(l => l.listingType === 'produto-procura').length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {filteredListings.filter(l => l.listingType === 'produto-procura').map((l, i) => {
+                          const m = listingMeta[l.listingType];
+                          const Icon = m.icon;
+                          const isOwner = currentUser?.uid === l.autorUid;
+                          return (
+                            <div key={l.id} className={`bg-card rounded-2xl border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
+                              <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
+                              {isOwner && (
+                                <button onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center`}><Icon className="h-5 w-5" /></div>
+                                <div><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground">{l.autorNome}</p></div>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{l.descricao}</p>
+                              <div className="space-y-2 text-xs font-medium">
+                                {l.produtos && l.produtos.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-2">
+                                    {l.produtos.map(prod => <Badge key={prod} variant="secondary" className="text-[10px]">{prod}</Badge>)}
+                                  </div>
+                                )}
+                                {l.quantidade && <div className="flex items-center gap-2"><Package className="h-3.5 w-3.5 text-muted-foreground" /> Precisa de {l.quantidade}</div>}
+                                {l.localizacao && <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Entrega: {l.localizacao}</div>}
+                                {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Orçamento: {l.preco.toLocaleString()} MT</div>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-2xl">
+                        <Package className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
+                        <p className="text-muted-foreground">Nenhum pedido de compra no momento.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default Marketplace;
