@@ -60,7 +60,7 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
             <h3 className="font-bold text-lg">{otherPartyName}</h3>
             <p className="text-xs text-muted-foreground">{negociacao.propertyNome}</p>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
+          <Button aria-label="Fechar conversa" variant="ghost" size="icon" onClick={onClose} className="rounded-full">
             <X className="h-5 w-5" />
           </Button>
         </div>

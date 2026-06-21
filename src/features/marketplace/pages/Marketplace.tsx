@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   MapPin, Search, Heart, MessageCircle, Lock,
   ArrowLeft, Droplets, Ruler, TreePine, SlidersHorizontal,
@@ -53,11 +54,11 @@ const Gallery = ({ urls, nome }: { urls: string[]; nome: string }) => {
         <img src={urls[idx]} alt={nome} className="w-full h-full object-cover" />
         {urls.length > 1 && (
           <>
-            <button onClick={() => setIdx(i => (i - 1 + urls.length) % urls.length)}
+            <button aria-label="Imagem anterior" onClick={() => setIdx(i => (i - 1 + urls.length) % urls.length)}
               className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button onClick={() => setIdx(i => (i + 1) % urls.length)}
+            <button aria-label="Próxima imagem" onClick={() => setIdx(i => (i + 1) % urls.length)}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors">
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -350,7 +351,7 @@ const ListingModal = ({ listingType, onClose, onSaved }: { listingType: ListingT
           <h2 className="font-black text-lg font-['Outfit'] flex items-center gap-2">
             <IconComp className="h-5 w-5 text-primary" /> {listingTitles[listingType]}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {error && <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-xl">{error}</p>}
@@ -456,7 +457,7 @@ const ContactModal = ({
                 <h3 className="text-lg font-black font-['Outfit']">Contactar Proprietário</h3>
                 <p className="text-sm text-muted-foreground">{property.nome} · {property.localizacao}</p>
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
+              <button aria-label="Fechar" onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
             </div>
             <div className="bg-muted/40 rounded-xl p-3 mb-4">
               <p className="text-xs text-muted-foreground font-semibold">Proprietário</p>
@@ -878,9 +879,21 @@ const Marketplace = () => {
 
           {/* CONTENT */}
           {loadingData ? (
-            <div className="flex flex-col items-center py-20 gap-4">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-muted-foreground font-medium">A carregar {activeTab}...</p>
+            <div role="status" aria-label="A carregar conteúdo" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-card rounded-2xl border border-border/60 overflow-hidden">
+                  <Skeleton className="h-48 w-full rounded-none" />
+                  <div className="p-5 space-y-3">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                    <Skeleton className="h-3 w-full" />
+                    <div className="flex justify-between pt-2">
+                      <Skeleton className="h-5 w-20" />
+                      <Skeleton className="h-4 w-10" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="space-y-8">
@@ -901,7 +914,7 @@ const Marketplace = () => {
                             <div key={l.id} className={`bg-card rounded-2xl border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
                               <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
                               {isOwner && (
-                                <button onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
+                                <button aria-label="Eliminar anúncio" onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
                                   <Trash2 className="h-4 w-4" />
                                 </button>
                               )}
@@ -942,12 +955,12 @@ const Marketplace = () => {
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                                 <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                  <button onClick={e => { e.stopPropagation(); p.id && toggleSave(p.id); }}
+                                  <button aria-label={p.id && saved.includes(p.id) ? 'Remover dos favoritos' : 'Guardar nos favoritos'} onClick={e => { e.stopPropagation(); p.id && toggleSave(p.id); }}
                                     className={`h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors`}>
                                     <Heart className={`h-4 w-4 ${p.id && saved.includes(p.id) ? 'fill-current text-red-400' : ''}`} />
                                   </button>
                                   {isOwner && (
-                                    <button onClick={e => { e.stopPropagation(); handleDelete(p); }}
+                                    <button aria-label="Eliminar propriedade" onClick={e => { e.stopPropagation(); handleDelete(p); }}
                                       className="h-8 w-8 rounded-full bg-destructive/80 hover:bg-destructive flex items-center justify-center text-white transition-colors"
                                       disabled={deletingId === p.id}>
                                       {deletingId === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
@@ -1022,7 +1035,7 @@ const Marketplace = () => {
                             <div key={l.id} className={`bg-card rounded-2xl border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
                               <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
                               {isOwner && (
-                                <button onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
+                                <button aria-label="Eliminar anúncio" onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
                                   <Trash2 className="h-4 w-4" />
                                 </button>
                               )}
@@ -1066,7 +1079,7 @@ const Marketplace = () => {
                             <div key={l.id} className={`bg-card rounded-2xl border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
                               <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
                               {isOwner && (
-                                <button onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
+                                <button aria-label="Eliminar anúncio" onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
                                   <Trash2 className="h-4 w-4" />
                                 </button>
                               )}
