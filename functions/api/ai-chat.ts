@@ -111,8 +111,8 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
       if (res.status === 429) return new Response(JSON.stringify({ error: 'Limite atingido. Aguarde 30s.' }), { status: 429, headers });
       if (res.status === 400) return new Response(JSON.stringify({ error: `Pedido inválido: ${err?.error?.message || ''}` }), { status: 400, headers });
-      if (res.status === 401 || res.status === 403) return new Response(JSON.stringify({ error: 'Chave API inválida.' }), { status: 403, headers });
-      return new Response(JSON.stringify({ error: `Erro ${res.status}.` }), { status: 502, headers });
+      if (res.status === 401 || res.status === 403) return new Response(JSON.stringify({ error: `Acesso negado pelo Gemini: ${err?.error?.message || 'chave inválida ou API não ativada'}` }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: `Erro ${res.status}: ${err?.error?.message || ''}` }), { status: 502, headers });
     }
 
     const data = await res.json() as { candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[] };
