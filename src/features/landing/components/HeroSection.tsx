@@ -1,15 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Users, TrendingUp, ChevronDown, Award, Leaf, Play } from "lucide-react";
+import { ArrowRight, ChevronDown, Leaf, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
-
-const stats = [
-  { icon: Users,      value: "10K+",  label: "Agricultores" },
-  { icon: TrendingUp, value: "500+",  label: "Propriedades" },
-  { icon: Award,      value: "95%",   label: "Satisfação" },
-];
 
 // Deterministic "random" for particles (no Math.random() to keep stable)
 const PARTICLES = Array.from({ length: 28 }, (_, i) => ({
@@ -280,40 +274,9 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
       </div>
 
-      {/* ── Floating badges ── */}
-      <div className="hidden lg:block">
-        <div className="absolute top-28 right-[12%] glass rounded-2xl px-4 py-3 shadow-strong float fade-in-up" style={{ animationDelay: '1.2s' }}>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-success pulse-glow" />
-            <span className="text-xs font-semibold text-white">10K+ agricultores online</span>
-          </div>
-        </div>
-        <div className="absolute bottom-40 right-[8%] glass rounded-2xl px-5 py-4 shadow-strong float float-delay-2 fade-in-up" style={{ animationDelay: '1.5s' }}>
-          <div className="text-center">
-            <Award className="h-5 w-5 text-yellow-400 mx-auto" />
-            <p className="text-xs text-white/90 font-medium mt-1">Melhor AgriTech<br/>Moçambique 2025</p>
-          </div>
-        </div>
-        <div className="absolute top-44 right-[28%] glass rounded-2xl px-4 py-3 shadow-strong float float-delay-1 fade-in-up" style={{ animationDelay: '1.8s' }}>
-          <div className="flex items-center gap-2">
-            <Leaf className="h-4 w-4 text-green-400" />
-            <div>
-              <p className="text-xs font-bold text-white">Novo registo</p>
-              <p className="text-[10px] text-white/70">há 2 minutos</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ── Hero Content ── */}
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 lg:pt-28 pb-16 sm:pb-20 lg:pb-24">
         <div className="max-w-2xl">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/20 text-white text-xs font-semibold mb-8 fade-in-up">
-            <div className="w-1.5 h-1.5 rounded-full bg-success pulse-glow" />
-            Plataforma #1 AgriTech em Moçambique
-          </div>
-
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-['Outfit'] leading-[1.05] mb-4 sm:mb-6 fade-in-up" style={{ animationDelay: '0.2s' }}>
             <span className="text-white drop-shadow-lg">Conecta.</span>{' '}
@@ -353,21 +316,6 @@ const HeroSection = () => {
                 )}
               </Button>
             </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="flex flex-wrap gap-4 sm:gap-6 fade-in-up" style={{ animationDelay: '0.8s' }}>
-            {stats.map(({ icon: Icon, value, label }) => (
-              <div key={label} className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center shadow-medium flex-shrink-0">
-                  <Icon className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-black text-white font-['Outfit'] leading-none">{value}</p>
-                  <p className="text-xs text-white/65 font-medium">{label}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
