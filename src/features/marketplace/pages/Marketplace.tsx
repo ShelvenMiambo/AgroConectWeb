@@ -16,8 +16,8 @@ import { usePlanConfig } from "@/hooks/usePlanConfig";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/features/auth/context/AuthContext";
-import { getProperties, addProperty, deleteProperty } from "@/features/marketplace/services/properties";
-import { getListings, addListing, deleteListing } from "@/features/marketplace/services/listings";
+import { getPropertiesPage, addProperty, deleteProperty, type Cursor } from "@/features/marketplace/services/properties";
+import { getListingsPage, addListing, deleteListing } from "@/features/marketplace/services/listings";
 import { toggleFavorito } from "@/features/marketplace/services/favoritos";
 import { createNegociacao } from "@/features/negociacoes/services/negociacoes";
 import type { Property, Listing, ListingType } from "@/types";
@@ -510,14 +510,44 @@ const Marketplace = () => {
   const [showListingModal, setShowListingModal] = useState<ListingType | null>(null);
   const [deletingId, setDeletingId]   = useState<string | null>(null);
   const [contactProperty, setContactProperty] = useState<Property | null>(null);
+  // Paginação
+  const [propsCursor, setPropsCursor] = useState<Cursor>(null);
+  const [propsHasMore, setPropsHasMore] = useState(false);
+  const [listsCursor, setListsCursor] = useState<Cursor>(null);
+  const [listsHasMore, setListsHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const load = async () => {
     setLoadingData(true);
     try {
-      const [props, lsts] = await Promise.all([getProperties(), getListings()]);
-      setProperties(props); setListings(lsts);
-    } catch { setProperties([]); setListings([]); }
-    finally { setLoadingData(false); }
+      const [pPage, lPage] = await Promise.all([getPropertiesPage(), getListingsPage()]);
+      setProperties(pPage.items); setPropsCursor(pPage.cursor); setPropsHasMore(pPage.hasMore);
+      setListings(lPage.items); setListsCursor(lPage.cursor); setListsHasMore(lPage.hasMore);
+    } catch {
+      setProperties([]); setListings([]); setPropsHasMore(false); setListsHasMore(false);
+    } finally { setLoadingData(false); }
+  };
+
+  const loadMoreProps = async () => {
+    if (loadingMore || !propsHasMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await getPropertiesPage(propsCursor);
+      setProperties(prev => [...prev, ...page.items]);
+      setPropsCursor(page.cursor); setPropsHasMore(page.hasMore);
+    } catch { /* mantém o que já há */ }
+    finally { setLoadingMore(false); }
+  };
+
+  const loadMoreLists = async () => {
+    if (loadingMore || !listsHasMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await getListingsPage(listsCursor);
+      setListings(prev => [...prev, ...page.items]);
+      setListsCursor(page.cursor); setListsHasMore(page.hasMore);
+    } catch { /* mantém o que já há */ }
+    finally { setLoadingMore(false); }
   };
 
   useEffect(() => { load(); }, []);
@@ -963,6 +993,14 @@ const Marketplace = () => {
                         <p className="text-muted-foreground">Nenhuma terra encontrada.</p>
                       </div>
                     )}
+                    {propsHasMore && !searchTerm && activeFilters === 0 && (
+                      <div className="flex justify-center mt-6">
+                        <Button variant="outline" onClick={loadMoreProps} disabled={loadingMore} className="rounded-xl gap-2">
+                          {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+                          Carregar mais terrenos
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -1058,6 +1096,15 @@ const Marketplace = () => {
                       </div>
                     )}
                   </div>
+
+                  {listsHasMore && !searchTerm && (
+                    <div className="flex justify-center">
+                      <Button variant="outline" onClick={loadMoreLists} disabled={loadingMore} className="rounded-xl gap-2">
+                        {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+                        Carregar mais produtos
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
