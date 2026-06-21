@@ -17,7 +17,7 @@ interface ChatRequest {
   systemPrompt: string;
 }
 
-const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconecta[\w-]*\.(pages\.dev|app)$/;
+const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconect[\w-]*\.(pages\.dev|app)$/;
 const MODEL = 'gemini-2.5-flash';
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_TURNS = 10;
