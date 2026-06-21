@@ -11,15 +11,14 @@ interface Env {
 
 const PAYSUITE_BASE_URL = 'https://app.paysuite.co.mz/api/v1';
 
-const ALLOWED_ORIGINS = [
-  'https://agroconect-67907.web.app',
-  'https://agroconect-67907.firebaseapp.com',
-];
+// Aceita os domínios do AgroConecta (Cloudflare Pages, Firebase Hosting) e localhost (dev)
+const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconect[\w-]*\.(pages\.dev|app|web\.app|firebaseapp\.com)$/;
+const LOCALHOST = ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:8080'];
 
 function corsHeaders(origin: string | null): Record<string, string> {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowed = !!origin && (ALLOWED_ORIGIN_PATTERN.test(origin) || LOCALHOST.includes(origin));
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': allowed ? origin! : 'null',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',

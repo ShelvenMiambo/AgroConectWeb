@@ -1,0 +1,20 @@
+{
+  "name": "AgroConecta — Plataforma Agrícola",
+  "short_name": "AgroConecta",
+  "description": "Marketplace de terras, assistente IA agrícola, gestão de produção e negociações para Moçambique.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "pt-MZ",
+  "background_color": "#0e140e",
+  "theme_color": "#2d6a2d",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
