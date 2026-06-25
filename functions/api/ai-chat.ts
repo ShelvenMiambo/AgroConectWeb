@@ -56,9 +56,6 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   if (!env.VITE_GEMINI_API_KEY) {
     return new Response(JSON.stringify({ error: 'AI não configurado.' }), { status: 503, headers });
   }
-  // DIAG temporário: impressão digital da chave (para confirmar qual chave o Cloudflare usa)
-  const k = env.VITE_GEMINI_API_KEY;
-  const keyFingerprint = `${k.slice(0, 8)}…${k.slice(-4)} (len ${k.length})`;
 
   let body: ChatRequest;
   try {
@@ -114,8 +111,12 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
       if (res.status === 429) return new Response(JSON.stringify({ error: 'Limite atingido. Aguarde 30s.' }), { status: 429, headers });
       if (res.status === 400) return new Response(JSON.stringify({ error: `Pedido inválido: ${err?.error?.message || ''}` }), { status: 400, headers });
-      if (res.status === 401 || res.status === 403) return new Response(JSON.stringify({ error: `Acesso negado pelo Gemini [chave ${keyFingerprint}]: ${err?.error?.message || 'chave inválida ou API não ativada'}` }), { status: 403, headers });
-      return new Response(JSON.stringify({ error: `Erro ${res.status}: ${err?.error?.message || ''}` }), { status: 502, headers });
+      if (res.status === 401 || res.status === 403) {
+        console.error('[ai-chat] Gemini auth error:', err?.error?.message);
+        return new Response(JSON.stringify({ error: 'Serviço de IA indisponível de momento. Tente mais tarde.' }), { status: 403, headers });
+      }
+      console.error('[ai-chat] Gemini error:', res.status, err?.error?.message);
+      return new Response(JSON.stringify({ error: 'Serviço temporariamente indisponível. Tente mais tarde.' }), { status: 502, headers });
     }
 
     const data = await res.json() as { candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[] };
