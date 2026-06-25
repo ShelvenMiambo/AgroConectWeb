@@ -180,18 +180,24 @@ const Header = () => {
           <div className="flex h-16 items-center justify-between gap-4">
 
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 flex-shrink-0 group">
-              <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shadow-medium group-hover:shadow-glow transition-spring">
-                <span className="text-white font-black text-sm font-['Outfit']">AC</span>
+            <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
+              <div className="h-9 w-9 flex-shrink-0 group-hover:scale-105 transition-spring">
+                <svg viewBox="0 0 48 48" className="h-full w-full" aria-hidden="true">
+                  <rect width="48" height="48" rx="13" fill="#1e5c1e" />
+                  <path d="M11 33 H37" stroke="#ffffff" strokeWidth="2.6" strokeLinecap="round" />
+                  <path d="M15 39 H33" stroke="#7cc47c" strokeWidth="2.6" strokeLinecap="round" />
+                  <path d="M24 33 V18" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" />
+                  <path d="M23.5 21 C23.5 14.5 19 11 12 11 C12 17.5 17 21 23.5 21 Z" fill="#7cc47c" />
+                  <path d="M25 19 C25 12.5 30 9 37 9 C37 15.5 32 19 25 19 Z" fill="#ffffff" />
+                </svg>
               </div>
               <div className="flex flex-col leading-none">
-                <span className={`text-base font-black font-['Outfit'] transition-colors ${
-                  scrolled || !isHome ? "text-primary" : "text-white"
-                }`}>
-                  AgroConecta
+                <span className="text-base font-black font-['Outfit'] transition-colors">
+                  <span className={scrolled || !isHome ? "text-primary" : "text-white"}>Agro</span>
+                  <span className="text-accent">Conecta</span>
                 </span>
                 <span className={`text-[10px] font-semibold tracking-widest uppercase transition-colors ${
-                  scrolled || !isHome ? "text-muted-foreground" : "text-white/60"
+                  scrolled || !isHome ? "text-muted-foreground" : "text-white/75"
                 }`}>
                   Moçambique
                 </span>
@@ -243,7 +249,7 @@ const Header = () => {
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">
-              <ThemeToggle />
+              <ThemeToggle className={scrolled || !isHome ? "" : "text-white hover:bg-white/15"} />
 
               <div className="relative">
                 <Button
