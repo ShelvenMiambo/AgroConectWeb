@@ -1,27 +1,32 @@
-// Firebase Storage — upload e eliminação de imagens de propriedades.
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '../firebase';
+// Upload/eliminação de imagens via Cloudflare R2 (através das Functions /api/upload e /api/images).
+// Substitui o Firebase Storage (evita o erro 402 de billing).
+import { apiFetch } from '@/lib/apiClient';
 
-export const uploadPropertyImages = async (propertyId: string, files: File[]): Promise<string[]> => {
+/** Faz upload de imagens para o R2 e devolve os URLs (relativos: /api/images/<key>). */
+export const uploadPropertyImages = async (_propertyId: string, files: File[]): Promise<string[]> => {
   const urls: string[] = [];
   for (const file of files) {
-    const path = `properties/${propertyId}/${Date.now()}_${file.name}`;
-    const sRef = storageRef(storage, path);
-    const snap = await uploadBytes(sRef, file);
-    urls.push(await getDownloadURL(snap.ref));
+    const form = new FormData();
+    form.append('file', file);
+    const res = await apiFetch('/api/upload', { method: 'POST', body: form });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { error?: string };
+      throw new Error(err.error || 'Falha ao enviar a imagem.');
+    }
+    const data = await res.json() as { url: string };
+    urls.push(data.url);
   }
   return urls;
 };
 
+/** Remove imagens do R2 (best-effort). Aceita URLs /api/images/<key> ou keys diretas. */
 export const deleteImagesFromStorage = async (imageUrls: string[]): Promise<void> => {
   for (const url of imageUrls) {
+    const key = url.startsWith('/api/images/') ? url.slice('/api/images/'.length) : url;
+    // Só tenta apagar imagens do R2 (ignora URLs antigos do Firebase Storage)
+    if (url.startsWith('http')) continue;
     try {
-      const decodedUrl = decodeURIComponent(url);
-      const pathMatch = decodedUrl.match(/\/o\/(.+?)\?/);
-      if (pathMatch) {
-        const sRef = storageRef(storage, pathMatch[1]);
-        await deleteObject(sRef);
-      }
-    } catch { /* ignore if already deleted */ }
+      await apiFetch(`/api/upload?key=${encodeURIComponent(key)}`, { method: 'DELETE' });
+    } catch { /* best-effort */ }
   }
 };
