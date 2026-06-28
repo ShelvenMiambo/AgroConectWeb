@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 
 export interface PlanPrices {
   mensal: number;
@@ -29,27 +28,30 @@ export function usePlanConfig(): { config: PlanConfig; loading: boolean } {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      getDoc(doc(db, 'config', 'plans')),
-      getDoc(doc(db, 'config', 'settings')),
-    ])
-      .then(([plansSnap, settingsSnap]) => {
+    supabase
+      .from('config')
+      .select('id, data')
+      .in('id', ['plans', 'settings'])
+      .then(({ data, error }) => {
+        if (error) { setConfig(DEFAULT_CONFIG); return; }
+        const rows = (data ?? []) as { id: string; data: any }[];
+        const plans = rows.find(r => r.id === 'plans')?.data ?? {};
+        const settings = rows.find(r => r.id === 'settings')?.data ?? {};
+
         const prices: PlanPrices = { ...DEFAULT_PRICES };
-        if (plansSnap.exists()) {
-          const d = plansSnap.data();
-          if (typeof d.mensal === 'number')     prices.mensal = d.mensal;
-          if (typeof d.trimestral === 'number') prices.trimestral = d.trimestral;
-          if (typeof d.anual === 'number')      prices.anual = d.anual;
-        }
+        if (typeof plans.mensal === 'number') prices.mensal = plans.mensal;
+        if (typeof plans.trimestral === 'number') prices.trimestral = plans.trimestral;
+        if (typeof plans.anual === 'number') prices.anual = plans.anual;
+
         const isPromotionActive =
-          settingsSnap.exists() && typeof settingsSnap.data().isPromotionActive === 'boolean'
-            ? settingsSnap.data().isPromotionActive
+          typeof settings.isPromotionActive === 'boolean'
+            ? settings.isPromotionActive
             : DEFAULT_CONFIG.isPromotionActive;
 
         setConfig({ prices, isPromotionActive });
       })
-      .catch(() => setConfig(DEFAULT_CONFIG))
-      .finally(() => setLoading(false));
+      .then(undefined, () => setConfig(DEFAULT_CONFIG))
+      .then(() => setLoading(false));
   }, []);
 
   return { config, loading };

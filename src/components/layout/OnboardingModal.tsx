@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from '@/features/auth/context/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import { Loader2, User, Phone, CheckCircle, Leaf, Sprout, Home, ShoppingBag, Package, AlertTriangle } from 'lucide-react';
 
 const profileOptions = [
@@ -54,11 +53,12 @@ const OnboardingModal = () => {
     setSaving(true);
     setSaveError('');
     try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        userType: selectedTypes[0], // Keep for backward compatibility
-        userTypes: selectedTypes,
+      const { error } = await supabase.from('profiles').update({
+        user_type: selectedTypes[0],
+        user_types: selectedTypes,
         phone: phone || userData?.phone || '',
-      });
+      }).eq('id', currentUser.uid);
+      if (error) throw error;
       window.location.reload();
     } catch (err) {
       console.error('Error updating profile:', err);

@@ -1,14 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import {
-  User, onAuthStateChanged, signInWithEmailAndPassword,
-  createUserWithEmailAndPassword, signOut, signInWithPopup, signInWithRedirect,
-  sendPasswordResetEmail, updateProfile
-} from 'firebase/auth';
-import {
-  doc, setDoc, getDoc, serverTimestamp
-} from 'firebase/firestore';
-import { auth, db, googleProvider } from '@/lib/firebase';
-import { env } from '@/lib/env';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+
+// Utilizador normalizado (mantém .uid para compatibilidade com os consumidores)
+export interface AppUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+}
 
 export interface UserData {
   uid: string;
@@ -19,142 +18,138 @@ export interface UserData {
   userType?: 'agricultor' | 'proprietario' | 'vendedor' | 'comprador' | 'pendente';
   userTypes?: ('agricultor' | 'proprietario' | 'vendedor' | 'comprador')[];
   plan?: 'gratuito' | 'mensal' | 'trimestral' | 'anual';
-  planAtivadoEm?: string;   // ISO date string
-  planExpiraEm?: string;    // ISO date string
-  favoritos?: string[];     // propertyIds guardados pelo utilizador
+  planAtivadoEm?: string;
+  planExpiraEm?: string;
+  favoritos?: string[];
   createdAt: any;
   photoURL?: string;
 }
 
 interface AuthContextType {
-  currentUser: User | null;
+  currentUser: AppUser | null;
   userData: UserData | null;
   userRole: 'user' | 'admin' | null;
   loading: boolean;
-  login: (email: string, pass: string) => Promise<any>;
-  register: (email: string, pass: string, name: string, phone?: string, userType?: string, userTypes?: string[]) => Promise<any>;
+  login: (email: string, pass: string) => Promise<void>;
+  register: (email: string, pass: string, name: string, phone?: string, userType?: string, userTypes?: string[]) => Promise<void>;
   logout: () => Promise<void>;
-  loginWithGoogle: () => Promise<any>;
+  loginWithGoogle: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
-
 export const useAuth = () => useContext(AuthContext);
 
-// Helper: fetch or create user document in Firestore (non-blocking)
-const syncUserToFirestore = async (user: User, extraData?: Partial<UserData>): Promise<UserData | null> => {
+// Traduz erros do Supabase Auth para mensagens amigáveis (pt-MZ)
+function authError(message: string): Error {
+  const m = message.toLowerCase();
+  if (m.includes('invalid login credentials')) return new Error('Email ou palavra-passe incorretos.');
+  if (m.includes('already registered') || m.includes('already exists')) return new Error('Este email já está registado.');
+  if (m.includes('email not confirmed')) return new Error('Confirme o seu email antes de entrar.');
+  if (m.includes('password should be')) return new Error('Palavra-passe demasiado fraca (mínimo 6 caracteres).');
+  if (m.includes('rate limit') || m.includes('too many')) return new Error('Muitas tentativas. Aguarde alguns minutos.');
+  if (m.includes('network')) return new Error('Verifique a sua ligação à internet.');
+  return new Error(message || 'Ocorreu um erro. Tente novamente.');
+}
+
+function mapProfile(row: any): UserData {
+  return {
+    uid: row.id,
+    name: row.name ?? '',
+    email: row.email ?? '',
+    phone: row.phone ?? '',
+    role: row.role ?? 'user',
+    userType: row.user_type ?? 'pendente',
+    userTypes: row.user_types ?? [],
+    plan: row.plan ?? 'gratuito',
+    planAtivadoEm: row.plan_ativado_em ?? undefined,
+    planExpiraEm: row.plan_expira_em ?? undefined,
+    favoritos: row.favoritos ?? [],
+    createdAt: row.created_at ?? null,
+    photoURL: row.photo_url ?? '',
+  };
+}
+
+const fetchProfile = async (uid: string): Promise<UserData | null> => {
   try {
-    const ref = doc(db, 'users', user.uid);
-    const snap = await getDoc(ref);
-
-    // Determine role: admin email from env, otherwise 'user'
-    const adminEmail = env.adminEmail;
-    const isAdmin = adminEmail && user.email === adminEmail;
-
-    if (!snap.exists()) {
-      // First time: create user document
-      await setDoc(ref, {
-        uid: user.uid,
-        uidPrefix: user.uid.slice(0, 8), // used by payment webhook to locate user
-        name: extraData?.name || user.displayName || user.email?.split('@')[0] || 'Utilizador',
-        email: user.email || '',
-        phone: extraData?.phone || '',
-        role: isAdmin ? 'admin' : 'user',
-        userType: extraData?.userType || 'pendente',
-        userTypes: extraData?.userTypes || [],
-        plan: 'gratuito', // default plan
-        photoURL: user.photoURL || '',
-        createdAt: serverTimestamp(),
-      });
-    } else if (isAdmin && snap.data()?.role !== 'admin') {
-      // Promote to admin if env email matches
-      await setDoc(ref, { role: 'admin' }, { merge: true });
-    }
-
-    const updated = await getDoc(ref);
-    return updated.data() as UserData;
-  } catch (err) {
-    // Firestore unavailable or rules blocking — log but don't crash login
-    console.warn('[AgroConecta] Firestore sync failed, continuing with auth only:', err);
-    // Return a minimal userData based on Firebase Auth info
-    const adminEmail = env.adminEmail;
-    return {
-      uid: user.uid,
-      name: extraData?.name || user.displayName || user.email?.split('@')[0] || 'Utilizador',
-      email: user.email || '',
-      phone: extraData?.phone || '',
-      role: (adminEmail && user.email === adminEmail) ? 'admin' : 'user',
-      photoURL: user.photoURL || '',
-      createdAt: null,
-    } as UserData;
+    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
+    return data ? mapProfile(data) : null;
+  } catch {
+    return null;
   }
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const userRole = userData?.role ?? null;
 
-  // Register — saves to Firebase Auth + Firestore
-  const register = async (email: string, pass: string, name: string, phone?: string, userType?: string, userTypes?: string[]) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    await updateProfile(cred.user, { displayName: name });
-    const data = await syncUserToFirestore(cred.user, { name, phone, userType: userType as any, userTypes: userTypes as any });
-    setUserData(data);
-    return cred;
+  const applySession = async (session: Session | null) => {
+    const u = session?.user;
+    if (u) {
+      setCurrentUser({
+        uid: u.id,
+        email: u.email ?? null,
+        displayName: (u.user_metadata?.name as string) ?? u.email?.split('@')[0] ?? null,
+      });
+      setUserData(await fetchProfile(u.id));
+    } else {
+      setCurrentUser(null);
+      setUserData(null);
+    }
   };
 
-  // Login with email/password — fetches Firestore profile
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      applySession(data.session).finally(() => setLoading(false));
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   const login = async (email: string, pass: string) => {
-    const cred = await signInWithEmailAndPassword(auth, email, pass);
-    const data = await syncUserToFirestore(cred.user);
-    setUserData(data);
-    return cred;
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) throw authError(error.message);
   };
 
-  // Login with Google — creates or syncs Firestore profile
-  const loginWithGoogle = async () => {
-    // Usamos signInWithRedirect em vez de popup para evitar bloqueios em browsers mobile (ex: in-app browsers)
-    await signInWithRedirect(auth, googleProvider);
+  const register = async (email: string, pass: string, name: string, phone?: string, userType?: string, userTypes?: string[]) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { name, phone: phone ?? '', user_type: userType ?? 'pendente', user_types: userTypes ?? [] } },
+    });
+    if (error) throw authError(error.message);
   };
 
-  // Logout — clears local state
   const logout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
+    setCurrentUser(null);
     setUserData(null);
   };
 
-  // Password reset email
-  const resetPassword = (email: string) => {
-    return sendPasswordResetEmail(auth, email);
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) throw authError(error.message);
   };
 
-  // Auth state observer — runs once on mount
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        try {
-          const data = await syncUserToFirestore(user);
-          setUserData(data);
-        } catch {
-          setUserData(null);
-        }
-      } else {
-        setUserData(null);
-      }
-      setLoading(false);
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
     });
-    return unsubscribe;
-  }, []);
+    if (error) throw authError(error.message);
+  };
 
   return (
     <AuthContext.Provider value={{
       currentUser, userData, userRole, loading,
-      login, register, logout, loginWithGoogle, resetPassword
+      login, register, logout, loginWithGoogle, resetPassword,
     }}>
       {!loading && children}
     </AuthContext.Provider>

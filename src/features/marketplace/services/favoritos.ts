@@ -1,21 +1,23 @@
-// Favoritos service — guarda propertyIds favoritos no doc do utilizador (users/{uid})
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+// Favoritos — guardados no array profiles.favoritos (Supabase).
+import { supabase } from '@/lib/supabase';
 
-/** Adiciona uma propriedade aos favoritos do utilizador. */
+async function getFavoritos(uid: string): Promise<string[]> {
+  const { data } = await supabase.from('profiles').select('favoritos').eq('id', uid).single();
+  return data?.favoritos ?? [];
+}
+
 export const addFavorito = async (uid: string, propertyId: string): Promise<void> => {
-  await updateDoc(doc(db, 'users', uid), { favoritos: arrayUnion(propertyId) });
+  const current = await getFavoritos(uid);
+  if (current.includes(propertyId)) return;
+  await supabase.from('profiles').update({ favoritos: [...current, propertyId] }).eq('id', uid);
 };
 
-/** Remove uma propriedade dos favoritos do utilizador. */
 export const removeFavorito = async (uid: string, propertyId: string): Promise<void> => {
-  await updateDoc(doc(db, 'users', uid), { favoritos: arrayRemove(propertyId) });
+  const current = await getFavoritos(uid);
+  await supabase.from('profiles').update({ favoritos: current.filter((p) => p !== propertyId) }).eq('id', uid);
 };
 
-/**
- * Alterna o estado de favorito de uma propriedade.
- * @returns o novo estado (`true` = passou a favorito).
- */
+/** Alterna o favorito. @returns o novo estado (true = passou a favorito). */
 export const toggleFavorito = async (
   uid: string,
   propertyId: string,

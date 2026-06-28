@@ -86,7 +86,7 @@ const Login = () => {
     try { clearMessages(); setLoading(true);
       await login(data.email, data.password);
       navigate('/');
-    } catch (e: any) { setError(errorMap[e.code] || 'Erro ao entrar. Tente novamente.');
+    } catch (e: any) { setError(e.message || 'Erro ao entrar. Tente novamente.');
     } finally { setLoading(false); }
   };
 
@@ -94,18 +94,17 @@ const Login = () => {
     try { clearMessages(); setLoading(true);
       await register(data.email, data.password, data.name, data.phone, data.userTypes[0], data.userTypes);
       navigate('/');
-    } catch (e: any) { setError(errorMap[e.code] || 'Erro ao criar conta. Tente novamente.');
+    } catch (e: any) { setError(e.message || 'Erro ao criar conta. Tente novamente.');
     } finally { setLoading(false); }
   };
 
   const handleGoogle = async () => {
     try { clearMessages(); setLoading(true);
       await loginWithGoogle();
-      navigate('/');
+      // O OAuth do Google redireciona; o navigate fica como fallback.
     } catch (e: any) {
-      const msg = errorMap[e.code] || `Erro Google (${e.code || 'desconhecido'}). Tente novamente.`;
-      setError(msg);
-      console.error('[Google Login Error]', e.code, e.message);
+      setError(e.message || 'Erro ao entrar com Google. Tente novamente.');
+      console.error('[Google Login Error]', e.message);
     } finally { setLoading(false); }
   };
 
@@ -114,7 +113,7 @@ const Login = () => {
       await resetPassword(data.email);
       setSuccess(`Email enviado para ${data.email}. Verifique a sua caixa de entrada (e spam).`);
       resetForm.reset();
-    } catch (e: any) { setError(errorMap[e.code] || 'Erro ao enviar email. Verifique o endereço.');
+    } catch (e: any) { setError(e.message || 'Erro ao enviar email. Verifique o endereço.');
     } finally { setLoading(false); }
   };
 

@@ -2,16 +2,5 @@ name = "agroconecta"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
 
-# Imagens dos anúncios (Cloudflare R2). Criar o bucket e o binding "IMAGES" no painel:
-# Cloudflare Pages → projeto → Settings → Functions → R2 bucket bindings
-#   Variable name: IMAGES   |   R2 bucket: agroconecta-images
-[[r2_buckets]]
-binding = "IMAGES"
-bucket_name = "agroconecta-images"
-
-[env.production]
-name = "agroconecta-production"
-
-[[env.production.r2_buckets]]
-binding = "IMAGES"
-bucket_name = "agroconecta-images"
+# Nota: As imagens estão no Supabase Storage (bucket 'property-images').
+# O Cloudflare R2 não é usado neste projecto.

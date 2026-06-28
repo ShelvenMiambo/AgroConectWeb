@@ -1,54 +1,23 @@
-// Serviço de conta — eliminação completa dos dados de um utilizador.
-import { collection, doc, getDocs, deleteDoc, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+// Serviço de conta — eliminação dos dados do utilizador (Supabase).
+import { supabase } from '@/lib/supabase';
 import type { Property } from '@/types';
 import { deleteProperty } from '@/features/marketplace/services/properties';
-import { deleteListing } from '@/features/marketplace/services/listings';
 
 export const deleteUserAccountData = async (uid: string): Promise<void> => {
-  // 1. Delete Properties & their images
-  const snapProps = await getDocs(query(collection(db, 'properties'), where('donoUid', '==', uid)));
-  for (const docSnap of snapProps.docs) {
-    const p = docSnap.data() as Property;
-    await deleteProperty(docSnap.id, p.imageUrls ?? []);
+  // 1. Propriedades + imagens
+  const { data: props } = await supabase.from('properties').select('id, image_urls').eq('dono_uid', uid);
+  for (const p of props ?? []) {
+    await deleteProperty(p.id, (p as any).image_urls ?? [] as Property['imageUrls']);
   }
 
-  // 2. Delete Listings
-  const snapListings = await getDocs(query(collection(db, 'listings'), where('autorUid', '==', uid)));
-  for (const docSnap of snapListings.docs) {
-    await deleteListing(docSnap.id);
-  }
+  // 2-6. As restantes tabelas apagam por dono (RLS permite o próprio).
+  await supabase.from('listings').delete().eq('autor_uid', uid);
+  await supabase.from('producao').delete().eq('uid', uid);
+  await supabase.from('alertas').delete().eq('uid', uid);
+  await supabase.from('ocorrencias').delete().eq('uid', uid);
+  // Negociações (como qualquer das partes) — as mensagens caem em cascata.
+  await supabase.from('negociacoes').delete().or(`arrendatario_uid.eq.${uid},proprietario_uid.eq.${uid}`);
 
-  // 3. Delete Production Plans
-  const snapPlanos = await getDocs(query(collection(db, 'producao'), where('uid', '==', uid)));
-  for (const docSnap of snapPlanos.docs) {
-    await deleteDoc(doc(db, 'producao', docSnap.id));
-  }
-
-  // 4. Delete Alerts
-  const snapAlerts = await getDocs(query(collection(db, 'alertas'), where('uid', '==', uid)));
-  for (const docSnap of snapAlerts.docs) {
-    await deleteDoc(doc(db, 'alertas', docSnap.id));
-  }
-
-  // 5. Delete Occurrences
-  const snapOcorrencias = await getDocs(query(collection(db, 'ocorrencias'), where('uid', '==', uid)));
-  for (const docSnap of snapOcorrencias.docs) {
-    await deleteDoc(doc(db, 'ocorrencias', docSnap.id));
-  }
-
-  // 6. Delete Negotiations (as either party)
-  const [snapArrend, snapProp] = await Promise.all([
-    getDocs(query(collection(db, 'negociacoes'), where('arrendatarioUid', '==', uid))),
-    getDocs(query(collection(db, 'negociacoes'), where('proprietarioUid', '==', uid))),
-  ]);
-  const negIdsToDelete = new Set<string>();
-  snapArrend.docs.forEach(d => negIdsToDelete.add(d.id));
-  snapProp.docs.forEach(d => negIdsToDelete.add(d.id));
-  for (const id of negIdsToDelete) {
-    await deleteDoc(doc(db, 'negociacoes', id));
-  }
-
-  // 7. Finally, delete the User profile document
-  await deleteDoc(doc(db, 'users', uid));
+  // 7. Perfil
+  await supabase.from('profiles').delete().eq('id', uid);
 };

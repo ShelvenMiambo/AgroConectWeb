@@ -11,8 +11,7 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 import OnboardingModal from "./OnboardingModal";
 import { markAlertaAsRead } from "@/features/producao/services/alertas";
 import type { Alerta } from "@/types";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase";
 
 /* ── Definição de acessos por perfil ─────────────────── */
 type NavItem = { label: string; href: string; icon: React.ElementType; desc: string };
@@ -96,7 +95,7 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  // Listeners em tempo real: alertas + negociações (ambas as partes)
+  // Notificações via Supabase (com Realtime): alertas + negociações
   useEffect(() => {
     if (!currentUser) {
       setNotificationCount(0);
@@ -106,35 +105,32 @@ const Header = () => {
       return;
     }
     const uid = currentUser.uid;
+    let active = true;
 
-    const unsubAlertas = onSnapshot(
-      query(collection(db, 'alertas'), where('uid', '==', uid)),
-      snap => {
-        const alts = snap.docs
-          .map(d => ({ id: d.id, ...d.data() } as Alerta))
-          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
-        setAlertsList(alts);
-      },
-      console.error
-    );
+    const refresh = async () => {
+      const [alts, negs] = await Promise.all([
+        supabase.from('alertas').select('*').eq('uid', uid).order('created_at', { ascending: false }),
+        supabase.from('negociacoes').select('id, status, proprietario_uid, arrendatario_uid'),
+      ]);
+      if (!active) return;
+      setAlertsList((alts.data ?? []).map((a: any) => ({
+        id: a.id, uid: a.uid, planoId: a.plano_id, planoNome: a.plano_nome,
+        tipo: a.tipo, titulo: a.titulo, descricao: a.descricao,
+        urgencia: a.urgencia, lido: a.lido, createdAt: a.created_at,
+      } as Alerta)));
+      const list = (negs.data ?? []) as any[];
+      setNegPropCount(list.filter(n => n.proprietario_uid === uid && n.status === 'pendente').length);
+      setNegArrCount(list.filter(n => n.arrendatario_uid === uid && (n.status === 'aceite' || n.status === 'recusada')).length);
+    };
 
-    const unsubProp = onSnapshot(
-      query(collection(db, 'negociacoes'), where('proprietarioUid', '==', uid)),
-      snap => setNegPropCount(snap.docs.filter(d => d.data().status === 'pendente').length),
-      console.error
-    );
+    refresh();
+    const channel = supabase.channel(`notifs-${uid}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alertas', filter: `uid=eq.${uid}` }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'negociacoes' }, refresh)
+      .subscribe();
 
-    const unsubArr = onSnapshot(
-      query(collection(db, 'negociacoes'), where('arrendatarioUid', '==', uid)),
-      snap => setNegArrCount(snap.docs.filter(d => {
-        const s = d.data().status;
-        return s === 'aceite' || s === 'recusada';
-      }).length),
-      console.error
-    );
-
-    return () => { unsubAlertas(); unsubProp(); unsubArr(); };
-  }, [currentUser]);
+    return () => { active = false; supabase.removeChannel(channel); };
+  }, [currentUser, location.pathname]);
 
   // Recalcular o badge sempre que as fontes mudam
   useEffect(() => {
@@ -287,7 +283,7 @@ const Header = () => {
                             className={`p-3 text-sm cursor-pointer rounded-lg mb-1 transition-colors ${alert.lido ? 'hover:bg-muted' : 'bg-primary/5 hover:bg-primary/10 border border-primary/20'}`}
                           >
                             <p className={`font-semibold ${alert.lido ? 'text-foreground/80' : 'text-primary'}`}>{alert.titulo}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{alert.mensagem}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{alert.descricao}</p>
                           </div>
                         ))
                       )}

@@ -1,24 +1,33 @@
-// Serviço de alertas (por plano de produção).
-import {
-  collection, doc, addDoc, getDocs, updateDoc,
-  query, where, orderBy, serverTimestamp
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+// Serviço de alertas — Supabase.
+import { supabase } from '@/lib/supabase';
 import type { Alerta } from '@/types';
 
+function mapAlerta(r: any): Alerta {
+  return {
+    id: r.id, uid: r.uid, planoId: r.plano_id, planoNome: r.plano_nome,
+    tipo: r.tipo, titulo: r.titulo, descricao: r.descricao,
+    urgencia: r.urgencia, lido: r.lido, createdAt: r.created_at,
+  };
+}
+
 export const getAlertas = async (uid: string): Promise<Alerta[]> => {
-  const snap = await getDocs(query(
-    collection(db, 'alertas'),
-    where('uid', '==', uid),
-    orderBy('createdAt', 'desc')
-  ));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Alerta));
+  const { data, error } = await supabase.from('alertas').select('*').eq('uid', uid).order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapAlerta);
 };
 
 export const addAlerta = async (data: Omit<Alerta, 'id' | 'createdAt'>) => {
-  return await addDoc(collection(db, 'alertas'), { ...data, lido: false, createdAt: serverTimestamp() });
+  const row = {
+    uid: data.uid, plano_id: data.planoId, plano_nome: data.planoNome,
+    tipo: data.tipo, titulo: data.titulo, descricao: data.descricao,
+    urgencia: data.urgencia, lido: false,
+  };
+  const { data: ins, error } = await supabase.from('alertas').insert(row).select('id').single();
+  if (error) throw error;
+  return ins;
 };
 
 export const markAlertaAsRead = async (id: string): Promise<void> => {
-  await updateDoc(doc(db, 'alertas', id), { lido: true });
+  const { error } = await supabase.from('alertas').update({ lido: true }).eq('id', id);
+  if (error) throw error;
 };

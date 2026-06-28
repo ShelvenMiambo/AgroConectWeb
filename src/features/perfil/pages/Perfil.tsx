@@ -7,19 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   User, Mail, Phone, Leaf, Shield, CheckCircle,
   Crown, Handshake, MapPin, LogOut, Edit3, Save,
-  Loader2, Sprout, Star, Zap, X, AlertCircle, Calendar, Trash2, Package, Trash
+  Loader2, Sprout, Star, Zap, X, AlertCircle, Calendar, Trash2, Package, Trash, Home
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getProperties, deleteProperty } from '@/features/marketplace/services/properties';
 import { getUserListings, deleteListing } from '@/features/marketplace/services/listings';
 import { deleteUserAccountData } from '@/features/perfil/services/account';
 import type { Property, Listing } from '@/types';
-import { deleteUser } from 'firebase/auth';
+import { supabase } from '@/lib/supabase';
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/features/auth/context/AuthContext";
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import {
   initiatePayment, checkPaymentStatus, activatePlan,
   isValidPhone, formatPhone, type PlanId, type PaymentMethod
@@ -357,13 +355,11 @@ const Perfil = () => {
     setDeletingAccount(true);
     try {
       await deleteUserAccountData(currentUser.uid);
-      await deleteUser(currentUser);
+      await supabase.auth.signOut();
       navigate('/');
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/requires-recent-login') {
-        alert('Por motivos de segurança, precisa de terminar a sessão e entrar novamente antes de apagar a conta.');
-      } else {
+      {
         alert('Erro ao apagar conta. Tente novamente.');
       }
     } finally {
@@ -376,12 +372,12 @@ const Perfil = () => {
     setSaving(true);
     try {
       const primaryType = userTypes[0] || 'pendente';
-      await updateDoc(doc(db, 'users', currentUser.uid), { 
-        name, 
+      await supabase.from('profiles').update({
+        name,
         phone,
-        userType: primaryType,
-        userTypes: userTypes
-      });
+        user_type: primaryType,
+        user_types: userTypes,
+      }).eq('id', currentUser.uid);
       setEditing(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       window.location.reload();
@@ -519,7 +515,7 @@ const Perfil = () => {
                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email</Label>
                     <p className="font-semibold flex items-center gap-2">
                       {currentUser?.email}
-                      {currentUser?.emailVerified && <CheckCircle className="h-4 w-4 text-success" />}
+                      {currentUser?.email && <CheckCircle className="h-4 w-4 text-success" />}
                     </p>
                   </div>
                   <div className={`space-y-1.5 ${editing ? 'col-span-2 mt-2' : ''}`}>

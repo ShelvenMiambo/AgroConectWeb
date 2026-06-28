@@ -4,6 +4,7 @@ import { Send, X, ShieldAlert, Loader2 } from "lucide-react";
 import { addMensagemNegociacao } from "@/features/negociacoes/services/negociacoes";
 import type { Negociacao } from "@/types";
 import { hasPhoneNumber } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 interface ChatModalProps {
   negociacao: Negociacao;
@@ -20,7 +21,23 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
   const isOwner = negociacao.proprietarioUid === currentUid;
   const otherPartyName = isOwner ? negociacao.arrendatarioNome : negociacao.proprietarioNome;
 
-  const mensagens = negociacao.mensagens || [];
+  const [mensagens, setMensagens] = useState(negociacao.mensagens || []);
+
+  // Realtime: novas mensagens aparecem ao vivo para ambas as partes
+  useEffect(() => {
+    const channel = supabase
+      .channel(`chat-${negociacao.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'mensagens', filter: `negociacao_id=eq.${negociacao.id}` },
+        (payload: any) => {
+          const m = payload.new;
+          setMensagens(prev => [...prev, { senderId: m.sender_id, text: m.text, createdAt: m.created_at }]);
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [negociacao.id]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -82,7 +99,7 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
                 }`}>
                   <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                   <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/70 text-right' : 'text-muted-foreground'}`}>
-                    {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Agora'}
+                    {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Agora'}
                   </p>
                 </div>
               </div>

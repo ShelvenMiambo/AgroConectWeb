@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Timestamp } from 'firebase/firestore';
 import { useAuth, UserData } from '@/features/auth/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +22,7 @@ import {
 
 const fmt = (ts: any) => {
   if (!ts) return '—';
-  const d = ts instanceof Timestamp ? ts.toDate() : new Date(ts);
+  const d = ts?.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 

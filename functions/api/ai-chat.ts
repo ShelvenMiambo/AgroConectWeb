@@ -18,7 +18,7 @@ interface ChatRequest {
 }
 
 const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconect[\w-]*\.(pages\.dev|app)$/;
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-2.0-flash';
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_TURNS = 10;
 
@@ -108,15 +108,14 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
+      const rawText = await res.text().catch(() => '');
+      let errMsg = '';
+      try { errMsg = (JSON.parse(rawText) as { error?: { message?: string } })?.error?.message || ''; } catch { errMsg = rawText.slice(0, 200); }
+      console.error('[ai-chat] Gemini error:', res.status, errMsg);
       if (res.status === 429) return new Response(JSON.stringify({ error: 'Limite atingido. Aguarde 30s.' }), { status: 429, headers });
-      if (res.status === 400) return new Response(JSON.stringify({ error: `Pedido inválido: ${err?.error?.message || ''}` }), { status: 400, headers });
-      if (res.status === 401 || res.status === 403) {
-        console.error('[ai-chat] Gemini auth error:', err?.error?.message);
-        return new Response(JSON.stringify({ error: 'Serviço de IA indisponível de momento. Tente mais tarde.' }), { status: 403, headers });
-      }
-      console.error('[ai-chat] Gemini error:', res.status, err?.error?.message);
-      return new Response(JSON.stringify({ error: 'Serviço temporariamente indisponível. Tente mais tarde.' }), { status: 502, headers });
+      if (res.status === 400) return new Response(JSON.stringify({ error: `Pedido inválido: ${errMsg}` }), { status: 400, headers });
+      if (res.status === 401 || res.status === 403) return new Response(JSON.stringify({ error: `Chave inválida: ${errMsg}` }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: `Serviço indisponível (${res.status}): ${errMsg}` }), { status: 502, headers });
     }
 
     const data = await res.json() as { candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[] };

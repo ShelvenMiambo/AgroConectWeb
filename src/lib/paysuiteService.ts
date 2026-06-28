@@ -16,8 +16,7 @@
  *      (necessita Firebase Functions — ver abaixo)
  */
 
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from './firebase';
+import { supabase } from './supabase';
 import { env } from './env';
 
 export type PaymentMethod = 'mpesa' | 'emola';
@@ -78,7 +77,7 @@ export async function initiatePayment(req: PaymentRequest): Promise<PaymentResul
         amount: req.amount,
         phone,
         method: req.method,
-        reference: `AGRO-${req.uid.slice(0, 8)}-${req.plan.toUpperCase()}`,
+        reference: `AGRO-${req.uid}-${req.plan.toUpperCase()}`,
         description: `AgroConecta — Plano ${req.plan}`,
         callback_url: `${window.location.origin}/api/payment-callback`,
       }),
@@ -133,11 +132,11 @@ export async function activatePlan(uid: string, plan: PlanId): Promise<void> {
   if (plan === 'trimestral')  expiry.setMonth(expiry.getMonth() + 3);
   if (plan === 'anual')       expiry.setFullYear(expiry.getFullYear() + 1);
 
-  await updateDoc(doc(db, 'users', uid), {
+  await supabase.from('profiles').update({
     plan,
-    planAtivadoEm:  serverTimestamp(),
-    planExpiraEm:   expiry.toISOString(),
-  });
+    plan_ativado_em: now.toISOString(),
+    plan_expira_em:  expiry.toISOString(),
+  }).eq('id', uid);
 }
 
 /**
