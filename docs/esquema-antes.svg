@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 470" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M2 1 L8 5 L2 9" fill="none" stroke="#666" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1040" height="470" fill="#ffffff"/>
+  <text x="20" y="28" font-size="20" font-weight="700" fill="#444">Arquitetura ANTES — Firebase</text>
+
+  <rect x="370" y="48" width="300" height="62" rx="10" fill="#EEEDFE" stroke="#9b8fe0" stroke-width="1.5"/>
+  <text x="520" y="85" text-anchor="middle" font-size="19" font-weight="700" fill="#26215C">Browser — App React</text>
+
+  <line x1="470" y1="110" x2="300" y2="186" stroke="#666" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="570" y1="110" x2="740" y2="186" stroke="#666" stroke-width="2" marker-end="url(#a)"/>
+  <text x="318" y="150" font-size="14" fill="#777">Firebase SDK</text>
+  <text x="700" y="150" font-size="14" fill="#777">fetch /api/*</text>
+
+  <rect x="60" y="190" width="470" height="240" rx="10" fill="#FAEEDA" stroke="#d9a64a" stroke-width="1.5"/>
+  <text x="84" y="218" font-size="19" font-weight="700" fill="#854F0B">Firebase</text>
+  <rect x="86" y="236" width="130" height="62" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="151" y="273" text-anchor="middle" font-size="16" fill="#333">Auth</text>
+  <rect x="238" y="236" width="132" height="62" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="304" y="273" text-anchor="middle" font-size="16" fill="#333">Firestore</text>
+  <rect x="392" y="236" width="120" height="62" rx="8" fill="#ffffff" stroke="#cc4444" stroke-width="1.8"/>
+  <text x="452" y="273" text-anchor="middle" font-size="16" fill="#333">Storage</text>
+  <text x="452" y="330" text-anchor="middle" font-size="15" font-weight="700" fill="#b00020">⚠ erro 402 (billing)</text>
+  <text x="295" y="400" text-anchor="middle" font-size="13" fill="#8a6a2a">NoSQL · regras firestore.rules · sem tempo real</text>
+
+  <rect x="600" y="190" width="440" height="116" rx="10" fill="#E6F1FB" stroke="#5b95d6" stroke-width="1.5"/>
+  <text x="624" y="218" font-size="18" font-weight="700" fill="#0C447C">Cloudflare Functions</text>
+  <rect x="624" y="232" width="180" height="56" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="714" y="266" text-anchor="middle" font-size="15" fill="#333">ai-chat (IA)</text>
+  <rect x="824" y="232" width="192" height="56" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="920" y="266" text-anchor="middle" font-size="15" fill="#333">pagamentos</text>
+
+  <line x1="714" y1="288" x2="714" y2="362" stroke="#888" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="920" y1="288" x2="920" y2="362" stroke="#888" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="624" y="364" width="180" height="56" rx="10" fill="#F1EFE8" stroke="#aaa"/>
+  <text x="714" y="398" text-anchor="middle" font-size="15" fill="#333">Google Gemini</text>
+  <rect x="824" y="364" width="192" height="56" rx="10" fill="#F1EFE8" stroke="#aaa"/>
+  <text x="920" y="398" text-anchor="middle" font-size="15" fill="#333">PaySuite</text>
+</svg>

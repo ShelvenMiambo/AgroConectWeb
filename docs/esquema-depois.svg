@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 470" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M2 1 L8 5 L2 9" fill="none" stroke="#666" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1040" height="470" fill="#ffffff"/>
+  <text x="20" y="28" font-size="20" font-weight="700" fill="#1E5C1E">Arquitetura DEPOIS — Supabase + Cloudflare</text>
+
+  <rect x="340" y="48" width="360" height="62" rx="10" fill="#EEEDFE" stroke="#9b8fe0" stroke-width="1.5"/>
+  <text x="520" y="78" text-anchor="middle" font-size="18" font-weight="700" fill="#26215C">Browser — App React</text>
+  <text x="520" y="98" text-anchor="middle" font-size="13" fill="#6a5fc0">hospedado no Cloudflare Pages</text>
+
+  <line x1="470" y1="110" x2="300" y2="186" stroke="#666" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="580" y1="110" x2="760" y2="186" stroke="#666" stroke-width="2" marker-end="url(#a)"/>
+  <text x="300" y="150" font-size="14" fill="#777">supabase-js (RLS)</text>
+  <text x="720" y="150" font-size="14" fill="#777">fetch /api/*</text>
+
+  <rect x="50" y="190" width="540" height="240" rx="10" fill="#DDF1EA" stroke="#3fae8e" stroke-width="1.5"/>
+  <text x="74" y="218" font-size="19" font-weight="700" fill="#0F6E56">Supabase — tudo num só sítio (grátis)</text>
+  <rect x="72" y="236" width="120" height="62" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="132" y="266" text-anchor="middle" font-size="15" fill="#333">Auth</text>
+  <text x="132" y="284" text-anchor="middle" font-size="12" fill="#777">login</text>
+  <rect x="202" y="236" width="120" height="62" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="262" y="266" text-anchor="middle" font-size="15" fill="#333">Base de dados</text>
+  <text x="262" y="284" text-anchor="middle" font-size="12" fill="#777">Postgres</text>
+  <rect x="332" y="236" width="120" height="62" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="392" y="266" text-anchor="middle" font-size="15" fill="#333">Storage</text>
+  <text x="392" y="284" text-anchor="middle" font-size="12" fill="#777">imagens</text>
+  <rect x="462" y="236" width="120" height="62" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="522" y="266" text-anchor="middle" font-size="15" fill="#333">Realtime</text>
+  <text x="522" y="284" text-anchor="middle" font-size="12" fill="#777">chat ao vivo</text>
+  <text x="320" y="345" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56">✓ imagens sem 402 · chat ao vivo · sem cartão</text>
+  <text x="320" y="400" text-anchor="middle" font-size="13" fill="#3a7a64">SQL (Postgres) · segurança por regras RLS</text>
+
+  <rect x="620" y="190" width="420" height="116" rx="10" fill="#E6F1FB" stroke="#5b95d6" stroke-width="1.5"/>
+  <text x="644" y="218" font-size="18" font-weight="700" fill="#0C447C">Cloudflare Functions</text>
+  <rect x="644" y="232" width="172" height="56" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="730" y="266" text-anchor="middle" font-size="15" fill="#333">ai-chat (IA)</text>
+  <rect x="836" y="232" width="180" height="56" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="926" y="266" text-anchor="middle" font-size="15" fill="#333">pagamentos</text>
+
+  <line x1="730" y1="288" x2="730" y2="362" stroke="#888" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="926" y1="288" x2="926" y2="362" stroke="#888" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="644" y="364" width="172" height="56" rx="10" fill="#F1EFE8" stroke="#aaa"/>
+  <text x="730" y="398" text-anchor="middle" font-size="15" fill="#333">Google Gemini</text>
+  <rect x="836" y="364" width="180" height="56" rx="10" fill="#F1EFE8" stroke="#aaa"/>
+  <text x="926" y="398" text-anchor="middle" font-size="15" fill="#333">PaySuite</text>
+</svg>
