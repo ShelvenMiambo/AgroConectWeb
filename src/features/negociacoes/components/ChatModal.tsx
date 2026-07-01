@@ -21,10 +21,32 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
   const isOwner = negociacao.proprietarioUid === currentUid;
   const otherPartyName = isOwner ? negociacao.arrendatarioNome : negociacao.proprietarioNome;
 
-  const [mensagens, setMensagens] = useState(negociacao.mensagens || []);
+  type Msg = { id?: string; senderId: string; text: string; createdAt: any };
+  const [mensagens, setMensagens] = useState<Msg[]>([]);
+  const [loadingMsgs, setLoadingMsgs] = useState(true);
 
-  // Realtime: novas mensagens aparecem ao vivo para ambas as partes
+  // Busca o histórico atual; só atualiza o estado se algo mudou (evita scroll/re-render à toa)
+  const loadMessages = async () => {
+    const { data } = await supabase
+      .from('mensagens')
+      .select('id, sender_id, text, created_at')
+      .eq('negociacao_id', negociacao.id)
+      .order('created_at', { ascending: true });
+    const next: Msg[] = (data ?? []).map((m: any) => ({ id: m.id, senderId: m.sender_id, text: m.text, createdAt: m.created_at }));
+    setMensagens(prev => {
+      if (prev.length === next.length && prev[prev.length - 1]?.id === next[next.length - 1]?.id) return prev;
+      return next;
+    });
+    setLoadingMsgs(false);
+  };
+
   useEffect(() => {
+    let active = true;
+
+    // 1) Histórico imediato ao abrir a conversa
+    loadMessages();
+
+    // 2) Realtime — entrega instantânea (quando disponível)
     const channel = supabase
       .channel(`chat-${negociacao.id}`)
       .on(
@@ -32,11 +54,18 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
         { event: 'INSERT', schema: 'public', table: 'mensagens', filter: `negociacao_id=eq.${negociacao.id}` },
         (payload: any) => {
           const m = payload.new;
-          setMensagens(prev => [...prev, { senderId: m.sender_id, text: m.text, createdAt: m.created_at }]);
+          setMensagens(prev => prev.some(x => x.id === m.id)
+            ? prev
+            : [...prev, { id: m.id, senderId: m.sender_id, text: m.text, createdAt: m.created_at }]);
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    // 3) Polling de segurança — garante que o recetor recebe mesmo se o realtime falhar
+    const interval = setInterval(() => { if (active) loadMessages(); }, 3000);
+
+    return () => { active = false; supabase.removeChannel(channel); clearInterval(interval); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [negociacao.id]);
 
   // Auto-scroll to bottom
@@ -58,7 +87,8 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
     try {
       await addMensagemNegociacao(negociacao.id!, currentUid, text.trim());
       setText('');
-      onMessageSent(); // Trigger reload
+      await loadMessages();   // o próprio envio refresca a conversa (fica instantâneo para quem envia)
+      onMessageSent();        // atualiza a lista de negociações (última mensagem)
     } catch (e) {
       console.error(e);
       alert('Erro ao enviar mensagem.');
@@ -90,10 +120,18 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+          {loadingMsgs && mensagens.length === 0 && (
+            <div className="flex items-center justify-center h-full text-muted-foreground gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> A carregar conversa...
+            </div>
+          )}
+          {!loadingMsgs && mensagens.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground py-8">Ainda sem mensagens. Escreva a primeira!</p>
+          )}
           {mensagens.map((msg, i) => {
             const isMe = msg.senderId === currentUid;
             return (
-              <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+              <div key={msg.id || i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                   isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'
                 }`}>
