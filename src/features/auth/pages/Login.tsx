@@ -251,7 +251,7 @@ const Login = () => {
             Cultive o seu<br /><span className="text-gradient-gold">futuro digital</span>
           </h2>
           <p className="text-white/75 text-base mb-8 leading-relaxed max-w-xs">
-            Junte-se a 10.000+ agricultores que já transformaram os seus negócios.
+            A plataforma que liga agricultores, donos de terra e compradores em Moçambique.
           </p>
           <ul className="space-y-3">
             {perks.map(perk => (

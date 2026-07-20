@@ -144,7 +144,7 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
       onClose();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e: any) {
-      setError('Erro ao publicar. Verifique o Firebase Storage e tente novamente.');
+      setError('Erro ao publicar. Verifique a sua ligação e tente novamente.');
       console.error(e);
     } finally { setLoading(false); }
   };

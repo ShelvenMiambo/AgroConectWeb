@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/features/auth/context/AuthContext";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import AdminRoute from "@/features/auth/components/AdminRoute";
@@ -34,6 +35,7 @@ const PageLoader = () => (
 );
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange={false}>
       <TooltipProvider>
@@ -68,6 +70,7 @@ const App = () => (
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

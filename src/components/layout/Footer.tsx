@@ -57,7 +57,7 @@ const Footer = () => {
                 Pronto para transformar o seu negócio?
               </h3>
               <p className="text-white/70 text-base">
-                Junte-se a mais de 10.000 agricultores que já usam o AgroConect.
+                Crie a sua conta e comece a cultivar o seu futuro digital.
               </p>
             </div>
             <div className="flex gap-3 flex-shrink-0">
