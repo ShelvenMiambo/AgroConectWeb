@@ -4,9 +4,13 @@ name: Keep Supabase Awake
 # por inatividade. Faz um pedido leve à API REST de 6 em 6 horas.
 # A chave usada é a "anon" (pública, protegida por RLS) — segura no repositório.
 
+# NOTA: o agendamento está desativado porque a conta GitHub está bloqueada por
+# faturação (os jobs falham antes de arrancar). O keep-alive é feito por um
+# serviço externo (cron-job.org). Quando a faturação estiver resolvida, basta
+# descomentar o "schedule" abaixo para voltar a correr aqui.
 on:
-  schedule:
-    - cron: "0 */6 * * *"   # a cada 6 horas
+  # schedule:
+  #   - cron: "0 */6 * * *"   # a cada 6 horas
   workflow_dispatch:          # permite correr manualmente no separador Actions
 
 jobs:
