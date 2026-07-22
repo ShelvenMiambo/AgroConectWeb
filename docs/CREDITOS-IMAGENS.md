@@ -9,6 +9,7 @@ Registo da origem e licença de cada fotografia usada no site. **Manter atualiza
 | `producao-maos-milho.webp` | [USAID Mozambique — FTF RESINA](https://www.flickr.com/photos/usaidmozambique/54339953482/) | **Domínio público** | ✅ Sim |
 | `negociacoes-venda.webp` | [USAID Mozambique — FTF RESINA](https://www.flickr.com/photos/usaidmozambique/54282775228/) | **Domínio público** | ✅ Sim |
 | `marketplace-debulha.webp` | [USAID Mozambique — FTF RESINA](https://www.flickr.com/photos/usaidmozambique/54341275345/) | **Domínio público** | ✅ Sim |
+| `login-campo.webp` | [USAID Mozambique — FTF RESINA](https://www.flickr.com/photos/usaidmozambique/54339874889/) | **Domínio público** | ✅ Sim |
 
 Todas retratam o programa *Feed the Future RESINA* nas províncias da **Zambézia e Nampula**,
 Moçambique. Originais em 2048×1366; no repositório ficam apenas as versões WebP otimizadas

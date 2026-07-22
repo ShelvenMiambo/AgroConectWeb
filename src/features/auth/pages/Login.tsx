@@ -121,116 +121,17 @@ const Login = () => {
   return (
     <div className="min-h-screen flex">
 
-      {/* ══ Left Panel — Animated SVG (hidden on mobile) ══ */}
+      {/* ══ Painel esquerdo — fotografia (escondido em telemóvel) ══ */}
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden flex-col justify-between p-12">
-        <svg
-          className="absolute inset-0 w-full h-full"
-          viewBox="0 0 800 900"
-          preserveAspectRatio="xMidYMid slice"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id="lsky" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#060d14" />
-              <stop offset="30%"  stopColor="#0f1e3a" />
-              <stop offset="60%"  stopColor="#1a1228" />
-              <stop offset="75%"  stopColor="#7a2e08" />
-              <stop offset="87%"  stopColor="#b05a10" />
-              <stop offset="95%"  stopColor="#2d5c1e" />
-              <stop offset="100%" stopColor="#0e1f0a" />
-            </linearGradient>
-            <radialGradient id="lsun" cx="75%" cy="55%" r="40%">
-              <stop offset="0%"   stopColor="#fff9c4" stopOpacity="1" />
-              <stop offset="25%"  stopColor="#ffd54f" stopOpacity="0.95" />
-              <stop offset="55%"  stopColor="#ff8f00" stopOpacity="0.55" />
-              <stop offset="85%"  stopColor="#e65100" stopOpacity="0.20" />
-              <stop offset="100%" stopColor="#bf360c" stopOpacity="0" />
-            </radialGradient>
-            <linearGradient id="lmfar" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#1a2e4a" />
-              <stop offset="100%" stopColor="#0d1e20" />
-            </linearGradient>
-            <linearGradient id="lmnear" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#0d2218" />
-              <stop offset="100%" stopColor="#050e06" />
-            </linearGradient>
-            <linearGradient id="lfield" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#162b10" />
-              <stop offset="100%" stopColor="#020502" />
-            </linearGradient>
-            <filter id="lblur">  <feGaussianBlur stdDeviation="14" /></filter>
-            <filter id="lblurSm"><feGaussianBlur stdDeviation="5"  /></filter>
-          </defs>
+        <img
+          src="/images/login-campo.webp"
+          alt="Agricultora com a colheita, em Moçambique"
+          className="absolute inset-0 h-full w-full object-cover"
+          decoding="async"
+        />
 
-          {/* Sky */}
-          <rect width="800" height="900" fill="url(#lsky)" />
-
-          {/* Stars */}
-          {[10,45,120,200,280,350,420,520,600,680,750,30,90,160,240,310,390,470,550,630,720,70,140,220,300,370,440].map((x, i) => (
-            <circle key={i} cx={x} cy={(i * 37 + 20) % 320} r={1 + (i % 3) * 0.6} fill="#e8f4fc" opacity={0.2 + (i % 4) * 0.1}>
-              <animate attributeName="opacity" values={`${0.2 + (i % 4) * 0.1};0.05;${0.2 + (i % 4) * 0.1}`} dur={`${4 + (i % 5)}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
-            </circle>
-          ))}
-
-          {/* Sun halo */}
-          <ellipse cx="600" cy="490" rx="200" ry="150" fill="url(#lsun)" filter="url(#lblur)" opacity="0.8" />
-          <circle  cx="600" cy="490" r="35" fill="#fff8c4" filter="url(#lblurSm)" />
-          <circle  cx="600" cy="490" r="22" fill="#fffde0" />
-
-          {/* Light rays */}
-          {[0,30,60,90,120,150,180,210,240,270,300,330].map((ang, i) => {
-            const rad = (ang * Math.PI) / 180;
-            return (
-              <line key={i} x1="600" y1="490"
-                x2={600 + Math.cos(rad) * 280} y2={490 + Math.sin(rad) * 280}
-                stroke="#ffd54f" strokeWidth="1.5" opacity={0.03 + (i % 4) * 0.015}>
-                <animate attributeName="opacity"
-                  values={`${0.03 + (i % 4) * 0.015};${0.07 + (i % 4) * 0.03};${0.03 + (i % 4) * 0.015}`}
-                  dur="5s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
-              </line>
-            );
-          })}
-
-          {/* Mountains */}
-          <path d="M-10 580 L60 480 L140 530 L240 440 L340 500 L440 420 L540 470 L640 390 L720 450 L810 400 L810 600 L-10 600Z" fill="url(#lmfar)" opacity="0.9" />
-          <path d="M-10 660 L80 560 L180 610 L300 530 L420 590 L540 510 L660 580 L760 530 L810 560 L810 680 L-10 680Z" fill="url(#lmnear)" />
-
-          {/* Baobab */}
-          <rect  x="100" y="590" width="14" height="80" fill="#050e06" rx="3" />
-          <ellipse cx="107" cy="580" rx="40" ry="20" fill="#060f07" />
-          <ellipse cx="78"  cy="588" rx="20" ry="12" fill="#060f07" />
-          <ellipse cx="136" cy="585" rx="22" ry="11" fill="#060f07" />
-          <ellipse cx="107" cy="564" rx="28" ry="16" fill="#070f07" />
-
-          {/* Small trees */}
-          <rect    x="310" y="628" width="6" height="42" fill="#07100a" />
-          <ellipse cx="313" cy="622" rx="20" ry="9" fill="#07110a" />
-          <rect    x="500" y="632" width="5" height="38" fill="#07100a" />
-          <ellipse cx="502" cy="626" rx="17" ry="8" fill="#07110a" />
-
-          {/* Ground */}
-          <rect x="0" y="658" width="800" height="242" fill="url(#lfield)" />
-
-          {/* Field rows */}
-          {Array.from({ length: 10 }, (_, i) => {
-            const t = (i + 1) / 11;
-            const y = 658 + t * 242;
-            return <line key={i} x1="0" y1={y} x2="800" y2={y} stroke="#4caf50" strokeWidth={0.6 + t * 1.2} opacity={0.05 + t * 0.09} />;
-          })}
-
-          {/* Vanishing lines */}
-          {[-4, -2, 0, 2, 4].map((s, i) => (
-            <line key={i} x1="400" y1="658" x2={400 + s * 300} y2="900" stroke="#388e3c" strokeWidth="0.6" opacity="0.10" />
-          ))}
-
-          {/* Moon */}
-          <circle cx="110" cy="130" r="24" fill="#e8eaf6" opacity="0.5" filter="url(#lblurSm)" />
-          <circle cx="120" cy="124" r="21" fill="#0f1e3a" opacity="0.9" />
-        </svg>
-
-        {/* Overlay for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-primary/20 to-black/55" />
+        {/* Escurecimento para o texto ser legível */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/35" />
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
