@@ -178,7 +178,7 @@ const Header = () => {
 
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-              <div className="h-9 w-9 flex-shrink-0 group-hover:scale-105 transition-spring">
+              <div className="h-9 w-9 flex-shrink-0">
                 <svg viewBox="0 0 48 48" className="h-full w-full" aria-hidden="true">
                   <rect width="48" height="48" rx="13" fill="#1e5c1e" />
                   <path d="M11 33 H37" stroke="#ffffff" strokeWidth="2.6" strokeLinecap="round" />
@@ -208,7 +208,7 @@ const Header = () => {
                   <Icon className="h-3.5 w-3.5" />
                   {label}
                   {isActive(href) && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full gradient-primary" />
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-primary" />
                   )}
                 </Link>
               ))}
@@ -303,7 +303,7 @@ const Header = () => {
                   <Link to="/perfil" className={`flex items-center gap-2 px-3 py-1.5 rounded-lg hover:opacity-80 transition-opacity ${
                     scrolled || !isHome ? "bg-muted" : "bg-white/15"
                   }`}>
-                    <div className="w-6 h-6 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                       {currentUser.email?.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex flex-col leading-none">
@@ -337,9 +337,9 @@ const Header = () => {
                 <Link to="/login" className="hidden lg:block">
                   <Button
                     size="sm"
-                    className={`h-9 rounded-lg font-semibold transition-spring ${
+                    className={`h-9 rounded-md font-semibold transition-colors ${
                       scrolled || !isHome
-                        ? "gradient-primary text-white border-0 shadow-soft hover:shadow-medium"
+                        ? "bg-primary text-primary-foreground border-0 hover:bg-primary/90"
                         : "bg-white/15 border border-white/30 text-white hover:bg-white/25"
                     }`}
                   >
@@ -402,7 +402,7 @@ const Header = () => {
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 hover:bg-muted transition-colors active:scale-[0.98]"
               >
-                <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
                   {currentUser.email?.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -491,7 +491,7 @@ const Header = () => {
               </Button>
             ) : (
               <Link to="/login" className="block">
-                <Button className="w-full gradient-primary text-white border-0 font-semibold rounded-xl">
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground border-0 font-semibold rounded-md">
                   <User className="h-4 w-4 mr-2" />
                   Entrar na conta
                 </Button>
@@ -546,9 +546,9 @@ const Header = () => {
                       key={href}
                       to={href}
                       onClick={() => setExtraOpen(false)}
-                      className="group p-4 rounded-2xl border border-border/60 hover:border-primary/50 bg-background hover:bg-primary/5 transition-all"
+                      className="group p-4 rounded-lg border border-border/60 hover:border-primary/50 bg-background hover:bg-primary/5 transition-colors"
                     >
-                      <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center mb-3 shadow-soft group-hover:scale-110 transition-transform">
+                      <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center mb-3">
                         <Icon className="h-5 w-5 text-white" />
                       </div>
                       <h4 className="font-bold text-sm mb-1">{label}</h4>

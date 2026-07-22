@@ -45,11 +45,10 @@ const socialLinks = [
 const Footer = () => {
   return (
     <footer className="relative overflow-hidden">
-      {/* Top decorative line */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <div className="h-px w-full bg-border" />
 
       {/* Newsletter CTA Band */}
-      <div className="gradient-landing py-14">
+      <div className="bg-primary py-14">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="text-center lg:text-left">
@@ -80,12 +79,12 @@ const Footer = () => {
             {/* Brand Column — 2 cols */}
             <div className="lg:col-span-2 space-y-6">
               <Link to="/" className="flex items-center gap-3 group">
-                <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center group-hover:shadow-glow transition-spring">
+                <div className="h-10 w-10 rounded-md bg-primary flex items-center justify-center">
                   <span className="text-white font-black font-['Outfit']">AC</span>
                 </div>
                 <div>
-                  <div className="text-lg font-black text-background dark:text-card-foreground font-['Outfit']">AgroConect</div>
-                  <div className="text-xs text-background/50 dark:text-card-foreground/50 font-medium tracking-widest uppercase">AI Platform</div>
+                  <div className="text-lg font-black text-background dark:text-card-foreground font-['Outfit']">AgroConecta</div>
+                  <div className="text-xs text-background/50 dark:text-card-foreground/50 font-medium tracking-widest uppercase">Moçambique</div>
                 </div>
               </Link>
 
@@ -117,7 +116,7 @@ const Footer = () => {
                     key={label}
                     href={href}
                     aria-label={label}
-                    className="h-9 w-9 rounded-lg flex items-center justify-center bg-background/10 dark:bg-card-foreground/10 hover:bg-primary/20 text-background/70 dark:text-card-foreground/70 hover:text-primary transition-spring"
+                    className="h-9 w-9 rounded-lg flex items-center justify-center bg-background/10 dark:bg-card-foreground/10 hover:bg-primary/20 text-background/70 dark:text-card-foreground/70 hover:text-primary transition-colors"
                   >
                     <Icon className="h-4 w-4" />
                   </a>
@@ -154,7 +153,7 @@ const Footer = () => {
           <div className="container mx-auto px-4 lg:px-8 py-5">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-background/50 dark:text-card-foreground/50">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1">
-                <span>© 2026 AgroConect AI. Todos os direitos reservados.</span>
+                <span>© 2026 AgroConecta. Todos os direitos reservados.</span>
                 <div className="hidden md:block w-px h-3 bg-current opacity-30" />
                 <div className="flex gap-4">
                   {["Privacidade", "Termos", "Cookies"].map(label => (
