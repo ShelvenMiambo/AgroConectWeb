@@ -22,6 +22,9 @@ const HeroSection = () => {
             transparente à direita para não tapar a fotografia. */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+        {/* Faixa extra no topo: o cabeçalho é transparente com texto branco e
+            fica sobre o céu claro da fotografia. Sem isto, perde-se o contraste. */}
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/75 to-transparent" />
       </div>
 
       {/* Conteúdo */}

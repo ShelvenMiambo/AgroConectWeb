@@ -91,6 +91,7 @@ const Header = () => {
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 16);
+    handler(); // avalia já: a página pode abrir com scroll (recarregar a meio, âncora)
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
