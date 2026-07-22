@@ -7,7 +7,10 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main>
+      {/* -mt-16 puxa o hero para debaixo do cabeçalho (h-16), que na página
+          inicial é transparente com texto branco. Sem isto, o cabeçalho fica
+          numa faixa branca própria e o texto branco desaparece no modo claro. */}
+      <main className="-mt-16">
         <HeroSection />
         <FeaturesSection />
       </main>
