@@ -49,3 +49,6 @@ attached_assets/
 .claude/
 .agents/
 *.zip
+
+# Ficheiros de trabalho locais (nao fazem parte do site)
+fotos/
