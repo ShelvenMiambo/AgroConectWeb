@@ -7,7 +7,7 @@ Registo da origem e licença de cada fotografia usada no site. **Manter atualiza
 |---|---|---|---|
 | `hero-flora-regador.webp` | [USAID Mozambique — FTF RESINA](https://www.flickr.com/photos/usaidmozambique/54338748987/) | **Domínio público** (US Government Work) | ✅ Sim, sem atribuição obrigatória |
 | `producao-maos-milho.webp` | [USAID Mozambique — FTF RESINA](https://www.flickr.com/photos/usaidmozambique/54339953482/) | **Domínio público** | ✅ Sim |
-| `negociacoes-venda.webp` | [USAID Mozambique — FTF RESINA](https://www.flickr.com/photos/usaidmozambique/54339862299/) | **Domínio público** | ✅ Sim |
+| `negociacoes-venda.webp` | [USAID Mozambique — FTF RESINA](https://www.flickr.com/photos/usaidmozambique/54282775228/) | **Domínio público** | ✅ Sim |
 | `marketplace-debulha.webp` | [USAID Mozambique — FTF RESINA](https://www.flickr.com/photos/usaidmozambique/54341275345/) | **Domínio público** | ✅ Sim |
 
 Todas retratam o programa *Feed the Future RESINA* nas províncias da **Zambézia e Nampula**,
