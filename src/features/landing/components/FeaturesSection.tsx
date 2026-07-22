@@ -1,53 +1,48 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   MapPin, Bot, Sprout, Handshake,
   MessageSquare, BarChart3, Smartphone, Globe, Shield,
-  ArrowRight, Check, Zap, UserPlus, Search, Crown
+  ArrowRight, Check, UserPlus, Search, Crown
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const features = [
   {
     icon: MapPin,
-    title: "Marketplace de Terras",
-    description: "Encontre e arrende terrenos agricolas com caracteristicas detalhadas, fotos e localizacao GPS.",
-    benefits: ["Filtros inteligentes", "Mapa interativo", "Comunicacao direta"],
-    color: "text-primary",
-    gradient: "gradient-primary",
+    title: "Marketplace de terrenos",
+    description: "Encontre e arrende terrenos agrícolas com características detalhadas, fotografias e localização.",
+    benefits: ["Filtros por zona e área", "Fotografias do terreno", "Contacto com o proprietário"],
     href: "/marketplace",
-    accentColor: "hsl(128 48% 28%)"
+    image: "/images/marketplace-debulha.webp",
+    alt: "Comunidade a debulhar milho, Moçambique",
   },
   {
     icon: Bot,
-    title: "Assistente IA Agricola",
-    description: "Receba conselhos personalizados sobre cultivo, pragas, clima e melhores praticas agricolas.",
-    benefits: ["Suporte em 4 idiomas", "Respostas por voz", "Conteudo tecnico"],
-    color: "text-accent",
-    gradient: "gradient-hero",
+    title: "Assistente agrícola",
+    description: "Tire dúvidas sobre cultivo, pragas, clima e boas práticas — por escrito ou por voz.",
+    benefits: ["Respostas em português", "Pergunte por voz", "Conteúdo técnico"],
     href: "/assistente-ia",
-    accentColor: "hsl(42 90% 52%)"
+    image: "/images/assistente-inspecao.webp",
+    alt: "Agricultora a inspecionar a plantação de tomate",
   },
   {
     icon: Sprout,
-    title: "Gestao de Producao",
-    description: "Planeie, monitorize e otimize os seus cultivos com ferramentas intuitivas e alertas inteligentes.",
-    benefits: ["Planos de cultivo", "Alertas personalizados", "Historico detalhado"],
-    color: "text-success",
-    gradient: "gradient-card",
+    title: "Gestão de produção",
+    description: "Planeie e acompanhe os seus cultivos, com registo de ocorrências e alertas por fase.",
+    benefits: ["Planos de cultivo", "Alertas de rega e colheita", "Histórico por campanha"],
     href: "/producao",
-    accentColor: "hsl(145 55% 38%)"
+    image: "/images/producao-maos-milho.webp",
+    alt: "Mãos com grãos de milho debulhado",
   },
   {
     icon: Handshake,
-    title: "Negociacoes Seguras",
-    description: "Crie contratos digitais, gerencie pagamentos e faca transacoes seguras com outros utilizadores.",
-    benefits: ["Contratos digitais", "Pagamentos via M-Pesa", "Historico completo"],
-    color: "text-warning",
-    gradient: "gradient-earth",
+    title: "Negociações na plataforma",
+    description: "Proponha, converse e feche acordos sem sair do site — com o histórico todo guardado.",
+    benefits: ["Propostas de arrendamento", "Conversa integrada", "Histórico completo"],
     href: "/negociacoes",
-    accentColor: "hsl(38 90% 52%)"
+    image: "/images/negociacoes-venda.webp",
+    alt: "Pesagem e ensacamento de milho para venda",
   }
 ];
 
@@ -84,11 +79,7 @@ const FeaturesSection = () => {
 
   return (
     <section className="py-28 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 dot-pattern opacity-40" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-      <div className="absolute -top-64 -left-64 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-64 -right-64 w-[600px] h-[600px] rounded-full bg-accent/5 blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-border/70" />
 
       <div className="relative container mx-auto px-4 lg:px-8">
 
@@ -97,29 +88,23 @@ const FeaturesSection = () => {
           ref={titleRef}
           className={`text-center max-w-3xl mx-auto mb-20 transition-all duration-700 ${titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
-          <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-sm font-semibold">
-            <Zap className="h-3.5 w-3.5 mr-1.5 text-accent" />
-            Funcionalidades
-          </Badge>
-          <h2 className="text-4xl md:text-5xl font-black mb-6 font-['Outfit']">
-            Tudo o que precisa para{" "}
-            <span className="text-gradient-primary">crescer</span>
+          <h2 className="text-4xl md:text-5xl font-black mb-5 font-['Outfit'] tracking-tight text-balance">
+            O que pode fazer aqui
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Uma plataforma completa que transforma a sua atividade agrícola —
-            desde encontrar terra até fechar negócios com segurança.
+            Desde encontrar um terreno até fechar o negócio — sem sair da plataforma.
           </p>
         </div>
 
         {/* Como Funciona Steps */}
         <div className={`mb-24 transition-all duration-700 ${featVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
           <div className="text-center mb-12">
-            <h3 className="text-2xl md:text-3xl font-black font-['Outfit']">Como Funciona em <span className="text-gradient-gold">4 Passos</span></h3>
-            <p className="text-muted-foreground mt-2">Um protocolo seguro para garantir negócios de confiança</p>
+            <h3 className="text-2xl md:text-3xl font-black font-['Outfit'] tracking-tight">Como funciona</h3>
+            <p className="text-muted-foreground mt-2">Quatro passos, do registo ao negócio fechado</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
             {/* Connecting line for desktop */}
-            <div className="hidden md:block absolute top-8 left-[12%] right-[12%] h-[2px] bg-gradient-to-r from-primary/10 via-primary/30 to-warning/10 z-0" />
+            <div className="hidden md:block absolute top-8 left-[12%] right-[12%] h-px bg-border z-0" />
             
             {[
               { icon: UserPlus, title: "1. Crie o seu Perfil", desc: "Selecione perfis combinados (ex: Agricultor + Dono de Terreno).", color: "text-primary", bg: "bg-primary/10" },
@@ -127,8 +112,8 @@ const FeaturesSection = () => {
               { icon: Crown, title: "3. Adira ao Premium", desc: "Subscreva um pacote para desbloquear mensagens e contactos.", color: "text-warning", bg: "bg-warning/10" },
               { icon: Handshake, title: "4. Feche Negócio", desc: "Negoceie de forma segura através da nossa plataforma dedicada.", color: "text-success", bg: "bg-success/10" }
             ].map((step, idx) => (
-              <div key={idx} className="relative z-10 flex flex-col items-center text-center group">
-                <div className={`w-16 h-16 rounded-2xl ${step.bg} border-2 border-background flex items-center justify-center mb-5 shadow-soft group-hover:-translate-y-1 transition-spring`}>
+              <div key={idx} className="relative z-10 flex flex-col items-center text-center">
+                <div className={`w-16 h-16 rounded-full ${step.bg} border-2 border-background flex items-center justify-center mb-5`}>
                   <step.icon className={`h-7 w-7 ${step.color}`} />
                 </div>
                 <h4 className="font-bold text-lg mb-2 font-['Outfit']">{step.title}</h4>
@@ -143,53 +128,49 @@ const FeaturesSection = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className={`group relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-soft card-hover transition-all duration-700 ${featVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+              className={`group relative overflow-hidden rounded-lg border border-border/60 bg-card transition-all duration-700 hover:border-primary/40 ${featVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
-              {/* Top accent bar */}
-              <div className={`h-1 w-full ${feature.gradient}`} />
-
-              <div className="p-8">
-                {/* Icon + title */}
-                <div className="flex items-start gap-5 mb-6">
-                  <div className={`flex-shrink-0 p-3.5 rounded-xl ${feature.gradient} shadow-medium`}>
-                    <feature.icon className="h-6 w-6 text-white" />
+              {/* Fotografia — agricultores em Moçambique (USAID, domínio público) */}
+              <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+                <img
+                  src={feature.image}
+                  alt={feature.alt}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 p-5">
+                  <div className="flex-shrink-0 rounded-md bg-white/15 p-2 backdrop-blur-sm">
+                    <feature.icon className="h-5 w-5 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold font-['Outfit']">{feature.title}</h3>
-                  </div>
+                  <h3 className="text-xl font-bold font-['Outfit'] text-white">{feature.title}</h3>
                 </div>
+              </div>
 
+              <div className="p-7">
                 <p className="text-muted-foreground mb-6 leading-relaxed">{feature.description}</p>
 
-                {/* Benefits */}
-                <ul className="space-y-2.5 mb-8">
+                <ul className="space-y-2.5 mb-7">
                   {feature.benefits.map((benefit, bi) => (
                     <li key={bi} className="flex items-center gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 rounded-full gradient-primary flex items-center justify-center">
-                        <Check className="h-3 w-3 text-white" />
-                      </div>
-                      <span className="text-sm font-medium text-foreground/80">{benefit}</span>
+                      <Check className="h-4 w-4 flex-shrink-0 text-primary" />
+                      <span className="text-sm text-foreground/80">{benefit}</span>
                     </li>
                   ))}
                 </ul>
 
-                {/* CTA */}
                 <Link to={feature.href}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-between font-semibold group-hover:bg-primary/8 rounded-xl h-11 transition-smooth"
+                    className="w-full justify-between font-semibold rounded-md h-11 px-3 hover:bg-primary/10"
                   >
-                    Explorar funcionalidade
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1.5 transition-spring" />
+                    Ver mais
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
-
-              {/* Hover shine effect */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                style={{ background: `radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(var(--primary) / 0.04), transparent 40%)` }}
-              />
             </div>
           ))}
         </div>
@@ -200,10 +181,10 @@ const FeaturesSection = () => {
             {additionalFeatures.map((feature, index) => (
               <div
                 key={index}
-                className={`group flex flex-col items-center text-center p-6 rounded-2xl border border-border/60 bg-card/80 hover:bg-card hover:shadow-medium hover:-translate-y-1 transition-spring transition-all duration-500`}
+                className={`flex flex-col items-center text-center p-6 rounded-lg border border-border/60 bg-card/80 transition-colors duration-300 hover:border-primary/40`}
                 style={{ transitionDelay: `${index * 80}ms` }}
               >
-                <div className="p-3 rounded-xl bg-primary/10 dark:bg-primary/15 mb-4 group-hover:scale-110 transition-spring">
+                <div className="p-3 rounded-md bg-primary/10 dark:bg-primary/15 mb-4">
                   <feature.icon className="h-5 w-5 text-primary" />
                 </div>
                 <h4 className="font-bold text-sm mb-1.5 font-['Outfit']">{feature.title}</h4>
@@ -223,15 +204,15 @@ const FeaturesSection = () => {
               <Link to="/marketplace">
                 <Button
                   size="lg"
-                  className="h-13 px-8 rounded-xl font-semibold gradient-primary text-white border-0 shadow-glow hover:-translate-y-1 hover:shadow-strong transition-spring"
+                  className="h-13 px-8 rounded-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground border-0 transition-colors"
                 >
-                  Experimentar Gratuitamente
+                  Criar conta gratuita
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
             <p className="text-sm text-muted-foreground flex items-center gap-3 flex-wrap justify-center">
-              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Sem cartao de credito</span>
+              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Sem cartão de crédito</span>
               <span className="text-muted-foreground/40">·</span>
               <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Configure em 2 minutos</span>
               <span className="text-muted-foreground/40">·</span>
