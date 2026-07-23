@@ -161,7 +161,7 @@ const AssistenteIA = () => {
             <div>
               <p className="font-semibold text-sm">AgroBot</p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-accent" /> Google Gemini 2.5 Flash
+                  <Sparkles className="h-3 w-3 text-accent" /> Google Gemini
               </p>
             </div>
           </div>

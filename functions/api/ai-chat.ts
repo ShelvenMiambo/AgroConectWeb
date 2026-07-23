@@ -18,7 +18,9 @@ interface ChatRequest {
 }
 
 const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconect[\w-]*\.(pages\.dev|app)$/;
-const MODEL = 'gemini-2.0-flash';
+// 'gemini-flash-latest' aponta sempre para o modelo Flash recomendado e tem
+// quota no plano gratuito deste projeto (o 'gemini-2.0-flash' tinha limite 0).
+const MODEL = 'gemini-flash-latest';
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_TURNS = 10;
 
