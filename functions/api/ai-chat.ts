@@ -118,7 +118,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       try { errMsg = (JSON.parse(rawText) as { error?: { message?: string } })?.error?.message || ''; } catch { errMsg = rawText.slice(0, 200); }
       console.error('[ai-chat] Gemini error:', res.status, errMsg);
       if (res.status === 429) return new Response(JSON.stringify({ error: 'Limite atingido. Aguarde 30s.' }), { status: 429, headers });
-      if (res.status === 400) return new Response(JSON.stringify({ error: `Pedido inválido: ${errMsg}`, _debug: { model: MODEL, raw: rawText.slice(0, 400), rawLen: (env.VITE_GEMINI_API_KEY || '').length, trimLen: apiKey.length } }), { status: 400, headers });
+      if (res.status === 400) return new Response(JSON.stringify({ error: `Pedido inválido: ${errMsg}` }), { status: 400, headers });
       if (res.status === 401 || res.status === 403) return new Response(JSON.stringify({ error: `Chave inválida: ${errMsg}` }), { status: 403, headers });
       return new Response(JSON.stringify({ error: `Serviço indisponível (${res.status}): ${errMsg}` }), { status: 502, headers });
     }
