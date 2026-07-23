@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,11 +32,19 @@ const registerSchema = z.object({
 const resetSchema = z.object({
   email: z.string().email('Email inválido'),
 });
+const updateSchema = z.object({
+  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  confirmPassword: z.string(),
+}).refine(d => d.password === d.confirmPassword, {
+  message: 'As palavras-passe não coincidem',
+  path: ['confirmPassword'],
+});
 
 type LoginData    = z.infer<typeof loginSchema>;
 type RegisterData = z.infer<typeof registerSchema>;
 type ResetData    = z.infer<typeof resetSchema>;
-type Mode         = 'login' | 'register' | 'reset';
+type UpdateData   = z.infer<typeof updateSchema>;
+type Mode         = 'login' | 'register' | 'reset' | 'update';
 
 const perks = [
   'Marketplace de terras em todo Moçambique',
@@ -67,12 +75,26 @@ const Login = () => {
   const [error, setError]         = useState('');
   const [success, setSuccess]     = useState('');
   const [loading, setLoading]     = useState(false);
-  const { login, register, loginWithGoogle, resetPassword } = useAuth();
+  const { login, register, loginWithGoogle, resetPassword, updatePassword, recoveryMode, clearRecovery } = useAuth();
   const navigate = useNavigate();
 
   const loginForm    = useForm<LoginData>   ({ resolver: zodResolver(loginSchema) });
   const registerForm = useForm<RegisterData>({ resolver: zodResolver(registerSchema) });
   const resetForm    = useForm<ResetData>   ({ resolver: zodResolver(resetSchema) });
+  const updateForm   = useForm<UpdateData>  ({ resolver: zodResolver(updateSchema) });
+
+  // Quando o utilizador chega pelo link de recuperação, mostra o ecrã de nova senha.
+  useEffect(() => { if (recoveryMode) setMode('update'); }, [recoveryMode]);
+
+  const handleUpdate = async (data: UpdateData) => {
+    try { clearMessages(); setLoading(true);
+      await updatePassword(data.password);
+      setSuccess('Palavra-passe alterada com sucesso. Já pode usá-la para entrar.');
+      updateForm.reset();
+      setTimeout(() => { setMode('login'); setSuccess(''); }, 2500);
+    } catch (e: any) { setError(e.message || 'Erro ao alterar a palavra-passe.');
+    } finally { setLoading(false); }
+  };
 
   const clearMessages = () => { setError(''); setSuccess(''); };
 
@@ -218,8 +240,51 @@ const Login = () => {
             </>
           )}
 
+          {/* ─── DEFINIR NOVA SENHA (vindo do link de recuperação) ─── */}
+          {mode === 'update' && (
+            <>
+              <div className="mb-8">
+                <h1 className="text-3xl font-black font-['Outfit'] mb-2">Definir nova palavra-passe</h1>
+                <p className="text-muted-foreground text-sm">
+                  Escolha uma nova palavra-passe para a sua conta.
+                </p>
+              </div>
+
+              {error && <div className="mb-4 p-4 rounded-xl bg-destructive/10 border border-destructive/25 text-destructive text-sm flex items-start gap-2"><AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />{error}</div>}
+              {success && <div className="mb-4 p-4 rounded-xl bg-success/10 border border-success/25 text-success text-sm flex items-start gap-2"><CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0"/>{success}</div>}
+
+              <form onSubmit={updateForm.handleSubmit(handleUpdate)} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="upd-pass" className="text-sm font-medium">Nova palavra-passe</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="upd-pass" type={showPass ? 'text' : 'password'} placeholder="Min. 6 caracteres" className="pl-10 pr-10 h-12 rounded-xl border-border/70" {...updateForm.register('password')} />
+                    <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {updateForm.formState.errors.password && <p className="text-xs text-destructive">{updateForm.formState.errors.password.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="upd-confirm" className="text-sm font-medium">Repetir palavra-passe</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="upd-confirm" type={showConfirm ? 'text' : 'password'} placeholder="Repetir" className="pl-10 pr-10 h-12 rounded-xl border-border/70" {...updateForm.register('confirmPassword')} />
+                    <button type="button" onClick={() => setShowConfirm(s => !s)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {updateForm.formState.errors.confirmPassword && <p className="text-xs text-destructive">{updateForm.formState.errors.confirmPassword.message}</p>}
+                </div>
+                <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0 font-semibold transition-colors">
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Guardar nova palavra-passe'}
+                </Button>
+              </form>
+            </>
+          )}
+
           {/* ─── LOGIN / REGISTER ─── */}
-          {mode !== 'reset' && (
+          {mode !== 'reset' && mode !== 'update' && (
             <>
               <div className="mb-8">
                 <h1 className="text-3xl font-black font-['Outfit'] mb-2">
