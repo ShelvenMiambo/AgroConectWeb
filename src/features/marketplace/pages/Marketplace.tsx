@@ -43,14 +43,14 @@ const Gallery = ({ urls, nome }: { urls: string[]; nome: string }) => {
   const [idx, setIdx] = useState(0);
   if (!urls || urls.length === 0) {
     return (
-      <div className="aspect-video rounded-2xl bg-gradient-to-br from-green-600/15 to-green-700/8 border border-border/60 flex items-center justify-center">
+      <div className="aspect-video rounded-lg bg-gradient-to-br from-green-600/15 to-green-700/8 border border-border/60 flex items-center justify-center">
         <MapPin className="h-16 w-16 text-primary/25" />
       </div>
     );
   }
   return (
     <div className="space-y-2">
-      <div className="relative aspect-video rounded-2xl overflow-hidden bg-muted">
+      <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
         <img src={urls[idx]} alt={nome} className="w-full h-full object-cover" />
         {urls.length > 1 && (
           <>
@@ -152,7 +152,7 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 max-h-[90vh] overflow-y-auto fade-in-up">
+      <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 max-h-[90vh] overflow-y-auto fade-in-up">
         <div className="flex items-center justify-between p-5 border-b border-border/60">
           <h2 className="font-black text-xl font-['Outfit'] flex items-center gap-2">
             <Leaf className="h-5 w-5 text-primary" /> Publicar Terra
@@ -253,7 +253,7 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 
           <Button type="submit"
             disabled={loading || !form.nome || !form.area || !form.localizacao || !form.preco || !form.descricao}
-            className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-semibold shadow-medium">
+            className="w-full h-12 rounded-xl bg-primary text-white border-0 font-semibold shadow-medium">
             {loading ? (
               <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {images.length > 0 ? 'A enviar fotos...' : 'A publicar...'}</>
             ) : (
@@ -346,7 +346,7 @@ const ListingModal = ({ listingType, onClose, onSaved }: { listingType: ListingT
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 max-h-[90vh] overflow-y-auto fade-in-up">
+      <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 max-h-[90vh] overflow-y-auto fade-in-up">
         <div className="flex items-center justify-between p-5 border-b border-border/60">
           <h2 className="font-black text-lg font-['Outfit'] flex items-center gap-2">
             <IconComp className="h-5 w-5 text-primary" /> {listingTitles[listingType]}
@@ -369,7 +369,7 @@ const ListingModal = ({ listingType, onClose, onSaved }: { listingType: ListingT
             </div>
           ))}
           <Button type="submit" disabled={loading || !form.titulo || !form.descricao}
-            className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-semibold shadow-medium">
+            className="w-full h-12 rounded-xl bg-primary text-white border-0 font-semibold shadow-medium">
             {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />A publicar...</> : <><IconComp className="h-4 w-4 mr-2" />Publicar</>}
           </Button>
         </form>
@@ -420,7 +420,7 @@ const ContactModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 p-6 fade-in-up">
+      <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 p-6 fade-in-up">
         {userData?.plan === 'gratuito' && !config.isPromotionActive ? (
           <div className="text-center py-6 space-y-4">
             <div className="w-16 h-16 rounded-full bg-amber-500/15 flex items-center justify-center mx-auto">
@@ -447,7 +447,7 @@ const ContactModal = ({
             <p className="text-sm text-muted-foreground">O proprietário será notificado. Pode acompanhar o estado em <strong>Negociações</strong>.</p>
             <div className="flex gap-3 pt-2">
               <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
-              <Button className="flex-1 rounded-xl gradient-primary text-white border-0" onClick={() => { onClose(); navigate('/negociacoes'); }}>Ver Negociações</Button>
+              <Button className="flex-1 rounded-xl bg-primary text-white border-0" onClick={() => { onClose(); navigate('/negociacoes'); }}>Ver Negociações</Button>
             </div>
           </div>
         ) : (
@@ -462,7 +462,7 @@ const ContactModal = ({
             <div className="bg-muted/40 rounded-xl p-3 mb-4">
               <p className="text-xs text-muted-foreground font-semibold">Proprietário</p>
               <div className="flex items-center gap-2 mt-1">
-                <div className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-black">{property.donoNome.charAt(0)}</div>
+                <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-black">{property.donoNome.charAt(0)}</div>
                 <p className="font-semibold text-sm">{property.donoNome}</p>
               </div>
             </div>
@@ -479,7 +479,7 @@ const ContactModal = ({
             <Button
               onClick={handleSend}
               disabled={!message.trim() || sending}
-              className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-bold shadow-medium gap-2"
+              className="w-full h-12 rounded-xl bg-primary text-white border-0 font-bold shadow-medium gap-2"
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4" /> Enviar Proposta</>}
             </Button>
@@ -638,7 +638,7 @@ const Marketplace = () => {
                 </div>
 
                 {userData?.plan === 'gratuito' && !config.isPromotionActive && !isOwner ? (
-                  <div className="relative overflow-hidden rounded-2xl bg-muted/30 border border-border/60 p-8 text-center mt-6">
+                  <div className="relative overflow-hidden rounded-lg bg-muted/30 border border-border/60 p-8 text-center mt-6">
                     <div className="absolute inset-0 bg-gradient-to-b from-background/10 to-background/90 backdrop-blur-[2px]" />
                     <div className="relative z-10 flex flex-col items-center max-w-md mx-auto">
                       <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
@@ -714,7 +714,7 @@ const Marketplace = () => {
                     <>
                       <div className="border rounded-xl p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-sm">{p.donoNome.charAt(0)}</div>
+                          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">{p.donoNome.charAt(0)}</div>
                           <div>
                             <p className="font-semibold text-sm">{p.donoNome}</p>
                             <p className="text-xs text-muted-foreground">{p.verificado ? 'Conta Verificada' : 'Proprietário'}</p>
@@ -723,13 +723,13 @@ const Marketplace = () => {
                       </div>
                       <div className="space-y-3">
                         <Button
-                          className="w-full h-12 gradient-primary text-white border-0 font-semibold rounded-xl shadow-medium hover:-translate-y-0.5 transition-spring"
+                          className="w-full h-12 bg-primary text-white border-0 font-semibold rounded-xl shadow-medium transition-colors"
                           onClick={() => setContactProperty(p)}
                         >
                           <MessageCircle className="h-4 w-4 mr-2" /> Contactar via Negociações
                         </Button>
                         <Button variant="outline"
-                          className={`w-full h-12 rounded-xl font-semibold transition-spring ${p.id && saved.includes(p.id) ? 'border-destructive text-destructive' : ''}`}
+                          className={`w-full h-12 rounded-xl font-semibold transition-colors ${p.id && saved.includes(p.id) ? 'border-destructive text-destructive' : ''}`}
                           onClick={() => p.id && toggleSave(p.id)}>
                           <Heart className={`h-4 w-4 mr-2 ${p.id && saved.includes(p.id) ? 'fill-current' : ''}`} />
                           {p.id && saved.includes(p.id) ? 'Guardado' : 'Guardar'}
@@ -772,7 +772,7 @@ const Marketplace = () => {
           <div className="absolute inset-0 dot-pattern opacity-40" />
           <div className="relative container mx-auto px-4 lg:px-8 text-center">
             <h1 className="text-4xl md:text-5xl font-black mb-4 font-['Outfit']">
-              <span className="text-gradient-primary">{ht.title.split(' ')[0]}</span> {ht.title.split(' ').slice(1).join(' ')}
+              <span className="text-primary">{ht.title.split(' ')[0]}</span> {ht.title.split(' ').slice(1).join(' ')}
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
               {ht.sub}
@@ -781,22 +781,22 @@ const Marketplace = () => {
             {/* Contextual Action Buttons */}
             <div className="flex flex-wrap justify-center gap-4">
               {userTypes.includes('proprietario') && (
-                <Button onClick={() => setShowPublish(true)} className="gradient-primary text-white border-0 rounded-xl gap-2 font-semibold shadow-medium hover:-translate-y-0.5 transition-spring">
+                <Button onClick={() => setShowPublish(true)} className="bg-primary text-white border-0 rounded-xl gap-2 font-semibold shadow-medium transition-colors">
                   <Plus className="h-4 w-4" /> Publicar a Minha Terra
                 </Button>
               )}
               {userTypes.includes('agricultor') && (
-                <Button onClick={() => setShowListingModal('terra-procura')} className="bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium hover:-translate-y-0.5 transition-spring">
+                <Button onClick={() => setShowListingModal('terra-procura')} className="bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium transition-colors">
                   <Plus className="h-4 w-4" /> Publicar Pedido de Terra
                 </Button>
               )}
               {userTypes.includes('vendedor') && (
-                <Button onClick={() => setShowListingModal('produto-oferta')} className="bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium hover:-translate-y-0.5 transition-spring">
+                <Button onClick={() => setShowListingModal('produto-oferta')} className="bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium transition-colors">
                   <Plus className="h-4 w-4" /> Publicar Produto para Venda
                 </Button>
               )}
               {userTypes.includes('comprador') && (
-                <Button onClick={() => setShowListingModal('produto-procura')} className="bg-purple-600 hover:bg-purple-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium hover:-translate-y-0.5 transition-spring">
+                <Button onClick={() => setShowListingModal('produto-procura')} className="bg-purple-600 hover:bg-purple-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium transition-colors">
                   <Plus className="h-4 w-4" /> Publicar Pedido de Produto
                 </Button>
               )}
@@ -806,7 +806,7 @@ const Marketplace = () => {
 
         {/* TABS */}
         <div className="container mx-auto px-4 lg:px-8 -mt-6 relative z-10">
-          <div className="bg-card border border-border/60 rounded-2xl shadow-strong p-2 flex gap-2 max-w-md mx-auto">
+          <div className="bg-card border border-border/60 rounded-lg shadow-strong p-2 flex gap-2 max-w-md mx-auto">
             <button
               onClick={() => setActiveTab('terrenos')}
               className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'terrenos' ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:bg-muted'}`}
@@ -839,14 +839,14 @@ const Marketplace = () => {
                 onClick={() => setShowFilters(!showFilters)}>
                 <SlidersHorizontal className="h-4 w-4" />
                 <span className="hidden sm:inline">Filtros</span>
-                {activeFilters > 0 && <Badge className="h-5 w-5 p-0 text-[10px] gradient-primary text-white border-0">{activeFilters}</Badge>}
+                {activeFilters > 0 && <Badge className="h-5 w-5 p-0 text-[10px] bg-primary text-white border-0">{activeFilters}</Badge>}
                 <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
               </Button>
             )}
           </div>
 
           {showFilters && activeTab === 'terrenos' && (
-            <div className="bg-card border border-border/60 rounded-2xl p-5 mb-8 shadow-soft fade-in-up">
+            <div className="bg-card border border-border/60 rounded-lg p-5 mb-8 shadow-soft fade-in-up">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Select value={filters.tipoSolo} onValueChange={v => setFilters(f => ({ ...f, tipoSolo: v }))}>
                   <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Tipo de Solo" /></SelectTrigger>
@@ -881,7 +881,7 @@ const Marketplace = () => {
           {loadingData ? (
             <div role="status" aria-label="A carregar conteúdo" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-card rounded-2xl border border-border/60 overflow-hidden">
+                <div key={i} className="bg-card rounded-lg border border-border/60 overflow-hidden">
                   <Skeleton className="h-48 w-full rounded-none" />
                   <div className="p-5 space-y-3">
                     <Skeleton className="h-4 w-2/3" />
@@ -911,7 +911,7 @@ const Marketplace = () => {
                           const Icon = m.icon;
                           const isOwner = currentUser?.uid === l.autorUid;
                           return (
-                            <div key={l.id} className={`bg-card rounded-2xl border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
+                            <div key={l.id} className={`bg-card rounded-lg border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
                               <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
                               {isOwner && (
                                 <button aria-label="Eliminar anúncio" onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
@@ -944,7 +944,7 @@ const Marketplace = () => {
                           const hasImage = (p.imageUrls ?? []).length > 0;
                           const isOwner = currentUser?.uid === p.donoUid;
                           return (
-                            <div key={p.id || i} className="group relative bg-card rounded-2xl border border-border/60 overflow-hidden cursor-pointer card-hover shadow-xs fade-in-up"
+                            <div key={p.id || i} className="group relative bg-card rounded-lg border border-border/60 overflow-hidden cursor-pointer card-hover shadow-xs fade-in-up"
                               style={{ animationDelay: `${i * 60}ms` }}
                               onClick={() => setSelectedProperty(p)}>
                               <div className={`h-48 overflow-hidden flex items-center justify-center relative ${!hasImage ? `bg-gradient-to-br ${soilColors[p.tipo_solo] || 'from-green-600/20 to-green-700/10'}` : ''}`}>
@@ -1001,7 +1001,7 @@ const Marketplace = () => {
                         })}
                       </div>
                     ) : (
-                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-2xl">
+                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-lg">
                         <MapPin className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
                         <p className="text-muted-foreground">Nenhuma terra encontrada.</p>
                       </div>
@@ -1032,7 +1032,7 @@ const Marketplace = () => {
                           const Icon = m.icon;
                           const isOwner = currentUser?.uid === l.autorUid;
                           return (
-                            <div key={l.id} className={`bg-card rounded-2xl border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
+                            <div key={l.id} className={`bg-card rounded-lg border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
                               <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
                               {isOwner && (
                                 <button aria-label="Eliminar anúncio" onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
@@ -1059,7 +1059,7 @@ const Marketplace = () => {
                         })}
                       </div>
                     ) : (
-                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-2xl">
+                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-lg">
                         <ShoppingBag className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
                         <p className="text-muted-foreground">Nenhum produto à venda no momento.</p>
                       </div>
@@ -1076,7 +1076,7 @@ const Marketplace = () => {
                           const Icon = m.icon;
                           const isOwner = currentUser?.uid === l.autorUid;
                           return (
-                            <div key={l.id} className={`bg-card rounded-2xl border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
+                            <div key={l.id} className={`bg-card rounded-lg border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
                               <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
                               {isOwner && (
                                 <button aria-label="Eliminar anúncio" onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
@@ -1103,7 +1103,7 @@ const Marketplace = () => {
                         })}
                       </div>
                     ) : (
-                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-2xl">
+                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-lg">
                         <Package className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
                         <p className="text-muted-foreground">Nenhum pedido de compra no momento.</p>
                       </div>

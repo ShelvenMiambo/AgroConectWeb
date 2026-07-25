@@ -154,9 +154,9 @@ export default function Admin() {
       {/* ── Confirmation Delete Modal ── */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-card border border-border/60 rounded-2xl shadow-strong p-6 space-y-5 fade-in-up">
+          <div className="w-full max-w-sm bg-card border border-border/60 rounded-lg shadow-strong p-6 space-y-5 fade-in-up">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="h-6 w-6 text-destructive" />
               </div>
               <div>
@@ -214,7 +214,7 @@ export default function Admin() {
       <aside className="hidden lg:flex w-60 flex-col border-r border-border/60 bg-card/50">
         <div className="p-5 border-b border-border/60">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center"><span className="text-white font-black text-sm">AC</span></div>
+            <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center"><span className="text-white font-black text-sm">AC</span></div>
             <div><p className="font-black text-sm text-primary font-['Outfit']">AgroConecta</p><p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Admin</p></div>
           </Link>
         </div>
@@ -227,7 +227,7 @@ export default function Admin() {
         </nav>
         <div className="p-4 border-t border-border/60">
           <div className="flex items-center gap-2 mb-3 px-1">
-            <div className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold">{currentUser?.email?.charAt(0).toUpperCase()}</div>
+            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">{currentUser?.email?.charAt(0).toUpperCase()}</div>
             <div className="min-w-0"><p className="text-xs font-semibold truncate">{userData?.name}</p><p className="text-[10px] text-muted-foreground truncate">{currentUser?.email}</p></div>
           </div>
           <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-destructive" onClick={logout}><LogOut className="h-4 w-4 mr-2" />Terminar Sessão</Button>
@@ -263,7 +263,7 @@ export default function Admin() {
                   { label: 'Planos Cultivo', value: plans.length, icon: Sprout, color: 'text-green-500', bg: 'bg-green-500/10' },
                   { label: 'Receita Est.', value: `${totalRevenue}MT`, icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
                 ].map(s => (
-                  <div key={s.label} className="rounded-2xl border border-border/60 bg-card p-4 shadow-soft">
+                  <div key={s.label} className="rounded-lg border border-border/60 bg-card p-4 shadow-soft">
                     <div className={`w-9 h-9 rounded-xl ${s.bg} flex items-center justify-center mb-3`}><s.icon className={`h-4 w-4 ${s.color}`} /></div>
                     <p className="text-xl font-black font-['Outfit']">{loading ? '—' : s.value}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5 font-semibold">{s.label}</p>
@@ -272,7 +272,7 @@ export default function Admin() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Subscriptions breakdown */}
-                <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-soft">
+                <div className="rounded-lg border border-border/60 bg-card p-5 shadow-soft">
                   <h3 className="font-bold font-['Outfit'] mb-4 flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" />Subscrições</h3>
                   <div className="space-y-3">
                     {[
@@ -293,12 +293,12 @@ export default function Admin() {
                   </div>
                 </div>
                 {/* Recent users */}
-                <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-soft">
+                <div className="rounded-lg border border-border/60 bg-card p-5 shadow-soft">
                   <h3 className="font-bold font-['Outfit'] mb-4 flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Últimos Utilizadores</h3>
                   <div className="space-y-2">
                     {loading ? <div className="h-32 bg-muted animate-pulse rounded-xl" /> : users.slice(0, 5).map(u => (
                       <div key={u.uid} className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{u.name?.charAt(0) || '?'}</div>
+                        <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{u.name?.charAt(0) || '?'}</div>
                         <div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{u.name}</p><p className="text-[10px] text-muted-foreground truncate">{u.email}</p></div>
                         <Badge variant="outline" className={`text-[10px] rounded-full ${planColor[u.plan || 'gratuito']}`}>{u.plan || 'gratuito'}</Badge>
                       </div>
@@ -311,7 +311,7 @@ export default function Admin() {
 
           {/* USERS */}
           {tab === 'users' && (
-            <div className="rounded-2xl border border-border/60 bg-card shadow-soft overflow-hidden">
+            <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
               <div className="p-5 border-b border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div><h2 className="font-bold font-['Outfit']">Utilizadores ({filteredUsers.length}/{users.length})</h2></div>
                 <div className="relative w-full sm:w-56"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar..." className="pl-9 h-9 rounded-xl" /></div>
@@ -322,7 +322,7 @@ export default function Admin() {
                   <tbody className="divide-y divide-border/40">
                     {loading ? <Skeleton cols={7} /> : filteredUsers.map(u => (
                       <tr key={u.uid} className="hover:bg-muted/20 transition-colors">
-                        <Td><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold">{u.name?.charAt(0) || '?'}</div><span className="font-semibold">{u.name}</span></div></Td>
+                        <Td><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">{u.name?.charAt(0) || '?'}</div><span className="font-semibold">{u.name}</span></div></Td>
                         <Td cls="text-muted-foreground max-w-[160px] truncate">{u.email}</Td>
                         <Td><span className="text-xs capitalize">{u.userType || '—'}</span></Td>
                         <Td><Badge variant="outline" className={`text-[10px] rounded-full ${planColor[u.plan || 'gratuito']}`}>{u.plan || 'gratuito'}</Badge></Td>
@@ -347,7 +347,7 @@ export default function Admin() {
 
           {/* PROPERTIES */}
           {tab === 'properties' && (
-            <div className="rounded-2xl border border-border/60 bg-card shadow-soft overflow-hidden">
+            <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
               <div className="p-5 border-b border-border/60"><h2 className="font-bold font-['Outfit']">Todas as Propriedades ({properties.length})</h2></div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -378,7 +378,7 @@ export default function Admin() {
 
           {/* NEGOTIATIONS */}
           {tab === 'negotiations' && (
-            <div className="rounded-2xl border border-border/60 bg-card shadow-soft overflow-hidden">
+            <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
               <div className="p-5 border-b border-border/60"><h2 className="font-bold font-['Outfit']">Todas as Negociações ({negotiations.length})</h2></div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -402,7 +402,7 @@ export default function Admin() {
 
           {/* PRODUCTION */}
           {tab === 'production' && (
-            <div className="rounded-2xl border border-border/60 bg-card shadow-soft overflow-hidden">
+            <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
               <div className="p-5 border-b border-border/60"><h2 className="font-bold font-['Outfit']">Todos os Planos de Produção ({plans.length})</h2></div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -435,7 +435,7 @@ export default function Admin() {
             <div className="space-y-6 max-w-2xl">
 
               {/* Prices card */}
-              <div className="rounded-2xl border border-border/60 bg-card shadow-soft overflow-hidden">
+              <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
                 <div className="p-5 border-b border-border/60 flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center"><Tag className="h-4 w-4 text-primary" /></div>
                   <div>
@@ -482,7 +482,7 @@ export default function Admin() {
               </div>
 
               {/* Promotion Mode card */}
-              <div className="rounded-2xl border border-border/60 bg-card shadow-soft overflow-hidden">
+              <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
                 <div className="p-5 border-b border-border/60 flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center"><Crown className="h-4 w-4 text-amber-500" /></div>
                   <div>
@@ -524,7 +524,7 @@ export default function Admin() {
                   onClick={handleSavePrices}
                   disabled={savingPrices}
                   className={`h-10 px-6 rounded-xl font-bold gap-2 border-0 transition-all ${
-                    priceSaved ? 'bg-success text-white' : 'gradient-primary text-white'
+                    priceSaved ? 'bg-success text-white' : 'bg-primary text-white'
                   }`}
                 >
                   {savingPrices ? (

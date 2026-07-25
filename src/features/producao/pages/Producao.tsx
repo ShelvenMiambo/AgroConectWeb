@@ -57,7 +57,7 @@ const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () 
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-card w-full max-w-md rounded-2xl shadow-strong border border-border/60 overflow-hidden fade-in-up">
+            <div className="bg-card w-full max-w-md rounded-lg shadow-strong border border-border/60 overflow-hidden fade-in-up">
                 <div className="flex items-center justify-between p-5 border-b border-border/60">
                     <h2 className="font-black text-xl font-['Outfit']">Novo Plano de Cultivo</h2>
                     <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
@@ -85,7 +85,7 @@ const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () 
                             <Input required type="date" value={form.dataColheita} onChange={e => set('dataColheita', e.target.value)} className="rounded-xl" />
                         </div>
                     </div>
-                    <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-bold shadow-medium">
+                    <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-primary text-white border-0 font-bold shadow-medium">
                         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Criar Plano de Produção'}
                     </Button>
                 </form>
@@ -187,7 +187,7 @@ const Producao = () => {
                         {planos.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano registado.</p>
                         ) : planos.slice(0, 3).map(p => (
-                            <div key={p.id} className="p-4 rounded-2xl border border-border/50 bg-muted/20 space-y-3">
+                            <div key={p.id} className="p-4 rounded-lg border border-border/50 bg-muted/20 space-y-3">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h4 className="font-bold text-sm">{p.cultura}</h4>
@@ -219,7 +219,7 @@ const Producao = () => {
                         {alertas.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-8">Sem alertas no momento.</p>
                         ) : alertas.slice(0, 3).map(a => (
-                            <div key={a.id} className={`p-4 rounded-2xl border ${getUrgenciaColor(a.urgencia)}`}>
+                            <div key={a.id} className={`p-4 rounded-lg border ${getUrgenciaColor(a.urgencia)}`}>
                                 <div className="flex justify-between mb-1">
                                     <span className="text-[10px] font-bold uppercase">{a.tipo} • {a.planoNome}</span>
                                     {!a.lido && <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
@@ -244,13 +244,13 @@ const Producao = () => {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
                     <div className="text-center md:text-left">
                         <h1 className="text-3xl md:text-4xl font-black font-['Outfit'] mb-2">
-                             Gestão de <span className="text-gradient-primary">Produção</span>
+                             Gestão de <span className="text-primary">Produção</span>
                         </h1>
                         <p className="text-muted-foreground max-w-lg text-sm">
                             Monitorize os seus cultivos em tempo real e receba alertas inteligentes para otimizar a sua colheita.
                         </p>
                     </div>
-                    <Button onClick={() => setShowAddModal(true)} className="gradient-primary text-white border-0 rounded-2xl font-bold px-6 py-6 shadow-medium hover:-translate-y-0.5 transition-spring">
+                    <Button onClick={() => setShowAddModal(true)} className="bg-primary text-white border-0 rounded-lg font-bold px-6 py-6 shadow-medium transition-colors">
                         <Plus className="h-5 w-5 mr-1" /> Novo Plano
                     </Button>
                 </div>
@@ -267,7 +267,7 @@ const Producao = () => {
                             key={key}
                             variant={activeTab === key ? "default" : "ghost"}
                             onClick={() => setActiveTab(key as any)}
-                            className={`rounded-xl gap-2 font-bold transition-all ${activeTab === key ? 'gradient-primary text-white border-0' : 'text-muted-foreground hover:bg-muted'}`}
+                            className={`rounded-xl gap-2 font-bold transition-all ${activeTab === key ? 'bg-primary text-white border-0' : 'text-muted-foreground hover:bg-muted'}`}
                         >
                             <Ic className="h-4 w-4" /> <span>{label}</span>
                         </Button>
@@ -287,7 +287,7 @@ const Producao = () => {
                         {activeTab === 'planos' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {planos.map(p => (
-                                    <Card key={p.id} className="border-border/50 shadow-soft rounded-2xl card-hover overflow-hidden">
+                                    <Card key={p.id} className="border-border/50 shadow-soft rounded-lg card-hover overflow-hidden">
                                         <CardHeader className="pb-2 bg-muted/20 border-b border-border/40">
                                             <div className="flex justify-between items-center mb-2">
                                                 <Badge className={getStatusColor(p.status)}>{p.status}</Badge>
@@ -322,7 +322,7 @@ const Producao = () => {
                                 ))}
                                 <button 
                                     onClick={() => setShowAddModal(true)}
-                                    className="border-2 border-dashed border-border/60 rounded-2xl p-10 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                                    className="border-2 border-dashed border-border/60 rounded-lg p-10 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 transition-all group"
                                 >
                                     <div className="p-4 rounded-full bg-muted group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                                         <Plus className="h-8 w-8" />
@@ -341,7 +341,7 @@ const Producao = () => {
                                         <p className="text-muted-foreground">Tudo está a correr bem nos seus campos.</p>
                                     </div>
                                 ) : alertas.map(a => (
-                                    <Card key={a.id} className={`border-l-4 ${getUrgenciaColor(a.urgencia)} shadow-soft rounded-2xl overflow-hidden`}>
+                                    <Card key={a.id} className={`border-l-4 ${getUrgenciaColor(a.urgencia)} shadow-soft rounded-lg overflow-hidden`}>
                                         <CardContent className="p-6">
                                             <div className="flex justify-between gap-4">
                                                 <div className="flex-1 space-y-2">
@@ -354,7 +354,7 @@ const Producao = () => {
                                                 </div>
                                                 <div className="flex flex-col gap-2">
                                                     <Button size="sm" variant="ghost">Ver Plano</Button>
-                                                    {!a.lido && <Button size="sm" className="gradient-primary text-white border-0">Marcar como Lido</Button>}
+                                                    {!a.lido && <Button size="sm" className="bg-primary text-white border-0">Marcar como Lido</Button>}
                                                 </div>
                                             </div>
                                         </CardContent>
@@ -378,7 +378,7 @@ const Producao = () => {
                                     ) : ocorrencias.map(o => (
                                         <div key={o.id} className="relative">
                                             <div className="absolute -left-[29px] top-1 w-6 h-6 rounded-full bg-background border-4 border-primary flex items-center justify-center z-10" />
-                                            <Card className="border-border/50 shadow-soft rounded-2xl">
+                                            <Card className="border-border/50 shadow-soft rounded-lg">
                                                 <CardContent className="p-5">
                                                     <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase mb-2">
                                                         <span>{new Date(o.data).toLocaleDateString('pt-MZ')} • {o.tipo}</span>

@@ -38,7 +38,7 @@ const NegociacaoCard = ({
   const isPending = n.status === 'pendente';
 
   return (
-    <Card className="border-border/50 shadow-soft rounded-2xl overflow-hidden hover:shadow-medium transition-spring">
+    <Card className="border-border/50 shadow-soft rounded-lg overflow-hidden hover:shadow-medium transition-colors">
       <CardContent className="p-0">
         {/* Header bar */}
         <div className="flex items-center justify-between px-5 py-3 bg-muted/30 border-b border-border/50">
@@ -58,7 +58,7 @@ const NegociacaoCard = ({
             <div className="space-y-0.5">
               <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Arrendatário</p>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full gradient-primary flex items-center justify-center text-white text-[10px] font-black">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-black">
                   {n.arrendatarioNome.charAt(0)}
                 </div>
                 <p className="text-sm font-semibold">{n.arrendatarioNome}</p>
@@ -98,7 +98,7 @@ const NegociacaoCard = ({
           {/* Actions: only owner can accept/reject pending requests */}
           <div className="flex gap-3 pt-1 flex-wrap">
             <Button
-              className="flex-1 min-w-[120px] h-10 rounded-xl gradient-primary text-white border-0 font-bold gap-2 shadow-soft hover:-translate-y-0.5 transition-spring"
+              className="flex-1 min-w-[120px] h-10 rounded-xl bg-primary text-white border-0 font-bold gap-2 shadow-soft transition-colors"
               onClick={() => onOpenChat(n)}
             >
               <MessageSquare className="h-4 w-4" />
@@ -149,7 +149,7 @@ const NegociacaoCard = ({
 /* ── Empty state ───────────────────────────────────── */
 const EmptyState = () => (
   <div className="text-center py-20 col-span-full">
-    <div className="w-20 h-20 rounded-2xl bg-muted/50 border border-dashed border-border flex items-center justify-center mx-auto mb-5">
+    <div className="w-20 h-20 rounded-lg bg-muted/50 border border-dashed border-border flex items-center justify-center mx-auto mb-5">
       <Inbox className="h-10 w-10 text-muted-foreground/40" />
     </div>
     <h3 className="text-lg font-bold mb-2">Sem negociações ainda</h3>
@@ -251,7 +251,7 @@ const Negociacoes = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
           <div className="text-center md:text-left">
             <h1 className="text-3xl md:text-4xl font-black font-['Outfit'] mb-2">
-              Negociações <span className="text-gradient-primary">Seguras</span>
+              Negociações <span className="text-primary">Seguras</span>
             </h1>
             <p className="text-muted-foreground text-sm max-w-lg">
               Gerencie as propostas de arrendamento entre agricultores e proprietários de terrenos.
@@ -276,7 +276,7 @@ const Negociacoes = () => {
             { label: 'Aceites',  value: stats.aceite,   color: 'text-green-600',    bg: 'bg-green-500/10' },
             { label: 'Recusadas',value: stats.recusada,  color: 'text-red-500',      bg: 'bg-red-500/10' },
           ].map(s => (
-            <div key={s.label} className={`rounded-2xl border border-border/50 ${s.bg} p-4 text-center`}>
+            <div key={s.label} className={`rounded-lg border border-border/50 ${s.bg} p-4 text-center`}>
               <p className={`text-2xl font-black font-['Outfit'] ${s.color}`}>{s.value}</p>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{s.label}</p>
             </div>
@@ -291,7 +291,7 @@ const Negociacoes = () => {
               size="sm"
               variant={tab === t ? "default" : "ghost"}
               onClick={() => setTab(t)}
-              className={`rounded-xl font-bold capitalize ${tab === t ? 'gradient-primary text-white border-0' : 'text-muted-foreground'}`}
+              className={`rounded-xl font-bold capitalize ${tab === t ? 'bg-primary text-white border-0' : 'text-muted-foreground'}`}
             >
               {t === 'todas' ? 'Todas' : t.charAt(0).toUpperCase() + t.slice(1)}
               {t !== 'todas' && stats[t] > 0 && (

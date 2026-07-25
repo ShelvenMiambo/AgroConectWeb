@@ -111,11 +111,11 @@ const AssistenteIA = () => {
       <Header />
       <main className="flex-1 container mx-auto px-4 lg:px-8 py-8 max-w-3xl">
         <div className="text-center mb-8">
-          <div className="inline-flex p-4 rounded-2xl gradient-hero shadow-glow mb-5">
+          <div className="inline-flex p-4 rounded-lg bg-primary shadow-md mb-5">
             <Bot className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl md:text-4xl font-black font-['Outfit'] mb-3">
-            <span className="text-gradient-primary">Assistente IA</span> Agrícola
+            <span className="text-primary">Assistente IA</span> Agrícola
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto text-sm">
             Respostas inteligentes sobre cultivo, pragas, clima e mercado — powered by Google Gemini.
@@ -150,10 +150,10 @@ const AssistenteIA = () => {
           </div>
         </div>
 
-        <Card className="mb-4 border-border/60 shadow-medium rounded-2xl overflow-hidden">
+        <Card className="mb-4 border-border/60 shadow-medium rounded-lg overflow-hidden">
           <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60 bg-muted/30">
             <div className="relative">
-              <div className="w-9 h-9 rounded-xl gradient-hero flex items-center justify-center shadow-medium">
+              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-medium">
                 <Bot className="h-5 w-5 text-white" />
               </div>
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-success border-2 border-background" />
@@ -170,12 +170,12 @@ const AssistenteIA = () => {
             {messages.map(msg => (
               <div key={msg.id} className={`flex gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
                 {msg.sender === 'ai' && (
-                  <div className="flex-shrink-0 w-7 h-7 rounded-lg gradient-hero flex items-center justify-center shadow-soft mt-0.5">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-soft mt-0.5">
                     <Bot className="h-3.5 w-3.5 text-white" />
                   </div>
                 )}
-                <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.sender === 'user' ? 'gradient-primary text-white rounded-tr-sm' : 'bg-muted rounded-tl-sm'
+                <div className={`max-w-[82%] rounded-lg px-4 py-3 text-sm leading-relaxed ${
+                  msg.sender === 'user' ? 'bg-primary text-white rounded-tr-sm' : 'bg-muted rounded-tl-sm'
                 }`}>
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                   <p className={`text-[10px] mt-1.5 ${msg.sender === 'user' ? 'text-white/60 text-right' : 'text-muted-foreground'}`}>
@@ -186,10 +186,10 @@ const AssistenteIA = () => {
             ))}
             {typing && (
               <div className="flex gap-3">
-                <div className="flex-shrink-0 w-7 h-7 rounded-lg gradient-hero flex items-center justify-center shadow-soft">
+                <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-soft">
                   <Bot className="h-3.5 w-3.5 text-white" />
                 </div>
-                <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
+                <div className="bg-muted rounded-lg rounded-tl-sm px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
                       {[0,1,2].map(i => (
@@ -218,7 +218,7 @@ const AssistenteIA = () => {
                 </Button>
               </div>
               <Button onClick={() => send(input)} disabled={!input.trim() || typing}
-                className="h-11 w-11 p-0 rounded-xl gradient-primary text-white border-0 flex-shrink-0 shadow-soft hover:-translate-y-0.5 transition-spring">
+                className="h-11 w-11 p-0 rounded-xl bg-primary text-white border-0 flex-shrink-0 shadow-soft transition-colors">
                 {typing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
@@ -233,7 +233,7 @@ const AssistenteIA = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           {topicSuggestions.map(({ icon: Ic, text, category, color }, i) => (
             <button key={i} onClick={() => send(text)} disabled={typing}
-              className="group flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5 hover:-translate-y-1 transition-spring text-center disabled:opacity-50 disabled:cursor-not-allowed">
+              className="group flex flex-col items-center gap-2 p-4 rounded-lg border border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5 transition-colors text-center disabled:opacity-50 disabled:cursor-not-allowed">
               <div className="p-2 rounded-xl bg-muted group-hover:bg-primary/10 transition-colors">
                 <Ic className={`h-5 w-5 ${color}`} />
               </div>
@@ -249,7 +249,7 @@ const AssistenteIA = () => {
             { icon: Volume2,   title: 'Áudio Integrado',   desc: 'Ouça as respostas em voz alta',     color: 'text-accent',  bg: 'bg-accent/8' },
             { icon: BookOpen,  title: 'IA Real',            desc: 'Powered by Google Gemini 1.5',     color: 'text-success', bg: 'bg-success/8' },
           ].map(({ icon: Ic, title, desc, color, bg }, i) => (
-            <div key={i} className="flex flex-col items-center text-center p-5 rounded-2xl border border-border/60 bg-card hover:shadow-soft transition-smooth">
+            <div key={i} className="flex flex-col items-center text-center p-5 rounded-lg border border-border/60 bg-card hover:shadow-soft transition-smooth">
               <div className={`p-3 rounded-xl ${bg} mb-3`}><Ic className={`h-6 w-6 ${color}`} /></div>
               <h3 className="font-bold text-sm mb-1 font-['Outfit']">{title}</h3>
               <p className="text-xs text-muted-foreground">{desc}</p>

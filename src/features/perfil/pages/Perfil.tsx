@@ -62,7 +62,7 @@ const plans = [
     bg: 'bg-primary/8',
     border: 'border-primary/30',
     features: ['Tudo no Mensal', 'Poupa 10% (vs mensal)', 'Suporte prioritário', 'Análise de mercado'],
-    cta: { label: 'Subscrever Trimestral', classes: 'gradient-primary text-white border-0' },
+    cta: { label: 'Subscrever Trimestral', classes: 'bg-primary text-white border-0' },
     badge: 'Popular',
   },
   {
@@ -144,7 +144,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={step === 'success' ? undefined : onClose} />
-      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-strong border border-border/60 fade-in-up overflow-hidden">
+      <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 fade-in-up overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/30">
           <div>
@@ -162,7 +162,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               </div>
               <h3 className="text-2xl font-black font-['Outfit']">Subscrição Ativa!</h3>
               <p className="text-muted-foreground text-sm">O seu plano <strong>{plan.label}</strong> foi ativado com sucesso. Bem-vindo ao Premium!</p>
-              <Button className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-bold" onClick={() => { onClose(); window.location.reload(); }}>
+              <Button className="w-full h-12 rounded-xl bg-primary text-white border-0 font-bold" onClick={() => { onClose(); window.location.reload(); }}>
                 <CheckCircle className="h-4 w-4 mr-2" /> Continuar para o AgroConecta
               </Button>
             </div>
@@ -194,14 +194,14 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               <p className="text-sm text-muted-foreground">{errorMsg}</p>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
-                <Button className="flex-1 rounded-xl gradient-primary text-white border-0" onClick={() => { setStep('method'); setPhone(''); }}>
+                <Button className="flex-1 rounded-xl bg-primary text-white border-0" onClick={() => { setStep('method'); setPhone(''); }}>
                   Tentar Novamente
                 </Button>
               </div>
             </div>
           ) : step === 'method' ? (
             <>
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/40 border border-border/50">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
                 <span className="text-muted-foreground text-sm">Total a pagar</span>
                 <span className="text-2xl font-black text-primary font-['Outfit']">{plan.price} MT</span>
               </div>
@@ -209,9 +209,9 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => { setStep('mpesa'); setMethod('mpesa'); }}
-                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-border/50 hover:border-primary/50 hover:bg-muted/50 transition-all group"
+                  className="flex flex-col items-center gap-3 p-5 rounded-lg border-2 border-border/50 hover:border-primary/50 hover:bg-muted/50 transition-all group"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg group-hover:scale-110 transition-transform">M</div>
+                  <div className="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg group-hover:scale-110 transition-transform">M</div>
                   <div className="text-center">
                     <p className="font-bold text-sm">M-Pesa</p>
                     <p className="text-[10px] text-muted-foreground">Vodacom Mçbq</p>
@@ -219,9 +219,9 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
                 </button>
                 <button
                   onClick={() => { setStep('emola'); setMethod('emola'); }}
-                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-border/50 hover:border-primary/50 hover:bg-muted/50 transition-all group"
+                  className="flex flex-col items-center gap-3 p-5 rounded-lg border-2 border-border/50 hover:border-primary/50 hover:bg-muted/50 transition-all group"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center font-black text-blue-600 text-lg group-hover:scale-110 transition-transform">e</div>
+                  <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center font-black text-blue-600 text-lg group-hover:scale-110 transition-transform">e</div>
                   <div className="text-center">
                     <p className="font-bold text-sm">eMola</p>
                     <p className="text-[10px] text-muted-foreground">Movitel</p>
@@ -234,7 +234,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
             </>
           ) : (
             <>
-              <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/40 border border-border/50 mb-2">
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/40 border border-border/50 mb-2">
                 {step === 'mpesa' ? (
                   <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg">M</div>
                 ) : (
@@ -269,7 +269,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               <Button
                 onClick={handlePayment}
                 disabled={!isValidPhone(phone) || processing}
-                className="w-full h-12 rounded-xl font-bold gap-2 text-white border-0 gradient-primary"
+                className="w-full h-12 rounded-xl font-bold gap-2 text-white border-0 bg-primary"
               >
                 Pagar {plan.price} MT agora
               </Button>
@@ -398,17 +398,17 @@ const Perfil = () => {
 
       <main className="container mx-auto px-4 lg:px-8 py-10 max-w-5xl pb-24 md:pb-10">
         <h1 className="text-3xl md:text-4xl font-black font-['Outfit'] mb-8">
-          O Meu <span className="text-gradient-primary">Perfil</span>
+          O Meu <span className="text-primary">Perfil</span>
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Profile Card */}
           <div className="lg:col-span-1 space-y-4">
-            <Card className="border-border/50 shadow-soft rounded-2xl overflow-hidden">
-              <div className="h-20 gradient-primary relative" />
+            <Card className="border-border/50 shadow-soft rounded-lg overflow-hidden">
+              <div className="h-20 bg-primary relative" />
               <CardContent className="px-6 pb-6 pt-0">
                 <div className="flex justify-end -mt-10 mb-3">
-                  <div className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center text-white text-3xl font-black shadow-glow border-4 border-background">
+                  <div className="w-20 h-20 rounded-lg bg-primary flex items-center justify-center text-white text-3xl font-black shadow-md border-4 border-background">
                     {(userData?.name || currentUser?.email || 'U').charAt(0).toUpperCase()}
                   </div>
                 </div>
@@ -452,7 +452,7 @@ const Perfil = () => {
             </Card>
 
             {/* Quick links */}
-            <Card className="border-border/50 shadow-soft rounded-2xl">
+            <Card className="border-border/50 shadow-soft rounded-lg">
               <CardContent className="p-4 space-y-1">
                 {[
                   { icon: MapPin, label: 'Marketplace', href: '/marketplace' },
@@ -477,7 +477,7 @@ const Perfil = () => {
           {/* Right: Details + Plans */}
           <div className="lg:col-span-2 space-y-6">
             {/* Account Details */}
-            <Card className="border-border/50 shadow-soft rounded-2xl">
+            <Card className="border-border/50 shadow-soft rounded-lg">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
                 <CardTitle className="text-lg font-black font-['Outfit']">Dados da Conta</CardTitle>
                 {!editing ? (
@@ -487,7 +487,7 @@ const Perfil = () => {
                 ) : (
                   <div className="flex gap-2">
                     <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>
-                    <Button size="sm" className="gap-2 rounded-xl gradient-primary text-white border-0" onClick={handleSave} disabled={saving}>
+                    <Button size="sm" className="gap-2 rounded-xl bg-primary text-white border-0" onClick={handleSave} disabled={saving}>
                       {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Guardar
                     </Button>
                   </div>
@@ -575,7 +575,7 @@ const Perfil = () => {
 
             {/* Subscription Plans — shown first so user sees upgrade options immediately */}
             {config.isPromotionActive && (
-              <div className="bg-gradient-to-r from-amber-500/10 via-primary/5 to-emerald-500/10 border border-primary/20 text-foreground p-4 rounded-2xl flex items-start gap-3 shadow-soft">
+              <div className="bg-gradient-to-r from-amber-500/10 via-primary/5 to-emerald-500/10 border border-primary/20 text-foreground p-4 rounded-lg flex items-start gap-3 shadow-soft">
                 <Crown className="h-5 w-5 text-amber-500 animate-pulse mt-0.5 flex-shrink-0" />
                 <div className="space-y-0.5">
                   <h4 className="font-black text-sm font-['Outfit'] flex items-center gap-2">
@@ -589,7 +589,7 @@ const Perfil = () => {
               </div>
             )}
 
-            <Card className="border-border/50 shadow-soft rounded-2xl">
+            <Card className="border-border/50 shadow-soft rounded-lg">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-black font-['Outfit'] flex items-center gap-2">
                   <Crown className="h-5 w-5 text-primary" /> Planos de Subscrição
@@ -621,13 +621,13 @@ const Perfil = () => {
                     return (
                       <div
                         key={plan.id}
-                        className={`relative rounded-2xl border-2 p-4 space-y-3 transition-all flex-shrink-0 w-[72vw] sm:w-auto snap-start ${
+                        className={`relative rounded-lg border-2 p-4 space-y-3 transition-all flex-shrink-0 w-[72vw] sm:w-auto snap-start ${
                           isActive ? 'border-primary bg-primary/5 shadow-soft' : `${plan.border} ${plan.bg}`
                         }`}
                       >
                         {plan.badge && (
                           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                            <Badge className="gradient-primary text-white border-0 font-bold text-[10px] px-3 shadow-soft whitespace-nowrap">
+                            <Badge className="bg-primary text-white border-0 font-bold text-[10px] px-3 shadow-soft whitespace-nowrap">
                               {plan.badge}
                             </Badge>
                           </div>
@@ -693,7 +693,7 @@ const Perfil = () => {
             </Card>
 
             {/* Minhas Publicações */}
-            <Card className="border-border/50 shadow-soft rounded-2xl">
+            <Card className="border-border/50 shadow-soft rounded-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-black font-['Outfit'] flex items-center gap-2">
                   <Package className="h-5 w-5 text-primary" /> Minhas Publicações
@@ -743,7 +743,7 @@ const Perfil = () => {
             </Card>
 
             {/* Danger Zone */}
-            <Card className="border-destructive/30 shadow-soft rounded-2xl bg-destructive/5">
+            <Card className="border-destructive/30 shadow-soft rounded-lg bg-destructive/5">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-black font-['Outfit'] flex items-center gap-2 text-destructive">
                   <AlertCircle className="h-5 w-5" /> Zona de Perigo

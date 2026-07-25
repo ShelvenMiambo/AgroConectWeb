@@ -161,7 +161,7 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
             }}
           />
           <Button 
-            className="h-[44px] w-[44px] rounded-xl gradient-primary text-white border-0 shadow-soft" 
+            className="h-[44px] w-[44px] rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0"
             size="icon"
             onClick={handleSend}
             disabled={sending || !text.trim()}
