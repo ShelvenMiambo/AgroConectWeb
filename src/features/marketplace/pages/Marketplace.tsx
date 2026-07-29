@@ -379,9 +379,11 @@ const ListingModal = ({ listingType, onClose, onSaved }: { listingType: ListingT
 };
 
 /* ── Contact Modal ──────────────────────────────────── */
+type ContactTarget = { refId: string; refNome: string; refLocal?: string; donoUid: string; donoNome: string };
+
 const ContactModal = ({
-  property, onClose
-}: { property: Property; onClose: () => void }) => {
+  target, onClose
+}: { target: ContactTarget; onClose: () => void }) => {
   const { currentUser, userData } = useAuth();
   const navigate = useNavigate();
   const { config } = usePlanConfig();
@@ -400,12 +402,12 @@ const ContactModal = ({
     setSending(true);
     try {
       await createNegociacao({
-        propertyId: property.id!,
-        propertyNome: property.nome,
+        propertyId: target.refId,
+        propertyNome: target.refNome,
         arrendatarioUid: currentUser.uid,
         arrendatarioNome: userData.name || currentUser.email || 'Anónimo',
-        proprietarioUid: property.donoUid,
-        proprietarioNome: property.donoNome,
+        proprietarioUid: target.donoUid,
+        proprietarioNome: target.donoNome,
         mensagem: message.trim(),
       });
       setSent(true);
@@ -444,7 +446,7 @@ const ContactModal = ({
               <CheckCircle className="h-8 w-8 text-success" />
             </div>
             <h3 className="text-xl font-black font-['Outfit']">Proposta Enviada!</h3>
-            <p className="text-sm text-muted-foreground">O proprietário será notificado. Pode acompanhar o estado em <strong>Negociações</strong>.</p>
+            <p className="text-sm text-muted-foreground">A outra pessoa será notificada. Pode acompanhar o estado em <strong>Negociações</strong>.</p>
             <div className="flex gap-3 pt-2">
               <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
               <Button className="flex-1 rounded-xl bg-primary text-white border-0" onClick={() => { onClose(); navigate('/negociacoes'); }}>Ver Negociações</Button>
@@ -454,16 +456,16 @@ const ContactModal = ({
           <>
             <div className="flex justify-between items-start mb-5">
               <div>
-                <h3 className="text-lg font-black font-['Outfit']">Contactar Proprietário</h3>
-                <p className="text-sm text-muted-foreground">{property.nome} · {property.localizacao}</p>
+                <h3 className="text-lg font-black font-['Outfit']">Contactar</h3>
+                <p className="text-sm text-muted-foreground">{target.refNome}{target.refLocal ? ` · ${target.refLocal}` : ''}</p>
               </div>
               <button aria-label="Fechar" onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
             </div>
             <div className="bg-muted/40 rounded-xl p-3 mb-4">
-              <p className="text-xs text-muted-foreground font-semibold">Proprietário</p>
+              <p className="text-xs text-muted-foreground font-semibold">Para</p>
               <div className="flex items-center gap-2 mt-1">
-                <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-black">{property.donoNome.charAt(0)}</div>
-                <p className="font-semibold text-sm">{property.donoNome}</p>
+                <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-black">{target.donoNome.charAt(0)}</div>
+                <p className="font-semibold text-sm">{target.donoNome}</p>
               </div>
             </div>
             <div className="space-y-2 mb-4">
@@ -471,7 +473,7 @@ const ContactModal = ({
               <textarea
                 value={message}
                 onChange={e => setMessage(e.target.value)}
-                placeholder={`Olá ${property.donoNome}, tenho interesse em arrendar ${property.nome}...`}
+                placeholder={`Olá ${target.donoNome}, tenho interesse em ${target.refNome}...`}
                 rows={4}
                 className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
@@ -510,7 +512,7 @@ const Marketplace = () => {
   const [showPublish, setShowPublish] = useState(false);
   const [showListingModal, setShowListingModal] = useState<ListingType | null>(null);
   const [deletingId, setDeletingId]   = useState<string | null>(null);
-  const [contactProperty, setContactProperty] = useState<Property | null>(null);
+  const [contactTarget, setContactTarget] = useState<ContactTarget | null>(null);
   // Paginação
   const [propsCursor, setPropsCursor] = useState<Cursor>(null);
   const [propsHasMore, setPropsHasMore] = useState(false);
@@ -724,7 +726,7 @@ const Marketplace = () => {
                       <div className="space-y-3">
                         <Button
                           className="w-full h-12 bg-primary text-white border-0 font-semibold rounded-xl shadow-medium transition-colors"
-                          onClick={() => setContactProperty(p)}
+                          onClick={() => setContactTarget({ refId: p.id!, refNome: p.nome, refLocal: p.localizacao, donoUid: p.donoUid, donoNome: p.donoNome })}
                         >
                           <MessageCircle className="h-4 w-4 mr-2" /> Contactar via Negociações
                         </Button>
@@ -763,7 +765,7 @@ const Marketplace = () => {
     <div className="min-h-screen bg-background">
       {showPublish && <PublishModal onClose={() => setShowPublish(false)} onSaved={load} />}
       {showListingModal && <ListingModal listingType={showListingModal} onClose={() => setShowListingModal(null)} onSaved={load} />}
-      {contactProperty && <ContactModal property={contactProperty} onClose={() => setContactProperty(null)} />}
+      {contactTarget && <ContactModal target={contactTarget} onClose={() => setContactTarget(null)} />}
       
       <Header />
       <main>
@@ -928,6 +930,12 @@ const Marketplace = () => {
                                 {l.area && <div className="flex items-center gap-2"><Ruler className="h-3.5 w-3.5 text-muted-foreground" /> Precisa de {l.area} ha</div>}
                                 {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Orçamento: {l.preco.toLocaleString()} MT</div>}
                               </div>
+                              {!isOwner && currentUser && (
+                                <Button onClick={() => setContactTarget({ refId: l.id!, refNome: l.titulo, refLocal: l.localizacao, donoUid: l.autorUid, donoNome: l.autorNome })}
+                                  className="w-full mt-4 h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0 font-semibold gap-2">
+                                  <Send className="h-4 w-4" /> Responder
+                                </Button>
+                              )}
                             </div>
                           );
                         })}
@@ -1054,6 +1062,12 @@ const Marketplace = () => {
                                 {l.localizacao && <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {l.localizacao}</div>}
                                 {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Preço: {l.preco.toLocaleString()} MT</div>}
                               </div>
+                              {!isOwner && currentUser && (
+                                <Button onClick={() => setContactTarget({ refId: l.id!, refNome: l.titulo, refLocal: l.localizacao, donoUid: l.autorUid, donoNome: l.autorNome })}
+                                  className="w-full mt-4 h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0 font-semibold gap-2">
+                                  <Send className="h-4 w-4" /> Contactar vendedor
+                                </Button>
+                              )}
                             </div>
                           );
                         })}
@@ -1098,6 +1112,12 @@ const Marketplace = () => {
                                 {l.localizacao && <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Entrega: {l.localizacao}</div>}
                                 {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Orçamento: {l.preco.toLocaleString()} MT</div>}
                               </div>
+                              {!isOwner && currentUser && (
+                                <Button onClick={() => setContactTarget({ refId: l.id!, refNome: l.titulo, refLocal: l.localizacao, donoUid: l.autorUid, donoNome: l.autorNome })}
+                                  className="w-full mt-4 h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0 font-semibold gap-2">
+                                  <Send className="h-4 w-4" /> Responder
+                                </Button>
+                              )}
                             </div>
                           );
                         })}
