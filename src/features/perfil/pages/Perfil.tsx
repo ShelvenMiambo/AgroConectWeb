@@ -14,6 +14,7 @@ import { getProperties, deleteProperty } from '@/features/marketplace/services/p
 import { getUserListings, deleteListing } from '@/features/marketplace/services/listings';
 import { deleteUserAccountData } from '@/features/perfil/services/account';
 import { uploadAvatar } from '@/lib/services/storage';
+import AvatarCropper from '@/features/perfil/components/AvatarCropper';
 import type { Property, Listing } from '@/types';
 import { supabase } from '@/lib/supabase';
 import Header from "@/components/layout/Header";
@@ -298,6 +299,8 @@ const Perfil = () => {
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
   
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);   // foto escolhida, a aguardar recorte
+  const [viewPhoto, setViewPhoto] = useState(false);             // ver a foto em grande
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [userProperties, setUserProperties] = useState<Property[]>([]);
@@ -371,19 +374,26 @@ const Perfil = () => {
     }
   };
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Passo 1: escolher o ficheiro → abre o recortador
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ''; // permite reenviar o mesmo ficheiro
-    if (!file || !currentUser) return;
+    if (!file) return;
     if (!file.type.startsWith('image/')) { alert('Escolha um ficheiro de imagem.'); return; }
+    setCropFile(file);
+  };
+
+  // Passo 2: guardar o recorte → comprime, envia, grava no perfil
+  const handleCropSave = async (blob: Blob) => {
+    if (!currentUser) return;
     setUploadingPhoto(true);
     try {
+      const file = new File([blob], 'avatar.webp', { type: 'image/webp' });
       const url = await uploadAvatar(currentUser.uid, file);
       await supabase.from('profiles').update({ photo_url: url }).eq('id', currentUser.uid);
       window.location.reload();
     } catch (err: any) {
       alert(err?.message || 'Erro ao enviar a foto. Tente novamente.');
-    } finally {
       setUploadingPhoto(false);
     }
   };
@@ -417,6 +427,34 @@ const Perfil = () => {
       <Header />
       {selectedPlan && <PaymentModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />}
 
+      {/* Recortar a foto de perfil escolhida */}
+      {cropFile && (
+        <AvatarCropper
+          file={cropFile}
+          saving={uploadingPhoto}
+          onCancel={() => setCropFile(null)}
+          onSave={handleCropSave}
+        />
+      )}
+
+      {/* Ver a foto de perfil em grande */}
+      {viewPhoto && userData?.photoURL && (
+        <div
+          className="fixed inset-0 z-[70] bg-background/90 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setViewPhoto(false)}
+        >
+          <button aria-label="Fechar" className="absolute top-4 right-4 h-10 w-10 rounded-full bg-card border border-border flex items-center justify-center" onClick={() => setViewPhoto(false)}>
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={userData.photoURL}
+            alt={userData?.name || 'Foto de perfil'}
+            className="max-w-[90vw] max-h-[85vh] rounded-2xl object-contain shadow-xl"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       <main className="container mx-auto px-4 lg:px-8 py-10 max-w-5xl pb-24 md:pb-10">
         <h1 className="text-3xl md:text-4xl font-black font-['Outfit'] mb-8">
           O Meu <span className="text-primary">Perfil</span>
@@ -431,11 +469,18 @@ const Perfil = () => {
                 <div className="flex -mt-12 mb-3">
                   <div className="relative">
                     {userData?.photoURL ? (
-                      <img
-                        src={userData.photoURL}
-                        alt={userData?.name || 'Foto de perfil'}
-                        className="w-24 h-24 rounded-full object-cover shadow-md border-4 border-background bg-muted"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setViewPhoto(true)}
+                        aria-label="Ver foto de perfil"
+                        className="block rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      >
+                        <img
+                          src={userData.photoURL}
+                          alt={userData?.name || 'Foto de perfil'}
+                          className="w-24 h-24 rounded-full object-cover shadow-md border-4 border-background bg-muted cursor-zoom-in"
+                        />
+                      </button>
                     ) : (
                       <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-black shadow-md border-4 border-background">
                         {(userData?.name || currentUser?.email || 'U').charAt(0).toUpperCase()}
