@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Menu, X, Bell, User,
@@ -63,6 +63,9 @@ const profileLabels: Record<string, string> = {
   pendente:     "Perfil Pendente",
 };
 
+/* ── Notificação unificada (alerta de produção ou negociação) ─────── */
+type Notif = { id: string; titulo: string; descricao: string; createdAt: string | null; lido: boolean };
+
 /* ── Componente principal ────────────────────────────── */
 const Header = () => {
   const [scrolled, setScrolled]       = useState(false);
@@ -71,8 +74,7 @@ const Header = () => {
   const [alertsOpen, setAlertsOpen]   = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [alertsList, setAlertsList]   = useState<Alerta[]>([]);
-  const [negPropCount, setNegPropCount] = useState(0); // negociações pendentes (como proprietário)
-  const [negArrCount, setNegArrCount]   = useState(0); // negociações resolvidas (como arrendatário)
+  const [negNotifs, setNegNotifs]     = useState<Notif[]>([]); // negociações como itens de notificação
   const location                      = useLocation();
   const navigate                      = useNavigate();
   const { currentUser, userData, userRole, logout } = useAuth();
@@ -101,8 +103,7 @@ const Header = () => {
     if (!currentUser) {
       setNotificationCount(0);
       setAlertsList([]);
-      setNegPropCount(0);
-      setNegArrCount(0);
+      setNegNotifs([]);
       return;
     }
     const uid = currentUser.uid;
@@ -111,7 +112,9 @@ const Header = () => {
     const refresh = async () => {
       const [alts, negs] = await Promise.all([
         supabase.from('alertas').select('*').eq('uid', uid).order('created_at', { ascending: false }),
-        supabase.from('negociacoes').select('id, status, proprietario_uid, arrendatario_uid'),
+        supabase.from('negociacoes')
+          .select('id, status, property_nome, arrendatario_uid, arrendatario_nome, proprietario_uid, proprietario_nome, created_at')
+          .order('created_at', { ascending: false }),
       ]);
       if (!active) return;
       setAlertsList((alts.data ?? []).map((a: any) => ({
@@ -119,9 +122,22 @@ const Header = () => {
         tipo: a.tipo, titulo: a.titulo, descricao: a.descricao,
         urgencia: a.urgencia, lido: a.lido, createdAt: a.created_at,
       } as Alerta)));
+
       const list = (negs.data ?? []) as any[];
-      setNegPropCount(list.filter(n => n.proprietario_uid === uid && n.status === 'pendente').length);
-      setNegArrCount(list.filter(n => n.arrendatario_uid === uid && (n.status === 'aceite' || n.status === 'recusada')).length);
+      const notifs: Notif[] = [];
+      for (const n of list) {
+        // Recebi uma proposta (sou o dono do terreno/pedido) e está por responder
+        if (n.proprietario_uid === uid && n.status === 'pendente') {
+          notifs.push({ id: `neg-${n.id}`, titulo: 'Nova proposta recebida',
+            descricao: `${n.arrendatario_nome} · ${n.property_nome}`, createdAt: n.created_at, lido: false });
+        }
+        // A minha proposta foi respondida (sou quem enviou)
+        if (n.arrendatario_uid === uid && (n.status === 'aceite' || n.status === 'recusada')) {
+          notifs.push({ id: `neg-${n.id}`, titulo: n.status === 'aceite' ? 'Proposta aceite ✓' : 'Proposta recusada',
+            descricao: n.property_nome, createdAt: n.created_at, lido: false });
+        }
+      }
+      setNegNotifs(notifs);
     };
 
     refresh();
@@ -133,17 +149,27 @@ const Header = () => {
     return () => { active = false; supabase.removeChannel(channel); };
   }, [currentUser, location.pathname]);
 
-  // Recalcular o badge sempre que as fontes mudam
-  useEffect(() => {
-    const unreadAlerts = alertsList.filter(a => !a.lido).length;
-    setNotificationCount(negPropCount + negArrCount + unreadAlerts);
-  }, [alertsList, negPropCount, negArrCount]);
+  // Lista combinada de notificações (negociações + alertas), mais recentes primeiro
+  const notifItems: Notif[] = useMemo(() => {
+    const alerts: Notif[] = alertsList.map(a => ({
+      id: `alt-${a.id}`, titulo: a.titulo, descricao: a.descricao,
+      createdAt: (a.createdAt as any) ?? null, lido: !!a.lido,
+    }));
+    return [...negNotifs, ...alerts].sort((x, y) =>
+      new Date(y.createdAt ?? 0).getTime() - new Date(x.createdAt ?? 0).getTime());
+  }, [negNotifs, alertsList]);
 
-  const handleAlertClick = async (alert: Alerta) => {
-    if (!alert.lido && alert.id) {
-      await markAlertaAsRead(alert.id);
-      // O badge recalcula-se via listener/efeito derivado; atualização otimista local:
-      setAlertsList(prev => prev.map(a => a.id === alert.id ? { ...a, lido: true } : a));
+  // Badge = negociações por ver + alertas não lidos
+  useEffect(() => {
+    setNotificationCount(notifItems.filter(n => !n.lido).length);
+  }, [notifItems]);
+
+  const handleNotifClick = async (n: Notif) => {
+    // Se for um alerta de produção (id 'alt-...'), marca como lido
+    if (n.id.startsWith('alt-') && !n.lido) {
+      const alertId = n.id.slice(4);
+      await markAlertaAsRead(alertId);
+      setAlertsList(prev => prev.map(a => a.id === alertId ? { ...a, lido: true } : a));
     }
     setAlertsOpen(false);
     navigate('/negociacoes');
@@ -248,11 +274,12 @@ const Header = () => {
             <div className="flex items-center gap-2">
               <ThemeToggle className={scrolled || !isHome ? "" : "text-white hover:bg-white/15"} />
 
+              {currentUser && (
               <div className="relative">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`hidden lg:flex h-9 w-9 p-0 rounded-lg transition-colors ${
+                  className={`flex h-9 w-9 p-0 rounded-lg transition-colors ${
                     scrolled || !isHome ? "" : "text-white hover:bg-white/15"
                   }`}
                   onClick={() => setAlertsOpen(!alertsOpen)}
@@ -274,17 +301,17 @@ const Header = () => {
                       <h4 className="font-bold text-sm">Notificações</h4>
                     </div>
                     <div className="max-h-80 overflow-y-auto p-2">
-                      {alertsList.length === 0 ? (
+                      {notifItems.length === 0 ? (
                         <p className="text-center text-xs text-muted-foreground p-4">Não tem notificações no momento.</p>
                       ) : (
-                        alertsList.slice(0, 5).map(alert => (
-                          <div 
-                            key={alert.id} 
-                            onClick={() => handleAlertClick(alert)}
-                            className={`p-3 text-sm cursor-pointer rounded-lg mb-1 transition-colors ${alert.lido ? 'hover:bg-muted' : 'bg-primary/5 hover:bg-primary/10 border border-primary/20'}`}
+                        notifItems.slice(0, 8).map(n => (
+                          <div
+                            key={n.id}
+                            onClick={() => handleNotifClick(n)}
+                            className={`p-3 text-sm cursor-pointer rounded-lg mb-1 transition-colors ${n.lido ? 'hover:bg-muted' : 'bg-primary/5 hover:bg-primary/10 border border-primary/20'}`}
                           >
-                            <p className={`font-semibold ${alert.lido ? 'text-foreground/80' : 'text-primary'}`}>{alert.titulo}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{alert.descricao}</p>
+                            <p className={`font-semibold ${n.lido ? 'text-foreground/80' : 'text-primary'}`}>{n.titulo}</p>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{n.descricao}</p>
                           </div>
                         ))
                       )}
@@ -297,6 +324,7 @@ const Header = () => {
                   </div>
                 )}
               </div>
+              )}
 
               {currentUser ? (
                 <div className="hidden lg:flex items-center gap-2">
