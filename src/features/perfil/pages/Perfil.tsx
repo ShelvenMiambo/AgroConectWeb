@@ -7,12 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   User, Mail, Phone, Leaf, Shield, CheckCircle,
   Crown, Handshake, MapPin, LogOut, Edit3, Save,
-  Loader2, Sprout, Star, Zap, X, AlertCircle, Calendar, Trash2, Package, Trash, Home
+  Loader2, Sprout, Star, Zap, X, AlertCircle, Calendar, Trash2, Package, Trash, Home, Camera
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getProperties, deleteProperty } from '@/features/marketplace/services/properties';
 import { getUserListings, deleteListing } from '@/features/marketplace/services/listings';
 import { deleteUserAccountData } from '@/features/perfil/services/account';
+import { uploadAvatar } from '@/lib/services/storage';
 import type { Property, Listing } from '@/types';
 import { supabase } from '@/lib/supabase';
 import Header from "@/components/layout/Header";
@@ -296,6 +297,9 @@ const Perfil = () => {
   );
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
   
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   const [userProperties, setUserProperties] = useState<Property[]>([]);
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -367,6 +371,23 @@ const Perfil = () => {
     }
   };
 
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permite reenviar o mesmo ficheiro
+    if (!file || !currentUser) return;
+    if (!file.type.startsWith('image/')) { alert('Escolha um ficheiro de imagem.'); return; }
+    setUploadingPhoto(true);
+    try {
+      const url = await uploadAvatar(currentUser.uid, file);
+      await supabase.from('profiles').update({ photo_url: url }).eq('id', currentUser.uid);
+      window.location.reload();
+    } catch (err: any) {
+      alert(err?.message || 'Erro ao enviar a foto. Tente novamente.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!currentUser) return;
     setSaving(true);
@@ -405,15 +426,42 @@ const Perfil = () => {
           {/* Left: Profile Card */}
           <div className="lg:col-span-1 space-y-4">
             <Card className="border-border/50 shadow-soft rounded-lg overflow-hidden">
-              <div className="h-20 bg-primary relative" />
+              <div className="h-20 bg-primary" />
               <CardContent className="px-6 pb-6 pt-0">
-                <div className="flex justify-end -mt-10 mb-3">
-                  <div className="w-20 h-20 rounded-lg bg-primary flex items-center justify-center text-white text-3xl font-black shadow-md border-4 border-background">
-                    {(userData?.name || currentUser?.email || 'U').charAt(0).toUpperCase()}
+                <div className="flex -mt-12 mb-3">
+                  <div className="relative">
+                    {userData?.photoURL ? (
+                      <img
+                        src={userData.photoURL}
+                        alt={userData?.name || 'Foto de perfil'}
+                        className="w-24 h-24 rounded-full object-cover shadow-md border-4 border-background bg-muted"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-black shadow-md border-4 border-background">
+                        {(userData?.name || currentUser?.email || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    {/* Botão de foto */}
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={uploadingPhoto}
+                      aria-label="Alterar foto de perfil"
+                      className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center border-2 border-background shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-70"
+                    >
+                      {uploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                    </button>
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePhotoChange}
+                    />
                   </div>
                 </div>
                 <h2 className="text-xl font-black font-['Outfit'] leading-tight">{userData?.name || 'Utilizador'}</h2>
-                <p className="text-sm text-muted-foreground mb-3">{currentUser?.email}</p>
+                <p className="text-sm text-muted-foreground mb-3 break-all">{currentUser?.email}</p>
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">

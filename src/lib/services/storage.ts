@@ -24,6 +24,20 @@ export const uploadPropertyImages = async (propertyId: string, files: File[]): P
   return urls;
 };
 
+/** Faz upload da foto de perfil e devolve o URL público (comprime antes). */
+export const uploadAvatar = async (uid: string, original: File): Promise<string> => {
+  const file = await comprimirImagem(original);
+  const ext = (file.name.split('.').pop() || 'webp').toLowerCase();
+  const path = `avatars/${uid}/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+    contentType: file.type,
+    upsert: true,
+  });
+  if (error) throw new Error(error.message || 'Falha ao enviar a foto.');
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+};
+
 /** Remove imagens do bucket (best-effort) a partir dos URLs públicos. */
 export const deleteImagesFromStorage = async (imageUrls: string[]): Promise<void> => {
   const marker = `/object/public/${BUCKET}/`;

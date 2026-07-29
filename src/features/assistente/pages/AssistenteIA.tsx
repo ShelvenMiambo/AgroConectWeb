@@ -4,9 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Bot, Send, Mic, MicOff, Volume2, VolumeX,
-  Languages, BookOpen, Lightbulb, Bug, Cloud, Sprout,
-  Loader2, Sparkles, RefreshCw
+  Bot, Send, Languages, BookOpen, Lightbulb, Bug, Cloud, Sprout,
+  Loader2, RefreshCw, MapPin
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -31,7 +30,7 @@ const SYSTEM = `Você é o AgroBot, assistente agrícola da AgroConecta especial
 Ajude agricultores com: culturas locais (milho, feijão, arroz, mandioca, caju, algodão, horticultura), clima (época chuvosa out-mar / seca abr-set), solos (argiloso, arenoso, franco), pragas, irrigação, preços em Meticais (MT) e mercados locais.
 Seja direto, prático e use emojis. Dê sempre recomendações acionáveis adaptadas a Moçambique.`;
 
-async function askGemini(userText: string, history: Message[], langNote: string): Promise<string> {
+async function askAssistant(userText: string, history: Message[], langNote: string): Promise<string> {
   const historyForServer = history
     .filter(m => m.id !== 1)
     .slice(-10)
@@ -58,14 +57,11 @@ const AssistenteIA = () => {
     id: 1, sender: 'ai', timestamp: new Date(),
     content: 'Olá! Sou o AgroBot — assistente agrícola especializado em Moçambique.\n\nPosso ajudá-lo com cultivo, pragas, clima, solo e preços. Qual é a sua dúvida?',
   }]);
-  const [input, setInput]         = useState('');
-  const [typing, setTyping]       = useState(false);
-  const [recording, setRecording] = useState(false);
-  const [audio, setAudio]         = useState(false);
-  const [lang, setLang]           = useState('pt');
+  const [input, setInput]   = useState('');
+  const [typing, setTyping] = useState(false);
+  const [lang, setLang]     = useState('pt');
   const endRef   = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const recRef   = useRef<any>(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, typing]);
 
@@ -78,33 +74,13 @@ const AssistenteIA = () => {
     setInput('');
     setTyping(true);
     try {
-      const reply = await askGemini(text.trim(), messages, getLang().note);
+      const reply = await askAssistant(text.trim(), messages, getLang().note);
       const aiMsg: Message = { id: Date.now() + 1, sender: 'ai', content: reply, timestamp: new Date() };
       setMessages(prev => [...prev, aiMsg]);
-      if (audio && 'speechSynthesis' in window) {
-        const u = new SpeechSynthesisUtterance(reply.replace(/[^\p{L}\p{N} ,.!?]/gu, ''));
-        u.lang = 'pt-PT'; u.rate = 0.9;
-        window.speechSynthesis.speak(u);
-      }
     } catch {
-      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', timestamp: new Date(), content: 'Erro de rede. Verifique a ligacao e tente novamente.' }]);
+      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', timestamp: new Date(), content: 'Erro de rede. Verifique a ligação e tente novamente.' }]);
     } finally { setTyping(false); }
   };
-
-  const toggleRec = () => {
-    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      alert('Use o Chrome para reconhecimento de voz.'); return;
-    }
-    if (recording) { recRef.current?.stop(); setRecording(false); return; }
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const r = new SR(); r.lang = 'pt-MZ'; r.continuous = false; r.interimResults = false;
-    r.onresult = (e: any) => { setInput(e.results[0][0].transcript); setRecording(false); };
-    r.onerror = () => setRecording(false);
-    r.onend   = () => setRecording(false);
-    recRef.current = r; r.start(); setRecording(true);
-  };
-
-  const toggleAudio = () => { if (audio) window.speechSynthesis?.cancel(); setAudio(!audio); };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -118,12 +94,12 @@ const AssistenteIA = () => {
             <span className="text-primary">Assistente IA</span> Agrícola
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto text-sm">
-            Respostas inteligentes sobre cultivo, pragas, clima e mercado — powered by Google Gemini.
+            Respostas práticas sobre cultivo, pragas, clima e mercado — adaptadas a Moçambique.
           </p>
           <div className="mt-3">
             <Badge variant="secondary" className="gap-1.5 text-success border-success/30 bg-success/10">
               <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
-              Gemini AI Ativo
+              Assistente disponível
             </Badge>
           </div>
         </div>
@@ -136,18 +112,11 @@ const AssistenteIA = () => {
               {languages.map(l => <option key={l.code} value={l.code}>{l.flag} {l.name}</option>)}
             </select>
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={toggleAudio}
-              className={`rounded-xl gap-2 ${audio ? 'text-primary' : 'text-muted-foreground'}`}>
-              {audio ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-              <span className="text-xs hidden sm:inline">{audio ? 'Áudio' : 'Mudo'}</span>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setMessages(m => [m[0]])}
-              className="rounded-xl gap-2 text-muted-foreground" title="Limpar conversa">
-              <RefreshCw className="h-4 w-4" />
-              <span className="text-xs hidden sm:inline">Limpar</span>
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={() => setMessages(m => [m[0]])}
+            className="rounded-xl gap-2 text-muted-foreground" title="Limpar conversa">
+            <RefreshCw className="h-4 w-4" />
+            <span className="text-xs hidden sm:inline">Limpar</span>
+          </Button>
         </div>
 
         <Card className="mb-4 border-border/60 shadow-medium rounded-lg overflow-hidden">
@@ -160,9 +129,7 @@ const AssistenteIA = () => {
             </div>
             <div>
               <p className="font-semibold text-sm">AgroBot</p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-accent" /> Google Gemini
-              </p>
+              <p className="text-xs text-muted-foreground">Assistente agrícola</p>
             </div>
           </div>
 
@@ -197,7 +164,7 @@ const AssistenteIA = () => {
                           style={{ animationDelay: `${i * 150}ms` }} />
                       ))}
                     </div>
-                    <span className="text-xs text-muted-foreground">A consultar Gemini...</span>
+                    <span className="text-xs text-muted-foreground">A escrever...</span>
                   </div>
                 </div>
               </div>
@@ -207,26 +174,15 @@ const AssistenteIA = () => {
 
           <div className="border-t border-border/60 px-4 py-3 bg-background">
             <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <Input ref={inputRef} placeholder="Faça a sua pergunta agrícola..."
-                  value={input} onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}
-                  className="pr-10 rounded-xl border-border/70 h-11" disabled={typing} />
-                <Button variant="ghost" size="sm" onClick={toggleRec}
-                  className={`absolute right-1 top-1 h-9 w-9 p-0 rounded-lg ${recording ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}>
-                  {recording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                </Button>
-              </div>
+              <Input ref={inputRef} placeholder="Faça a sua pergunta agrícola..."
+                value={input} onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}
+                className="flex-1 rounded-xl border-border/70 h-11" disabled={typing} />
               <Button onClick={() => send(input)} disabled={!input.trim() || typing}
                 className="h-11 w-11 p-0 rounded-xl bg-primary text-white border-0 flex-shrink-0 shadow-soft transition-colors">
                 {typing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
-            {recording && (
-              <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse inline-block" /> A gravar...
-              </p>
-            )}
           </div>
         </Card>
 
@@ -245,9 +201,9 @@ const AssistenteIA = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: Languages, title: '4 Idiomas Locais',  desc: 'Português, Makua, Sena e Changana', color: 'text-primary', bg: 'bg-primary/8' },
-            { icon: Volume2,   title: 'Áudio Integrado',   desc: 'Ouça as respostas em voz alta',     color: 'text-accent',  bg: 'bg-accent/8' },
-            { icon: BookOpen,  title: 'IA Real',            desc: 'Powered by Google Gemini 1.5',     color: 'text-success', bg: 'bg-success/8' },
+            { icon: Languages, title: '4 idiomas locais',        desc: 'Português, Makua, Sena e Changana',   color: 'text-primary', bg: 'bg-primary/8' },
+            { icon: MapPin,    title: 'Focado em Moçambique',    desc: 'Culturas, clima e solos do país',     color: 'text-accent',  bg: 'bg-accent/8' },
+            { icon: BookOpen,  title: 'Conselhos práticos',      desc: 'Recomendações que pode aplicar já',   color: 'text-success', bg: 'bg-success/8' },
           ].map(({ icon: Ic, title, desc, color, bg }, i) => (
             <div key={i} className="flex flex-col items-center text-center p-5 rounded-lg border border-border/60 bg-card hover:shadow-soft transition-smooth">
               <div className={`p-3 rounded-xl ${bg} mb-3`}><Ic className={`h-6 w-6 ${color}`} /></div>
