@@ -6,24 +6,23 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Sprout, Calendar, AlertTriangle, CheckCircle, Clock,
-    Camera, TrendingUp, Droplets, Thermometer, Plus,
-    Eye, Loader2, X, MapPin, Search
+    Sprout, Calendar, Clock,
+    Camera, TrendingUp, Plus,
+    Eye, Loader2, X, MapPin
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { getPlanos, addPlano } from "@/features/producao/services/producao";
-import { getAlertas } from "@/features/producao/services/alertas";
 import { getOcorrencias } from "@/features/producao/services/ocorrencias";
-import type { PlanoProducao, Alerta, Ocorrencia } from "@/types";
+import type { PlanoProducao, Ocorrencia } from "@/types";
 
 /* ── Add Plano Modal ────────────────────────────────── */
 const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) => {
     const { currentUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({
-        cultura: '', propriedade: '', area: '', 
+        cultura: '', propriedade: '', largura: '', comprimento: '',
         dataInicio: '', dataColheita: '', notas: ''
     });
 
@@ -38,7 +37,7 @@ const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () 
                 uid: currentUser.uid,
                 cultura: form.cultura,
                 propriedade: form.propriedade,
-                area: Number(form.area),
+                area: Number(form.largura) * Number(form.comprimento),
                 dataInicio: form.dataInicio,
                 dataColheita: form.dataColheita,
                 progresso: 0,
@@ -72,8 +71,15 @@ const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () 
                         <Input required value={form.propriedade} onChange={e => set('propriedade', e.target.value)} placeholder="Onde?" className="rounded-xl" />
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Área (ha)</Label>
-                        <Input required type="number" step="0.1" value={form.area} onChange={e => set('area', e.target.value)} placeholder="Hectares" className="rounded-xl" />
+                        <Label>Tamanho do terreno (metros)</Label>
+                        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                            <Input required type="number" min="0" step="1" value={form.largura} onChange={e => set('largura', e.target.value)} placeholder="Largura" className="rounded-xl" />
+                            <span className="text-muted-foreground font-bold">×</span>
+                            <Input required type="number" min="0" step="1" value={form.comprimento} onChange={e => set('comprimento', e.target.value)} placeholder="Comprimento" className="rounded-xl" />
+                        </div>
+                        {Number(form.largura) > 0 && Number(form.comprimento) > 0 && (
+                            <p className="text-xs text-muted-foreground">Área: {(Number(form.largura) * Number(form.comprimento)).toLocaleString('pt-MZ')} m²</p>
+                        )}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
@@ -97,10 +103,10 @@ const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () 
 /* ── Main Production Component ──────────────────────── */
 const Producao = () => {
     const { currentUser } = useAuth();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'planos' | 'alertas' | 'historico'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'planos' | 'historico'>('dashboard');
     const [planos, setPlanos] = useState<PlanoProducao[]>([]);
-    const [alertas, setAlertas] = useState<Alerta[]>([]);
     const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
+    const [detailPlano, setDetailPlano] = useState<PlanoProducao | null>(null);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
 
@@ -108,13 +114,11 @@ const Producao = () => {
         if (!currentUser) return;
         setLoading(true);
         try {
-            const [p, a, o] = await Promise.all([
+            const [p, o] = await Promise.all([
                 getPlanos(currentUser.uid),
-                getAlertas(currentUser.uid),
                 getOcorrencias(currentUser.uid)
             ]);
             setPlanos(p);
-            setAlertas(a);
             setOcorrencias(o);
         } catch (err) {
             console.error(err);
@@ -125,14 +129,6 @@ const Producao = () => {
 
     useEffect(() => { loadData(); }, [currentUser]);
 
-    const getUrgenciaColor = (urgencia: string) => {
-        switch (urgencia) {
-            case 'alta': return 'text-red-500 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20';
-            case 'media': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/20';
-            case 'baixa': return 'text-green-600 bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20';
-            default: return 'text-muted-foreground bg-muted border-border';
-        }
-    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -146,18 +142,16 @@ const Producao = () => {
     const stats = {
         ativos: planos.filter(p => p.status !== 'Finalizado').length,
         area: planos.reduce((sum, p) => sum + p.area, 0),
-        alertas: alertas.filter(a => !a.lido).length,
         colheita: planos.find(p => p.status === 'Quase Pronto')?.dataColheita || 'Nenhuma'
     };
 
     const renderDashboard = () => (
         <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                     { label: 'Planos Ativos', value: stats.ativos, icon: Sprout, color: 'text-primary' },
-                    { label: 'Área Total', value: `${stats.area}ha`, icon: TrendingUp, color: 'text-accent' },
-                    { label: 'Alertas', value: stats.alertas, icon: AlertTriangle, color: 'text-warning' },
+                    { label: 'Área Total', value: `${stats.area.toLocaleString('pt-MZ')} m²`, icon: TrendingUp, color: 'text-accent' },
                     { label: 'P. Colheita', value: stats.colheita === 'Nenhuma' ? '-' : new Date(stats.colheita).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short' }), icon: Calendar, color: 'text-success' },
                 ].map((s, i) => (
                     <Card key={i} className="border-border/50 shadow-soft">
@@ -174,63 +168,37 @@ const Producao = () => {
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Plans List */}
-                <Card className="border-border/50 shadow-soft">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                             <Sprout className="h-5 w-5 text-primary" /> Planos de Cultivo
-                        </CardTitle>
-                        <Button variant="ghost" size="sm" onClick={() => setActiveTab('planos')}>Ver todos</Button>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {planos.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano registado.</p>
-                        ) : planos.slice(0, 3).map(p => (
-                            <div key={p.id} className="p-4 rounded-lg border border-border/50 bg-muted/20 space-y-3">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h4 className="font-bold text-sm">{p.cultura}</h4>
-                                        <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {p.propriedade}</p>
-                                    </div>
-                                    <Badge className={getStatusColor(p.status)} variant="outline">{p.status}</Badge>
+            {/* Plans List */}
+            <Card className="border-border/50 shadow-soft">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                         <Sprout className="h-5 w-5 text-primary" /> Planos de Cultivo
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveTab('planos')}>Ver todos</Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {planos.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano registado.</p>
+                    ) : planos.slice(0, 4).map(p => (
+                        <div key={p.id} className="p-4 rounded-lg border border-border/50 bg-muted/20 space-y-3">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h4 className="font-bold text-sm">{p.cultura}</h4>
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {p.propriedade}</p>
                                 </div>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
-                                        <span>Progresso</span>
-                                        <span>{p.progresso}%</span>
-                                    </div>
-                                    <Progress value={p.progresso} className="h-1.5" />
-                                </div>
+                                <Badge className={getStatusColor(p.status)} variant="outline">{p.status}</Badge>
                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-
-                {/* Alerts List */}
-                <Card className="border-border/50 shadow-soft">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                             <AlertTriangle className="h-5 w-5 text-warning" /> Alertas Recentes
-                        </CardTitle>
-                        <Button variant="ghost" size="sm" onClick={() => setActiveTab('alertas')}>Ver todos</Button>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {alertas.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-8">Sem alertas no momento.</p>
-                        ) : alertas.slice(0, 3).map(a => (
-                            <div key={a.id} className={`p-4 rounded-lg border ${getUrgenciaColor(a.urgencia)}`}>
-                                <div className="flex justify-between mb-1">
-                                    <span className="text-[10px] font-bold uppercase">{a.tipo} • {a.planoNome}</span>
-                                    {!a.lido && <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
+                            <div className="space-y-1">
+                                <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
+                                    <span>Progresso</span>
+                                    <span>{p.progresso}%</span>
                                 </div>
-                                <h4 className="font-bold text-sm">{a.titulo}</h4>
-                                <p className="text-xs opacity-80 line-clamp-1">{a.descricao}</p>
+                                <Progress value={p.progresso} className="h-1.5" />
                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            </div>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
         </div>
     );
 
@@ -238,6 +206,47 @@ const Producao = () => {
         <div className="min-h-screen bg-background">
             <Header />
             {showAddModal && <AddPlanoModal onClose={() => setShowAddModal(false)} onSaved={loadData} />}
+
+            {/* Detalhes do cultivo — vista simples */}
+            {detailPlano && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setDetailPlano(null)}>
+                    <div className="bg-card w-full max-w-md rounded-lg shadow-strong border border-border/60 overflow-hidden fade-in-up" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-5 border-b border-border/60">
+                            <div>
+                                <h2 className="font-black text-xl font-['Outfit']">{detailPlano.cultura}</h2>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {detailPlano.propriedade}</p>
+                            </div>
+                            <button onClick={() => setDetailPlano(null)} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
+                        </div>
+                        <div className="p-5 space-y-5">
+                            <div className="flex items-center gap-2">
+                                <Badge className={getStatusColor(detailPlano.status)} variant="outline">{detailPlano.status}</Badge>
+                                <span className="text-sm font-semibold text-muted-foreground">{detailPlano.area.toLocaleString('pt-MZ')} m²</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Início</p>
+                                    <p className="text-sm font-semibold">{detailPlano.dataInicio ? new Date(detailPlano.dataInicio).toLocaleDateString('pt-MZ') : '—'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Colheita prevista</p>
+                                    <p className="text-sm font-semibold">{detailPlano.dataColheita ? new Date(detailPlano.dataColheita).toLocaleDateString('pt-MZ') : '—'}</p>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-xs font-bold uppercase"><span>Progresso</span><span>{detailPlano.progresso}%</span></div>
+                                <Progress value={detailPlano.progresso} className="h-2" />
+                            </div>
+                            {detailPlano.notas && (
+                                <div>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Notas</p>
+                                    <p className="text-sm whitespace-pre-wrap">{detailPlano.notas}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
             
             <main className="container mx-auto px-4 lg:px-8 py-10 max-w-5xl">
                 {/* Header */}
@@ -247,7 +256,7 @@ const Producao = () => {
                              Gestão de <span className="text-primary">Produção</span>
                         </h1>
                         <p className="text-muted-foreground max-w-lg text-sm">
-                            Monitorize os seus cultivos em tempo real e receba alertas inteligentes para otimizar a sua colheita.
+                            Registe e acompanhe os seus cultivos — do plantio à colheita.
                         </p>
                     </div>
                     <Button onClick={() => setShowAddModal(true)} className="bg-primary text-white border-0 rounded-lg font-bold px-6 py-6 shadow-medium transition-colors">
@@ -260,7 +269,6 @@ const Producao = () => {
                     {[
                         { key: 'dashboard', label: 'Monitor', icon: TrendingUp },
                         { key: 'planos', label: 'Planos', icon: Sprout },
-                        { key: 'alertas', label: 'Alertas', icon: AlertTriangle },
                         { key: 'historico', label: 'Diário de Campo', icon: Clock }
                     ].map(({ key, label, icon: Ic }) => (
                         <Button
@@ -291,7 +299,7 @@ const Producao = () => {
                                         <CardHeader className="pb-2 bg-muted/20 border-b border-border/40">
                                             <div className="flex justify-between items-center mb-2">
                                                 <Badge className={getStatusColor(p.status)}>{p.status}</Badge>
-                                                <p className="text-[10px] text-muted-foreground font-bold uppercase">{p.area}ha</p>
+                                                <p className="text-[10px] text-muted-foreground font-bold uppercase">{p.area.toLocaleString('pt-MZ')} m²</p>
                                             </div>
                                             <CardTitle className="text-xl font-black font-['Outfit']">{p.cultura}</CardTitle>
                                             <CardDescription className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {p.propriedade}</CardDescription>
@@ -314,7 +322,7 @@ const Producao = () => {
                                                 </div>
                                                 <Progress value={p.progresso} className="h-2" />
                                             </div>
-                                            <Button variant="outline" className="w-full rounded-xl gap-2 font-bold group">
+                                            <Button variant="outline" onClick={() => setDetailPlano(p)} className="w-full rounded-xl gap-2 font-bold group">
                                                 Detalhes do Cultivo <Eye className="h-4 w-4 transition-transform group-hover:scale-110" />
                                             </Button>
                                         </CardContent>
@@ -329,37 +337,6 @@ const Producao = () => {
                                     </div>
                                     <span className="font-bold">Adicionar Novo Plano</span>
                                 </button>
-                            </div>
-                        )}
-
-                        {activeTab === 'alertas' && (
-                            <div className="space-y-4 max-w-3xl mx-auto">
-                                {alertas.length === 0 ? (
-                                    <div className="text-center py-20 bg-muted/20 rounded-3xl border border-dashed">
-                                        <CheckCircle className="h-12 w-12 text-success mx-auto mb-4 opacity-50" />
-                                        <h3 className="font-bold text-lg">Sem alertas no momento</h3>
-                                        <p className="text-muted-foreground">Tudo está a correr bem nos seus campos.</p>
-                                    </div>
-                                ) : alertas.map(a => (
-                                    <Card key={a.id} className={`border-l-4 ${getUrgenciaColor(a.urgencia)} shadow-soft rounded-lg overflow-hidden`}>
-                                        <CardContent className="p-6">
-                                            <div className="flex justify-between gap-4">
-                                                <div className="flex-1 space-y-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <Badge variant="outline" className="text-[10px]">{a.tipo}</Badge>
-                                                        <span className="text-[10px] font-bold text-muted-foreground uppercase">{a.planoNome}</span>
-                                                    </div>
-                                                    <h3 className="text-lg font-black font-['Outfit']">{a.titulo}</h3>
-                                                    <p className="text-sm text-muted-foreground">{a.descricao}</p>
-                                                </div>
-                                                <div className="flex flex-col gap-2">
-                                                    <Button size="sm" variant="ghost">Ver Plano</Button>
-                                                    {!a.lido && <Button size="sm" className="bg-primary text-white border-0">Marcar como Lido</Button>}
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
                             </div>
                         )}
 
