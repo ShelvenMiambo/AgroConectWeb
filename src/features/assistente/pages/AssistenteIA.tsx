@@ -14,7 +14,7 @@ type Message = { id: number; sender: 'user' | 'ai'; content: string; timestamp: 
 
 const topicSuggestions = [
   { icon: Sprout,    text: "Como plantar milho em Moçambique?",   category: "Cultivo",  color: "text-success" },
-  { icon: Bug,       text: "Pragas no tomateiro — como tratar?",  category: "Pragas",   color: "text-destructive" },
+  { icon: Bug,       text: "Pragas no tomateiro: como tratar?",  category: "Pragas",   color: "text-destructive" },
   { icon: Cloud,     text: "Melhores culturas para época seca?",  category: "Clima",    color: "text-primary" },
   { icon: Lightbulb, text: "Como melhorar a fertilidade do solo?",category: "Solo",     color: "text-accent" },
 ];
@@ -55,7 +55,7 @@ async function askAssistant(userText: string, history: Message[], langNote: stri
 const AssistenteIA = () => {
   const [messages, setMessages] = useState<Message[]>([{
     id: 1, sender: 'ai', timestamp: new Date(),
-    content: 'Olá! Sou o AgroBot — assistente agrícola especializado em Moçambique.\n\nPosso ajudá-lo com cultivo, pragas, clima, solo e preços. Qual é a sua dúvida?',
+    content: 'Olá! Sou o AgroBot, assistente agrícola especializado em Moçambique.\n\nPosso ajudá-lo com cultivo, pragas, clima, solo e preços. Qual é a sua dúvida?',
   }]);
   const [input, setInput]   = useState('');
   const [typing, setTyping] = useState(false);
@@ -94,7 +94,7 @@ const AssistenteIA = () => {
             <span className="text-primary">Assistente IA</span> Agrícola
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto text-sm">
-            Respostas práticas sobre cultivo, pragas, clima e mercado — adaptadas a Moçambique.
+            Respostas práticas sobre cultivo, pragas, clima e mercado, adaptadas a Moçambique.
           </p>
           <div className="mt-3">
             <Badge variant="secondary" className="gap-1.5 text-success border-success/30 bg-success/10">

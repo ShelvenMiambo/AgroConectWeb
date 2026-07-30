@@ -131,7 +131,7 @@ const NegociacaoCard = ({
           {!isOwner && n.status === 'aceite' && (
             <div className="flex items-center gap-2 text-sm text-success font-semibold">
               <CheckCircle className="h-4 w-4" />
-              Proposta aceite — contacte o proprietário para assinar o contrato.
+              Proposta aceite. Contacte o proprietário para assinar o contrato.
             </div>
           )}
           {!isOwner && n.status === 'recusada' && (
@@ -223,9 +223,9 @@ const Negociacoes = () => {
             A gestão de negociações e o contacto direto com proprietários/agricultores são funcionalidades exclusivas para utilizadores premium. Atualize o seu plano para desbloquear as negociações reais.
           </p>
           <div className="w-full max-w-md space-y-3">
-             <Button onClick={() => navigate('/perfil')} className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal — {config.prices.mensal} MT</Button>
-             <Button onClick={() => navigate('/perfil')} className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral — {config.prices.trimestral} MT (Poupa 10%)</Button>
-             <Button onClick={() => navigate('/perfil')} className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual — {config.prices.anual} MT (Melhor Valor)</Button>
+             <Button onClick={() => navigate('/perfil')} className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal: {config.prices.mensal} MT</Button>
+             <Button onClick={() => navigate('/perfil')} className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral: {config.prices.trimestral} MT (Poupa 10%)</Button>
+             <Button onClick={() => navigate('/perfil')} className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual: {config.prices.anual} MT (Melhor Valor)</Button>
           </div>
         </main>
         <Footer />

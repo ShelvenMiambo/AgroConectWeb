@@ -162,7 +162,7 @@ export default function Admin() {
               <div>
                 <h3 className="font-black text-lg font-['Outfit']">Apagar Utilizador?</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Todos os dados de <strong className="text-foreground">{confirmDelete.name}</strong> serão eliminados permanentemente — perfil, propriedades, negociações e planos de produção.
+                  Todos os dados de <strong className="text-foreground">{confirmDelete.name}</strong> serão eliminados permanentemente: perfil, propriedades, negociações e planos de produção.
                 </p>
                 <p className="text-xs text-destructive/80 font-medium mt-2">Esta ação não pode ser revertida.</p>
               </div>
@@ -448,7 +448,7 @@ export default function Admin() {
                   {[
                     { key: 'mensal' as const, label: 'Mensal', icon: '⚡', desc: 'Subscrição mensal renovável', color: 'text-orange-500 bg-orange-500/10', original: 200 },
                     { key: 'trimestral' as const, label: 'Trimestral', icon: '⭐', desc: 'Subscrição trimestral (3 meses)', color: 'text-primary bg-primary/10', original: 580 },
-                    { key: 'anual' as const, label: 'Anual', icon: '👑', desc: 'Subscrição anual — melhor valor', color: 'text-emerald-500 bg-emerald-500/10', original: 2000 },
+                    { key: 'anual' as const, label: 'Anual', icon: '👑', desc: 'Subscrição anual, melhor valor', color: 'text-emerald-500 bg-emerald-500/10', original: 2000 },
                   ].map(plan => (
                     <div key={plan.key} className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-muted/20">
                       <div className={`w-10 h-10 rounded-xl ${plan.color} flex items-center justify-center text-xl flex-shrink-0`}>{plan.icon}</div>

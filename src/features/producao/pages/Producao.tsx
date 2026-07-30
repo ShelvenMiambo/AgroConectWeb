@@ -249,7 +249,7 @@ const Producao = () => {
                              Gestão de <span className="text-primary">Produção</span>
                         </h1>
                         <p className="text-muted-foreground max-w-lg text-sm">
-                            Registe e acompanhe os seus cultivos — do plantio à colheita.
+                            Registe e acompanhe os seus cultivos, do plantio à colheita.
                         </p>
                     </div>
                     <Button onClick={() => setShowAddModal(true)} className="bg-primary text-white border-0 rounded-lg font-bold px-6 py-6 shadow-medium transition-colors">

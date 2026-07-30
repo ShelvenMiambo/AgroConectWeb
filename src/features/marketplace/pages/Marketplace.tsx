@@ -276,7 +276,7 @@ const listingFields: Record<ListingType, { key: string; label: string; placehold
     { key: 'descricao', label: 'Descrição *',               placeholder: 'Experiência, culturas que planta, condições...', rows: 3 },
   ],
   'produto-oferta': [
-    { key: 'titulo',    label: 'Nome do Produto *',          placeholder: 'Ex: Tomates frescos — colheita de Maio' },
+    { key: 'titulo',    label: 'Nome do Produto *',          placeholder: 'Ex: Tomates frescos, colheita de Maio' },
     { key: 'produtos',  label: 'Produtos (por vírgula)',     placeholder: 'Ex: Tomate, Cebola, Alface' },
     { key: 'quantidade',label: 'Quantidade disponível',      placeholder: 'Ex: 500 kg, 2 toneladas' },
     { key: 'preco',     label: 'Preço (MT)',                 placeholder: 'Ex: 150', type: 'number' },
@@ -284,7 +284,7 @@ const listingFields: Record<ListingType, { key: string; label: string; placehold
     { key: 'descricao', label: 'Descrição *',               placeholder: 'Qualidade, condições de venda...', rows: 3 },
   ],
   'produto-procura': [
-    { key: 'titulo',    label: 'Título do Pedido *',         placeholder: 'Ex: Procuro milho a granel — Maputo' },
+    { key: 'titulo',    label: 'Título do Pedido *',         placeholder: 'Ex: Procuro milho a granel, Maputo' },
     { key: 'produtos',  label: 'Produtos necessários (vírgula)', placeholder: 'Ex: Milho, Feijão' },
     { key: 'quantidade',label: 'Quantidade necessária',      placeholder: 'Ex: 1 tonelada, 200 sacos' },
     { key: 'preco',     label: 'Orçamento disponível (MT)', placeholder: 'Ex: 50000', type: 'number' },
@@ -651,9 +651,9 @@ const Marketplace = () => {
                         Desbloqueie todos os detalhes, como a descrição técnica do terreno, disponibilidade de recursos, e contacte diretamente o proprietário.
                       </p>
                       <div className="w-full space-y-3">
-                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal — {config.prices.mensal} MT</Button>
-                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral — {config.prices.trimestral} MT (Poupa 10%)</Button>
-                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual — {config.prices.anual} MT (Melhor Valor)</Button>
+                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-soft">Desbloquear Mensal: {config.prices.mensal} MT</Button>
+                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-soft">Desbloquear Trimestral: {config.prices.trimestral} MT (Poupa 10%)</Button>
+                         <Button onClick={() => navigate('/perfil')} className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-soft">Desbloquear Anual: {config.prices.anual} MT (Melhor Valor)</Button>
                       </div>
                       <p className="text-xs text-muted-foreground mt-4">Pagamentos seguros integrados com PaySuite.</p>
                     </div>
@@ -664,7 +664,7 @@ const Marketplace = () => {
                       <div className="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 p-4 rounded-xl flex items-center gap-3 mb-6 animate-pulse">
                         <Crown className="h-5 w-5 text-amber-500 flex-shrink-0 animate-bounce" />
                         <div className="text-xs">
-                          <p className="font-bold">Campanha de Lançamento — 5 Meses Premium Grátis!</p>
+                          <p className="font-bold">Campanha de Lançamento: 5 Meses Premium Grátis!</p>
                           <p className="opacity-95">Todas as funcionalidades e detalhes técnicos deste terreno foram desbloqueados para si sem qualquer custo.</p>
                         </div>
                       </div>

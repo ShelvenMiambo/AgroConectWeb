@@ -20,7 +20,7 @@ const features = [
   {
     icon: Bot,
     title: "Assistente agrícola",
-    description: "Tire dúvidas sobre cultivo, pragas, clima e boas práticas — por escrito ou por voz.",
+    description: "Tire dúvidas sobre cultivo, pragas, clima e boas práticas, por escrito ou por voz.",
     benefits: ["Respostas em português", "Pergunte por voz", "Conteúdo técnico"],
     href: "/assistente-ia",
     image: "/images/assistente-inspecao.webp",
@@ -38,7 +38,7 @@ const features = [
   {
     icon: Handshake,
     title: "Negociações na plataforma",
-    description: "Proponha, converse e feche acordos sem sair do site — com o histórico todo guardado.",
+    description: "Proponha, converse e feche acordos sem sair do site, com o histórico todo guardado.",
     benefits: ["Propostas de arrendamento", "Conversa integrada", "Histórico completo"],
     href: "/negociacoes",
     image: "/images/negociacoes-venda.webp",
@@ -92,7 +92,7 @@ const FeaturesSection = () => {
             O que pode fazer aqui
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Desde encontrar um terreno até fechar o negócio — sem sair da plataforma.
+            Desde encontrar um terreno até fechar o negócio, sem sair da plataforma.
           </p>
         </div>
 
