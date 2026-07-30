@@ -108,7 +108,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
           parts: [{ text: `${sanitizeText(systemPrompt || '')}\nIdioma: ${sanitizeText(langNote || 'pt')}` }],
         },
         contents: alternating,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 800, topP: 0.9 },
+        generationConfig: { temperature: 0.5, maxOutputTokens: 2048, topP: 0.9 },
       }),
     });
 
