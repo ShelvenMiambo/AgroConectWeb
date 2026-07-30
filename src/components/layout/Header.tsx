@@ -279,7 +279,7 @@ const Header = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`flex h-9 w-9 p-0 rounded-lg transition-colors ${
+                  className={`hidden lg:flex h-9 w-9 p-0 rounded-lg transition-colors ${
                     scrolled || !isHome ? "" : "text-white hover:bg-white/15"
                   }`}
                   onClick={() => setAlertsOpen(!alertsOpen)}
@@ -378,6 +378,7 @@ const Header = () => {
               )}
 
               {/* Mobile: Bell notifications + menu (for extra/admin items) */}
+              {currentUser && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -394,6 +395,7 @@ const Header = () => {
                   </span>
                 )}
               </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

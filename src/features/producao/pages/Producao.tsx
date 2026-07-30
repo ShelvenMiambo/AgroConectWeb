@@ -6,16 +6,14 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Sprout, Calendar, Clock,
-    Camera, TrendingUp, Plus,
+    Sprout, Calendar, TrendingUp, Plus,
     Eye, Loader2, X, MapPin
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { getPlanos, addPlano } from "@/features/producao/services/producao";
-import { getOcorrencias } from "@/features/producao/services/ocorrencias";
-import type { PlanoProducao, Ocorrencia } from "@/types";
+import type { PlanoProducao } from "@/types";
 
 /* ── Add Plano Modal ────────────────────────────────── */
 const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) => {
@@ -103,9 +101,8 @@ const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () 
 /* ── Main Production Component ──────────────────────── */
 const Producao = () => {
     const { currentUser } = useAuth();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'planos' | 'historico'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'planos'>('dashboard');
     const [planos, setPlanos] = useState<PlanoProducao[]>([]);
-    const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
     const [detailPlano, setDetailPlano] = useState<PlanoProducao | null>(null);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -114,12 +111,8 @@ const Producao = () => {
         if (!currentUser) return;
         setLoading(true);
         try {
-            const [p, o] = await Promise.all([
-                getPlanos(currentUser.uid),
-                getOcorrencias(currentUser.uid)
-            ]);
+            const p = await getPlanos(currentUser.uid);
             setPlanos(p);
-            setOcorrencias(o);
         } catch (err) {
             console.error(err);
         } finally {
@@ -268,8 +261,7 @@ const Producao = () => {
                 <div className="flex overflow-x-auto pb-2 gap-2 mb-8 no-scrollbar justify-center md:justify-start">
                     {[
                         { key: 'dashboard', label: 'Monitor', icon: TrendingUp },
-                        { key: 'planos', label: 'Planos', icon: Sprout },
-                        { key: 'historico', label: 'Diário de Campo', icon: Clock }
+                        { key: 'planos', label: 'Planos', icon: Sprout }
                     ].map(({ key, label, icon: Ic }) => (
                         <Button
                             key={key}
@@ -337,41 +329,6 @@ const Producao = () => {
                                     </div>
                                     <span className="font-bold">Adicionar Novo Plano</span>
                                 </button>
-                            </div>
-                        )}
-
-                        {activeTab === 'historico' && (
-                            <div className="space-y-6 max-w-3xl mx-auto">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h2 className="text-xl font-bold font-['Outfit']">Diário de Ocorrências</h2>
-                                    <Button size="sm" variant="outline" className="rounded-xl gap-2"><Camera className="h-4 w-4" /> Adicionar Foto</Button>
-                                </div>
-                                <div className="relative pl-8 space-y-8 before:absolute before:inset-0 before:left-3 before:w-0.5 before:bg-border/60">
-                                    {ocorrencias.length === 0 ? (
-                                        <div className="text-center py-20 ml-[-2rem]">
-                                            <Clock className="h-10 w-10 text-muted-foreground mx-auto mb-4 opacity-30" />
-                                            <p className="text-muted-foreground">O seu diário de campo está vazio.</p>
-                                        </div>
-                                    ) : ocorrencias.map(o => (
-                                        <div key={o.id} className="relative">
-                                            <div className="absolute -left-[29px] top-1 w-6 h-6 rounded-full bg-background border-4 border-primary flex items-center justify-center z-10" />
-                                            <Card className="border-border/50 shadow-soft rounded-lg">
-                                                <CardContent className="p-5">
-                                                    <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase mb-2">
-                                                        <span>{new Date(o.data).toLocaleDateString('pt-MZ')} • {o.tipo}</span>
-                                                        <span className="text-primary">{o.planoNome}</span>
-                                                    </div>
-                                                    <p className="text-sm font-medium mb-3">{o.descricao}</p>
-                                                    {o.fotos && o.fotos > 0 && (
-                                                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground bg-muted/50 w-fit px-2 py-1 rounded-lg">
-                                                            <Camera className="h-3 w-3" /> {o.fotos} {o.fotos === 1 ? 'Foto' : 'Fotos'}
-                                                        </div>
-                                                    )}
-                                                </CardContent>
-                                            </Card>
-                                        </div>
-                                    ))}
-                                </div>
                             </div>
                         )}
                     </div>
