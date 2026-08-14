@@ -2,29 +2,81 @@
 <html lang="pt-MZ">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Ícones -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="description" content="AgroConecta. A plataforma que revoluciona a agricultura moçambicana. Marketplace de terras, assistente IA agrícola, gestão de produção e negociações seguras." />
-    <meta name="keywords" content="agricultura, Moçambique, marketplace, IA, terras, cultivo, agronegócio" />
-    <meta property="og:title" content="AgroConecta: Revolução Agrícola Digital" />
-    <meta property="og:description" content="Conectamos agricultores, donos de terra e compradores numa plataforma inteligente que revoluciona a agricultura moçambicana." />
-    <meta property="og:type" content="website" />
     <meta name="theme-color" content="#2d6a2d" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AgroConecta" />
 
-    <!-- Google Fonts: Inter + Outfit -->
+    <!-- SEO -->
+    <title>AgroConecta: Terrenos, produção e negócios agrícolas em Moçambique</title>
+    <meta name="description" content="AgroConecta. A plataforma que liga agricultores, donos de terra e compradores em Moçambique: marketplace de terrenos e produtos, assistente agrícola, gestão de produção e negociações seguras." />
+    <meta name="keywords" content="agricultura, Moçambique, marketplace, terras, cultivo, agronegócio, assistente agrícola" />
+    <link rel="canonical" href="https://agroconecta.pages.dev/" />
+
+    <!-- Partilha em redes sociais (WhatsApp, Facebook) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AgroConecta" />
+    <meta property="og:locale" content="pt_MZ" />
+    <meta property="og:url" content="https://agroconecta.pages.dev/" />
+    <meta property="og:title" content="AgroConecta: agricultura ligada em Moçambique" />
+    <meta property="og:description" content="Encontre terra, venda a sua colheita e negoceie em segurança. Marketplace, assistente agrícola e gestão de produção." />
+    <meta property="og:image" content="https://agroconecta.pages.dev/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Agricultora no seu campo, em Moçambique" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AgroConecta: agricultura ligada em Moçambique" />
+    <meta name="twitter:description" content="Encontre terra, venda a sua colheita e negoceie em segurança." />
+    <meta name="twitter:image" content="https://agroconecta.pages.dev/og-image.jpg" />
+
+    <!-- Tipos de letra -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet" />
 
-    <title>AgroConecta: Terrenos, produção e negócios agrícolas em Moçambique</title>
+    <!-- Ecrã inicial estático: aparece de imediato (mesmo antes do JavaScript
+         carregar, em redes lentas) e é substituído pela app ao arrancar. -->
+    <style>
+      #boot { position:fixed; inset:0; display:flex; flex-direction:column;
+              align-items:center; justify-content:center; gap:18px;
+              background:#12150f; color:#e9ebe3; font-family:system-ui,-apple-system,sans-serif; }
+      #boot svg { width:64px; height:64px; }
+      #boot .n { font-size:22px; font-weight:800; letter-spacing:-.01em; }
+      #boot .n b { color:#93c264; }
+      #boot .t { font-size:13px; color:#9aa292; }
+      #boot .s { width:26px; height:26px; border:3px solid #2c3227; border-top-color:#93c264;
+                 border-radius:50%; animation:spin 0.8s linear infinite; margin-top:6px; }
+      @keyframes spin { to { transform:rotate(360deg); } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="32" height="32" rx="9" fill="#1e5c1e"/>
+          <path d="M7 22 H25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          <path d="M10 26 H22" stroke="#7cc47c" stroke-width="2" stroke-linecap="round"/>
+          <path d="M16 22 V13" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+          <ellipse cx="16" cy="11" rx="3" ry="6" fill="#ffffff"/>
+          <ellipse cx="21" cy="15" rx="2.4" ry="5" fill="#7cc47c" transform="rotate(40 21 15)"/>
+          <ellipse cx="11" cy="15" rx="2.4" ry="5" fill="#7cc47c" transform="rotate(-40 11 15)"/>
+        </svg>
+        <div class="n">Agro<b>Conecta</b></div>
+        <div class="t">A carregar…</div>
+        <div class="s"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

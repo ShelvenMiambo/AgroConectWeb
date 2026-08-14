@@ -1,0 +1,16 @@
+# Cabeçalhos de segurança HTTP (lidos nativamente pela Cloudflare Pages).
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  X-DNS-Prefetch-Control: on
+
+# Cache longo para os ficheiros com hash no nome (nunca mudam)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# As imagens otimizadas podem ficar em cache um bom tempo
+/images/*
+  Cache-Control: public, max-age=604800

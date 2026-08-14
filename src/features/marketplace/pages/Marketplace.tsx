@@ -957,7 +957,7 @@ const Marketplace = () => {
                               onClick={() => setSelectedProperty(p)}>
                               <div className={`h-48 overflow-hidden flex items-center justify-center relative ${!hasImage ? `bg-gradient-to-br ${soilColors[p.tipo_solo] || 'from-green-600/20 to-green-700/10'}` : ''}`}>
                                 {hasImage ? (
-                                  <img src={p.imageUrls![0]} alt={p.nome} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                  <img src={p.imageUrls![0]} alt={`Terreno "${p.nome}"${p.localizacao ? ' em ' + p.localizacao : ''}${p.area ? ', ' + p.area + ' m²' : ''}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                 ) : (
                                   <MapPin className="h-12 w-12 text-primary/25" />
                                 )}
