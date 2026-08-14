@@ -24,7 +24,8 @@ import { getPropertiesPage, addProperty, deleteProperty, type Cursor } from "@/f
 import { getListingsPage, addListing, deleteListing } from "@/features/marketplace/services/listings";
 import { toggleFavorito } from "@/features/marketplace/services/favoritos";
 import { createNegociacao } from "@/features/negociacoes/services/negociacoes";
-import type { Property, Listing, ListingType } from "@/types";
+import ChatModal from "@/features/negociacoes/components/ChatModal";
+import type { Property, Listing, ListingType, Negociacao } from "@/types";
 import { useNavigate } from 'react-router-dom';
 
 type MarketTab = 'terrenos' | 'produtos';
@@ -385,18 +386,17 @@ const ListingModal = ({ listingType, onClose, onSaved }: { listingType: ListingT
 type ContactTarget = { refId: string; refNome: string; refLocal?: string; donoUid: string; donoNome: string };
 
 const ContactModal = ({
-  target, onClose
-}: { target: ContactTarget; onClose: () => void }) => {
+  target, onClose, onOpenChat
+}: { target: ContactTarget; onClose: () => void; onOpenChat: (n: Negociacao) => void }) => {
   const { currentUser, userData } = useAuth();
   const navigate = useNavigate();
   const { config } = usePlanConfig();
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
 
   const handleSend = async () => {
     if (!currentUser || !userData || !message.trim()) return;
-    
+
     if (hasPhoneNumber(message)) {
       alert('Por razões de segurança e protocolo do site, não é permitido colocar números de telemóvel nas mensagens e propostas.');
       return;
@@ -404,20 +404,31 @@ const ContactModal = ({
 
     setSending(true);
     try {
-      await createNegociacao({
+      const arrendatarioNome = userData.name || currentUser.email || 'Anónimo';
+      const id = await createNegociacao({
         propertyId: target.refId,
         propertyNome: target.refNome,
         arrendatarioUid: currentUser.uid,
-        arrendatarioNome: userData.name || currentUser.email || 'Anónimo',
+        arrendatarioNome,
         proprietarioUid: target.donoUid,
         proprietarioNome: target.donoNome,
         mensagem: message.trim(),
       });
-      setSent(true);
+      // Abre a conversa imediatamente (fica instantâneo, como uma app de chat)
+      onOpenChat({
+        id,
+        propertyId: target.refId,
+        propertyNome: target.refNome,
+        arrendatarioUid: currentUser.uid,
+        arrendatarioNome,
+        proprietarioUid: target.donoUid,
+        proprietarioNome: target.donoNome,
+        mensagem: message.trim(),
+        status: 'pendente',
+      });
     } catch (e) {
       console.error(e);
       alert('Erro ao enviar. Tente novamente.');
-    } finally {
       setSending(false);
     }
   };
@@ -441,18 +452,6 @@ const ContactModal = ({
               <Button className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold gap-2" onClick={() => { onClose(); navigate('/perfil'); }}>
                 Ver Planos <Crown className="h-4 w-4 fill-current" />
               </Button>
-            </div>
-          </div>
-        ) : sent ? (
-          <div className="text-center py-6 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto">
-              <CheckCircle className="h-8 w-8 text-success" />
-            </div>
-            <h3 className="text-xl font-black font-['Outfit']">Proposta Enviada!</h3>
-            <p className="text-sm text-muted-foreground">A outra pessoa será notificada. Pode acompanhar o estado em <strong>Negociações</strong>.</p>
-            <div className="flex gap-3 pt-2">
-              <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
-              <Button className="flex-1 rounded-xl bg-primary text-white border-0" onClick={() => { onClose(); navigate('/negociacoes'); }}>Ver Negociações</Button>
             </div>
           </div>
         ) : (
@@ -517,6 +516,7 @@ const Marketplace = () => {
   const [showListingModal, setShowListingModal] = useState<ListingType | null>(null);
   const [deletingId, setDeletingId]   = useState<string | null>(null);
   const [contactTarget, setContactTarget] = useState<ContactTarget | null>(null);
+  const [chatNeg, setChatNeg] = useState<Negociacao | null>(null);
   // Paginação
   const [propsCursor, setPropsCursor] = useState<Cursor>(null);
   const [propsHasMore, setPropsHasMore] = useState(false);
@@ -786,7 +786,21 @@ const Marketplace = () => {
     <div className="min-h-screen bg-background">
       {showPublish && <PublishModal onClose={() => setShowPublish(false)} onSaved={load} />}
       {showListingModal && <ListingModal listingType={showListingModal} onClose={() => setShowListingModal(null)} onSaved={load} />}
-      {contactTarget && <ContactModal target={contactTarget} onClose={() => setContactTarget(null)} />}
+      {contactTarget && (
+        <ContactModal
+          target={contactTarget}
+          onClose={() => setContactTarget(null)}
+          onOpenChat={(n) => { setContactTarget(null); setChatNeg(n); }}
+        />
+      )}
+      {chatNeg && currentUser && (
+        <ChatModal
+          negociacao={chatNeg}
+          currentUid={currentUser.uid}
+          onClose={() => setChatNeg(null)}
+          onMessageSent={() => {}}
+        />
+      )}
       
       <Header />
       <main>
