@@ -618,12 +618,35 @@ const Marketplace = () => {
   };
 
 
+  // Modais globais (contactar + chat). Renderizados em qualquer vista — lista
+  // OU detalhe — para o chat abrir logo, independentemente de onde se contacta.
+  const modais = (
+    <>
+      {contactTarget && (
+        <ContactModal
+          target={contactTarget}
+          onClose={() => setContactTarget(null)}
+          onOpenChat={(n) => { setContactTarget(null); setChatNeg(n); }}
+        />
+      )}
+      {chatNeg && currentUser && (
+        <ChatModal
+          negociacao={chatNeg}
+          currentUid={currentUser.uid}
+          onClose={() => setChatNeg(null)}
+          onMessageSent={() => {}}
+        />
+      )}
+    </>
+  );
+
   /* ── Detail View ─────────────────────────── */
   if (selectedProperty) {
     const p = selectedProperty;
     const isOwner = currentUser?.uid === p.donoUid;
     return (
       <div className="min-h-screen bg-background">
+        {modais}
         <Header />
         <main className="container mx-auto px-4 lg:px-8 py-8 max-w-5xl">
           <div className="flex items-center justify-between mb-6">
@@ -786,22 +809,8 @@ const Marketplace = () => {
     <div className="min-h-screen bg-background">
       {showPublish && <PublishModal onClose={() => setShowPublish(false)} onSaved={load} />}
       {showListingModal && <ListingModal listingType={showListingModal} onClose={() => setShowListingModal(null)} onSaved={load} />}
-      {contactTarget && (
-        <ContactModal
-          target={contactTarget}
-          onClose={() => setContactTarget(null)}
-          onOpenChat={(n) => { setContactTarget(null); setChatNeg(n); }}
-        />
-      )}
-      {chatNeg && currentUser && (
-        <ChatModal
-          negociacao={chatNeg}
-          currentUid={currentUser.uid}
-          onClose={() => setChatNeg(null)}
-          onMessageSent={() => {}}
-        />
-      )}
-      
+      {modais}
+
       <Header />
       <main>
         {/* HERO */}
