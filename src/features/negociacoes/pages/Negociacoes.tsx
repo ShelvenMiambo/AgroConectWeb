@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Handshake, FileText, MessageSquare, Plus, Clock,
   CheckCircle, XCircle, MapPin, User, Calendar, Lock,
-  Loader2, ArrowLeft, Bell, RefreshCw, Inbox, Crown
+  Loader2, ArrowLeft, Bell, RefreshCw, Inbox, Crown, Star
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -13,8 +13,10 @@ import { usePlanConfig } from "@/hooks/usePlanConfig";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { getNegociacoes, updateNegociacaoStatus } from "@/features/negociacoes/services/negociacoes";
+import { getNegociacoesAvaliadas } from "@/features/negociacoes/services/avaliacoes";
 import type { Negociacao } from "@/types";
 import ChatModal from "@/features/negociacoes/components/ChatModal";
+import AvaliarModal from "@/features/negociacoes/components/AvaliarModal";
 
 /* ── Status helpers ─────────────────────────────────── */
 const statusConfig = {
@@ -25,12 +27,14 @@ const statusConfig = {
 
 /* ── Card ───────────────────────────────────────────── */
 const NegociacaoCard = ({
-  n, currentUid, onAccept, onReject, updating, onOpenChat
+  n, currentUid, onAccept, onReject, updating, onOpenChat, jaAvaliou, onAvaliar
 }: {
   n: Negociacao; currentUid: string;
   onAccept: (id: string) => void; onReject: (id: string) => void;
   updating: string | null;
   onOpenChat: (n: Negociacao) => void;
+  jaAvaliou: boolean;
+  onAvaliar: (n: Negociacao) => void;
 }) => {
   const cfg   = statusConfig[n.status];
   const Icon  = cfg.icon;
@@ -127,6 +131,25 @@ const NegociacaoCard = ({
             )}
           </div>
 
+          {/* Avaliar a outra parte, quando o negócio foi aceite */}
+          {n.status === 'aceite' && (
+            jaAvaliou ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                Já avaliou {isOwner ? n.arrendatarioNome : n.proprietarioNome}.
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full h-10 rounded-xl border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-bold gap-2"
+                onClick={() => onAvaliar(n)}
+              >
+                <Star className="h-4 w-4" />
+                Avaliar {isOwner ? n.arrendatarioNome : n.proprietarioNome}
+              </Button>
+            )
+          )}
+
           {/* Renter label when accepted */}
           {!isOwner && n.status === 'aceite' && (
             <div className="flex items-center gap-2 text-sm text-success font-semibold">
@@ -170,12 +193,19 @@ const Negociacoes = () => {
   const [updating, setUpdating]       = useState<string | null>(null);
   const [tab, setTab]                 = useState<'todas' | 'pendente' | 'aceite' | 'recusada'>('todas');
   const [activeChat, setActiveChat]   = useState<Negociacao | null>(null);
+  const [avaliadas, setAvaliadas]     = useState<Set<string>>(new Set());
+  const [avaliar, setAvaliar]         = useState<Negociacao | null>(null);
 
   const load = async () => {
     if (!currentUser) return;
     setLoading(true);
     try {
-      setNegociacoes(await getNegociacoes(currentUser.uid));
+      const [negs, feitas] = await Promise.all([
+        getNegociacoes(currentUser.uid),
+        getNegociacoesAvaliadas(currentUser.uid),
+      ]);
+      setNegociacoes(negs);
+      setAvaliadas(feitas);
     } catch (e) {
       console.error(e);
     } finally {
@@ -320,6 +350,8 @@ const Negociacoes = () => {
                 onReject={handleReject}
                 updating={updating}
                 onOpenChat={setActiveChat}
+                jaAvaliou={!!n.id && avaliadas.has(n.id)}
+                onAvaliar={setAvaliar}
               />
             ))}
           </div>
@@ -333,6 +365,22 @@ const Negociacoes = () => {
             onMessageSent={() => load()}
           />
         )}
+
+        {avaliar && currentUser && (() => {
+          const souDono = avaliar.proprietarioUid === currentUser.uid;
+          const alvoUid = souDono ? avaliar.arrendatarioUid : avaliar.proprietarioUid;
+          const alvoNome = souDono ? avaliar.arrendatarioNome : avaliar.proprietarioNome;
+          return (
+            <AvaliarModal
+              negociacaoId={avaliar.id!}
+              autorUid={currentUser.uid}
+              alvoUid={alvoUid}
+              alvoNome={alvoNome}
+              onClose={() => setAvaliar(null)}
+              onDone={() => { setAvaliar(null); load(); }}
+            />
+          );
+        })()}
       </main>
       <Footer />
     </div>

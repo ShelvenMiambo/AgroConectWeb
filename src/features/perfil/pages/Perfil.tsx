@@ -16,6 +16,8 @@ import { deleteUserAccountData } from '@/features/perfil/services/account';
 import { uploadAvatar } from '@/lib/services/storage';
 import AvatarCropper from '@/features/perfil/components/AvatarCropper';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import Stars from '@/components/Stars';
+import { getResumoAvaliacoes, type ResumoAvaliacoes } from '@/features/negociacoes/services/avaliacoes';
 import type { Property, Listing } from '@/types';
 import { supabase } from '@/lib/supabase';
 import Header from "@/components/layout/Header";
@@ -299,6 +301,7 @@ const Perfil = () => {
   );
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
   
+  const [reputacao, setReputacao] = useState<ResumoAvaliacoes>({ media: 0, total: 0 });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);   // foto escolhida, a aguardar recorte
   const [viewPhoto, setViewPhoto] = useState(false);             // ver a foto em grande
@@ -317,6 +320,10 @@ const Perfil = () => {
       setUserTypes(userData.userTypes || (userData.userType ? [userData.userType] : []));
     }
   }, [userData]);
+
+  useEffect(() => {
+    if (currentUser?.uid) getResumoAvaliacoes(currentUser.uid).then(setReputacao).catch(() => {});
+  }, [currentUser?.uid]);
 
   useEffect(() => {
     const loadContent = async () => {
@@ -510,6 +517,12 @@ const Perfil = () => {
                   {userData?.name || 'Utilizador'}
                   {userData?.verificado && <VerifiedBadge size="md" />}
                 </h2>
+                {reputacao.total > 0 && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <Stars valor={reputacao.media} />
+                    <span className="text-xs text-muted-foreground">{reputacao.media} ({reputacao.total} avaliaç{reputacao.total === 1 ? 'ão' : 'ões'})</span>
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground mb-3 break-all">{currentUser?.email}</p>
 
                 <div className="space-y-2">
