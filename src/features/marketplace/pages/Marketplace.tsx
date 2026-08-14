@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import Stars from "@/components/Stars";
+import { getConfianca, type Confianca } from "@/features/negociacoes/services/confianca";
 import {
   MapPin, Search, Heart, MessageCircle, Lock,
   ArrowLeft, Droplets, Ruler, TreePine, SlidersHorizontal,
@@ -506,6 +509,7 @@ const Marketplace = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [searchTerm, setSearchTerm]   = useState('');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [donoConfianca, setDonoConfianca] = useState<Confianca | null>(null);
   const [saved, setSaved]             = useState<string[]>([]);
   const [filters, setFilters] = useState({ tipoSolo: '', temAgua: '', areaMin: '' });
   const [showFilters, setShowFilters] = useState(false);
@@ -519,6 +523,13 @@ const Marketplace = () => {
   const [listsCursor, setListsCursor] = useState<Cursor>(null);
   const [listsHasMore, setListsHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Confiança do dono, ao abrir o detalhe de um terreno
+  useEffect(() => {
+    const uid = selectedProperty?.donoUid;
+    if (!uid) { setDonoConfianca(null); return; }
+    getConfianca(uid).then(setDonoConfianca).catch(() => setDonoConfianca(null));
+  }, [selectedProperty?.donoUid]);
 
   const load = async () => {
     setLoadingData(true);
@@ -718,8 +729,18 @@ const Marketplace = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">{p.donoNome.charAt(0)}</div>
                           <div>
-                            <p className="font-semibold text-sm">{p.donoNome}</p>
-                            <p className="text-xs text-muted-foreground">{p.verificado ? 'Conta Verificada' : 'Proprietário'}</p>
+                            <p className="font-semibold text-sm flex items-center gap-1.5">
+                              {p.donoNome}
+                              {donoConfianca?.verificado && <VerifiedBadge />}
+                            </p>
+                            {donoConfianca && donoConfianca.total > 0 ? (
+                              <div className="flex items-center gap-1.5">
+                                <Stars valor={donoConfianca.media} />
+                                <span className="text-xs text-muted-foreground">{donoConfianca.media} ({donoConfianca.total})</span>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">{donoConfianca?.verificado ? 'Conta verificada' : 'Proprietário'}</p>
+                            )}
                           </div>
                         </div>
                       </div>

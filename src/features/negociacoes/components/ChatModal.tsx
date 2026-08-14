@@ -5,6 +5,9 @@ import { addMensagemNegociacao } from "@/features/negociacoes/services/negociaco
 import type { Negociacao } from "@/types";
 import { hasPhoneNumber } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import Stars from "@/components/Stars";
+import { getConfianca, type Confianca } from "@/features/negociacoes/services/confianca";
 
 interface ChatModalProps {
   negociacao: Negociacao;
@@ -20,10 +23,16 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
 
   const isOwner = negociacao.proprietarioUid === currentUid;
   const otherPartyName = isOwner ? negociacao.arrendatarioNome : negociacao.proprietarioNome;
+  const otherPartyUid  = isOwner ? negociacao.arrendatarioUid : negociacao.proprietarioUid;
 
   type Msg = { id?: string; senderId: string; text: string; createdAt: any };
   const [mensagens, setMensagens] = useState<Msg[]>([]);
   const [loadingMsgs, setLoadingMsgs] = useState(true);
+  const [confianca, setConfianca] = useState<Confianca | null>(null);
+
+  useEffect(() => {
+    if (otherPartyUid) getConfianca(otherPartyUid).then(setConfianca).catch(() => {});
+  }, [otherPartyUid]);
 
   // Busca o histórico atual; só atualiza o estado se algo mudou (evita scroll/re-render à toa)
   const loadMessages = async () => {
@@ -104,8 +113,18 @@ export default function ChatModal({ negociacao, currentUid, onClose, onMessageSe
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border/50 bg-muted/20">
           <div>
-            <h3 className="font-bold text-lg">{otherPartyName}</h3>
-            <p className="text-xs text-muted-foreground">{negociacao.propertyNome}</p>
+            <h3 className="font-bold text-lg flex items-center gap-1.5">
+              {otherPartyName}
+              {confianca?.verificado && <VerifiedBadge />}
+            </h3>
+            {confianca && confianca.total > 0 ? (
+              <div className="flex items-center gap-1.5">
+                <Stars valor={confianca.media} />
+                <span className="text-xs text-muted-foreground">{confianca.media} ({confianca.total})</span>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">{negociacao.propertyNome}</p>
+            )}
           </div>
           <Button aria-label="Fechar conversa" variant="ghost" size="icon" onClick={onClose} className="rounded-full">
             <X className="h-5 w-5" />
