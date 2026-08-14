@@ -5,6 +5,7 @@ import type { Property, Negociacao, PlanoProducao, Listing } from '@/types';
 
 const mapUser = (r: any): UserData => ({
   uid: r.id, name: r.name, email: r.email, phone: r.phone, role: r.role,
+  verificado: r.verificado ?? false,
   userType: r.user_type, userTypes: r.user_types ?? [], plan: r.plan,
   planAtivadoEm: r.plan_ativado_em ?? undefined, planExpiraEm: r.plan_expira_em ?? undefined,
   favoritos: r.favoritos ?? [], createdAt: r.created_at, photoURL: r.photo_url ?? '',
