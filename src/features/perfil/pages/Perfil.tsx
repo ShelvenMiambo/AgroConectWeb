@@ -15,6 +15,7 @@ import { getUserListings, deleteListing } from '@/features/marketplace/services/
 import { deleteUserAccountData } from '@/features/perfil/services/account';
 import { uploadAvatar } from '@/lib/services/storage';
 import AvatarCropper from '@/features/perfil/components/AvatarCropper';
+import VerifiedBadge from '@/components/VerifiedBadge';
 import type { Property, Listing } from '@/types';
 import { supabase } from '@/lib/supabase';
 import Header from "@/components/layout/Header";
@@ -505,7 +506,10 @@ const Perfil = () => {
                     />
                   </div>
                 </div>
-                <h2 className="text-xl font-black font-['Outfit'] leading-tight">{userData?.name || 'Utilizador'}</h2>
+                <h2 className="text-xl font-black font-['Outfit'] leading-tight flex items-center gap-1.5">
+                  {userData?.name || 'Utilizador'}
+                  {userData?.verificado && <VerifiedBadge size="md" />}
+                </h2>
                 <p className="text-sm text-muted-foreground mb-3 break-all">{currentUser?.email}</p>
 
                 <div className="space-y-2">

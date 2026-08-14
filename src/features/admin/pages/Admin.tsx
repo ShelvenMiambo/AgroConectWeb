@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, UserData } from '@/features/auth/context/AuthContext';
+import VerifiedBadge from '@/components/VerifiedBadge';
+import { BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +11,7 @@ import { ThemeToggle } from '@/components/theme/theme-toggle';
 import type { Property, Negociacao, PlanoProducao } from '@/types';
 import {
   adminGetUsers, adminGetProperties, adminGetNegociacoes, adminGetPlanos,
-  adminToggleRole, adminVerifyProperty, adminDeleteUser,
+  adminToggleRole, adminVerifyProperty, adminToggleVerificado, adminDeleteUser,
   adminGetPlanPrices, adminSetPlanPrices, adminGetAppSettings, adminSetAppSettings,
   type PlanPriceConfig,
 } from '@/features/admin/services/adminService';
@@ -318,16 +320,17 @@ export default function Admin() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead><tr className="border-b border-border/60 bg-muted/40"><Th c="Utilizador" /><Th c="Email" /><Th c="Tipo" /><Th c="Plano" /><Th c="Registo" /><Th c="Papel" /><th /><th /></tr></thead>
+                  <thead><tr className="border-b border-border/60 bg-muted/40"><Th c="Utilizador" /><Th c="Email" /><Th c="Tipo" /><Th c="Plano" /><Th c="Registo" /><Th c="Papel" /><th /><th /><th /></tr></thead>
                   <tbody className="divide-y divide-border/40">
                     {loading ? <Skeleton cols={7} /> : filteredUsers.map(u => (
                       <tr key={u.uid} className="hover:bg-muted/20 transition-colors">
-                        <Td><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">{u.name?.charAt(0) || '?'}</div><span className="font-semibold">{u.name}</span></div></Td>
+                        <Td><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">{u.name?.charAt(0) || '?'}</div><span className="font-semibold">{u.name}</span>{u.verificado && <VerifiedBadge />}</div></Td>
                         <Td cls="text-muted-foreground max-w-[160px] truncate">{u.email}</Td>
                         <Td><span className="text-xs capitalize">{u.userType || '—'}</span></Td>
                         <Td><Badge variant="outline" className={`text-[10px] rounded-full ${planColor[u.plan || 'gratuito']}`}>{u.plan || 'gratuito'}</Badge></Td>
                         <Td cls="text-muted-foreground">{fmt(u.createdAt)}</Td>
                         <Td><Badge variant="outline" className={`rounded-full text-[10px] ${u.role === 'admin' ? 'text-yellow-600 bg-yellow-500/10' : 'text-green-700 bg-green-500/10'}`}>{u.role === 'admin' ? <><Crown className="h-3 w-3 mr-1 inline" />Admin</> : <><UserCheck className="h-3 w-3 mr-1 inline" />User</>}</Badge></Td>
+                        <Td><Button size="sm" variant="ghost" className={`h-7 rounded-lg text-xs ${u.verificado ? 'text-sky-600 hover:text-destructive' : 'text-muted-foreground hover:text-sky-600'}`} disabled={updating === u.uid} onClick={async () => { setUpdating(u.uid); const nv = await adminToggleVerificado(u.uid, !!u.verificado); setUsers(p => p.map(x => x.uid === u.uid ? { ...x, verificado: nv } : x)); setUpdating(null); }}>{updating === u.uid ? <Loader2 className="h-3 w-3 animate-spin" /> : <><BadgeCheck className="h-3 w-3 mr-1 inline" />{u.verificado ? 'Remover' : 'Verificar'}</>}</Button></Td>
                         <Td>{u.uid !== currentUser?.uid && <Button size="sm" variant="ghost" className={`h-7 rounded-lg text-xs ${u.role === 'admin' ? 'hover:text-destructive' : 'hover:text-yellow-600'}`} disabled={updating === u.uid} onClick={async () => { setUpdating(u.uid); const nr = await adminToggleRole(u.uid, u.role); setUsers(p => p.map(x => x.uid === u.uid ? { ...x, role: nr as any } : x)); setUpdating(null); }}>{updating === u.uid ? <Loader2 className="h-3 w-3 animate-spin" /> : u.role === 'admin' ? <><UserX className="h-3 w-3 mr-1 inline" />Revogar</> : <><Crown className="h-3 w-3 mr-1 inline" />Promover</>}</Button>}</Td>
                         <Td>{u.uid !== currentUser?.uid && (
                           <Button size="sm" variant="ghost"

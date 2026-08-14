@@ -64,6 +64,13 @@ export const adminVerifyProperty = async (id: string, verified: boolean) => {
   await supabase.from('properties').update({ verificado: verified }).eq('id', id);
 };
 
+/** Liga/desliga o selo "Verificado" de um utilizador. Devolve o novo estado. */
+export const adminToggleVerificado = async (uid: string, current: boolean) => {
+  const novo = !current;
+  await supabase.from('profiles').update({ verificado: novo }).eq('id', uid);
+  return novo;
+};
+
 /* ─── PLAN CONFIG ─────────────────────────────────────── */
 export interface PlanPriceConfig { mensal: number; trimestral: number; anual: number; }
 export interface AppSettings { isPromotionActive: boolean; }

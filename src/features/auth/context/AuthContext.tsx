@@ -15,6 +15,7 @@ export interface UserData {
   email: string;
   phone?: string;
   role: 'user' | 'admin';
+  verificado?: boolean;
   userType?: 'agricultor' | 'proprietario' | 'vendedor' | 'comprador' | 'pendente';
   userTypes?: ('agricultor' | 'proprietario' | 'vendedor' | 'comprador')[];
   plan?: 'gratuito' | 'mensal' | 'trimestral' | 'anual';
@@ -62,6 +63,7 @@ function mapProfile(row: any): UserData {
     email: row.email ?? '',
     phone: row.phone ?? '',
     role: row.role ?? 'user',
+    verificado: row.verificado ?? false,
     userType: row.user_type ?? 'pendente',
     userTypes: row.user_types ?? [],
     plan: row.plan ?? 'gratuito',
