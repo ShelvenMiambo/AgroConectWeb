@@ -315,7 +315,7 @@ export default function Admin() {
           {tab === 'users' && (
             <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
               <div className="p-5 border-b border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div><h2 className="font-bold font-['Outfit']">Utilizadores ({filteredUsers.length}/{users.length})</h2></div>
+                <div><h2 className="font-bold font-['Outfit']">Utilizadores ({filteredUsers.length}/{users.length})</h2><p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1"><BadgeCheck className="h-3.5 w-3.5 text-sky-500" /> {users.filter(u => u.verificado).length} verificado(s)</p></div>
                 <div className="relative w-full sm:w-56"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar..." className="pl-9 h-9 rounded-xl" /></div>
               </div>
               <div className="overflow-x-auto">
@@ -324,7 +324,7 @@ export default function Admin() {
                   <tbody className="divide-y divide-border/40">
                     {loading ? <Skeleton cols={7} /> : filteredUsers.map(u => (
                       <tr key={u.uid} className="hover:bg-muted/20 transition-colors">
-                        <Td><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">{u.name?.charAt(0) || '?'}</div><span className="font-semibold">{u.name}</span>{u.verificado && <VerifiedBadge />}</div></Td>
+                        <Td><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">{u.name?.charAt(0) || '?'}</div><span className="font-semibold">{u.name}</span>{u.verificado && <VerifiedBadge withText />}</div></Td>
                         <Td cls="text-muted-foreground max-w-[160px] truncate">{u.email}</Td>
                         <Td><span className="text-xs capitalize">{u.userType || '—'}</span></Td>
                         <Td><Badge variant="outline" className={`text-[10px] rounded-full ${planColor[u.plan || 'gratuito']}`}>{u.plan || 'gratuito'}</Badge></Td>
