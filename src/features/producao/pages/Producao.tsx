@@ -15,6 +15,8 @@ import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { getPlanos, addPlano } from "@/features/producao/services/producao";
 import ClimaCard from "@/features/producao/components/ClimaCard";
+import CalendarioCultivo from "@/features/producao/components/CalendarioCultivo";
+import { getCalendario } from "@/features/producao/services/calendario";
 import type { PlanoProducao } from "@/types";
 
 /* ── Add Plano Modal ────────────────────────────────── */
@@ -141,6 +143,14 @@ const Producao = () => {
         colheita: planos.find(p => p.status === 'Quase Pronto')?.dataColheita || 'Nenhuma'
     };
 
+    // Progresso real, a partir das tarefas do calendário marcadas (localStorage).
+    const progressoDe = (p: PlanoProducao) => {
+        const { tarefas } = getCalendario(p.cultura, p.dataInicio);
+        let feitas: number[] = [];
+        try { feitas = JSON.parse(localStorage.getItem(`agro_tarefas_${p.id}`) || '[]'); } catch { /* vazio */ }
+        return tarefas.length ? Math.round((feitas.length / tarefas.length) * 100) : 0;
+    };
+
     // Está perto (ou passou) a data de colheita? -> altura de vender.
     const pertoColheita = (p: PlanoProducao) => {
         if (!p.dataColheita || p.status === 'Finalizado') return false;
@@ -206,9 +216,9 @@ const Producao = () => {
                             <div className="space-y-1">
                                 <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
                                     <span>Progresso</span>
-                                    <span>{p.progresso}%</span>
+                                    <span>{progressoDe(p)}%</span>
                                 </div>
-                                <Progress value={p.progresso} className="h-1.5" />
+                                <Progress value={progressoDe(p)} className="h-1.5" />
                             </div>
                         </div>
                     ))}
@@ -248,15 +258,19 @@ const Producao = () => {
                                     <p className="text-sm font-semibold">{detailPlano.dataColheita ? new Date(detailPlano.dataColheita).toLocaleDateString('pt-MZ') : '—'}</p>
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-xs font-bold uppercase"><span>Progresso</span><span>{detailPlano.progresso}%</span></div>
-                                <Progress value={detailPlano.progresso} className="h-2" />
-                            </div>
                             {detailPlano.notas && (
                                 <div>
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Notas</p>
                                     <p className="text-sm whitespace-pre-wrap">{detailPlano.notas}</p>
                                 </div>
+                            )}
+                            <div className="border-t border-border/60 pt-4">
+                                <CalendarioCultivo plano={detailPlano} />
+                            </div>
+                            {pertoColheita(detailPlano) && (
+                                <Button onClick={() => venderColheita(detailPlano)} className="w-full rounded-xl gap-2 font-bold bg-primary hover:bg-primary/90 text-primary-foreground border-0">
+                                    <ShoppingBag className="h-4 w-4" /> Vender a colheita
+                                </Button>
                             )}
                         </div>
                     </div>
@@ -332,9 +346,9 @@ const Producao = () => {
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-xs font-bold uppercase">
                                                     <span>Progresso</span>
-                                                    <span>{p.progresso}%</span>
+                                                    <span>{progressoDe(p)}%</span>
                                                 </div>
-                                                <Progress value={p.progresso} className="h-2" />
+                                                <Progress value={progressoDe(p)} className="h-2" />
                                             </div>
                                             <Button variant="outline" onClick={() => setDetailPlano(p)} className="w-full rounded-xl gap-2 font-bold group">
                                                 Detalhes do Cultivo <Eye className="h-4 w-4 transition-transform group-hover:scale-110" />
