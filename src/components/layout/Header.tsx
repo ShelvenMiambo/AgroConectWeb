@@ -296,7 +296,7 @@ const Header = () => {
                 </Button>
 
                 {alertsOpen && (
-                  <div className="absolute right-0 mt-2 w-[min(20rem,90vw)] bg-card border border-border/60 rounded-xl shadow-strong overflow-hidden z-50 fade-in-up">
+                  <div className="fixed top-16 right-2 left-2 sm:left-auto sm:absolute sm:top-auto sm:right-0 sm:mt-2 w-auto sm:w-[min(20rem,90vw)] bg-card border border-border/60 rounded-xl shadow-strong overflow-hidden z-[60] fade-in-up">
                     <div className="p-3 border-b border-border/50 bg-muted/30">
                       <h4 className="font-bold text-sm">Notificações</h4>
                     </div>
@@ -512,8 +512,8 @@ const Header = () => {
             )}
           </nav>
 
-          {/* Drawer Footer */}
-          <div className="p-4 border-t border-border/60 space-y-3 mt-auto">
+          {/* Drawer Footer — pb generoso para não ficar atrás da barra inferior fixa */}
+          <div className="px-4 pt-4 pb-24 border-t border-border/60 space-y-3 mt-auto">
             {currentUser ? (
               <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />

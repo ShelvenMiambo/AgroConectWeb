@@ -98,7 +98,7 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef            = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
-    nome: '', area: '', localizacao: '', tipo_solo: 'franco' as Property['tipo_solo'],
+    nome: '', largura: '', comprimento: '', localizacao: '', tipo_solo: 'franco' as Property['tipo_solo'],
     disponibilidade_agua: false, preco: '', descricao: '', culturas: '',
   });
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
@@ -132,7 +132,7 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
     try {
       await addProperty({
         nome: form.nome.trim(),
-        area: Number(form.area),
+        area: Number(form.largura) * Number(form.comprimento),
         localizacao: form.localizacao.trim(),
         tipo_solo: form.tipo_solo,
         disponibilidade_agua: form.disponibilidade_agua,
@@ -218,17 +218,24 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
             </div>
           ))}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Área (hectares) *</label>
-              <Input type="number" min="0.1" step="0.1" value={form.area}
-                onChange={e => set('area', e.target.value)} placeholder="Ex: 25" className="rounded-xl" />
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Tamanho do terreno (metros) *</label>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <Input type="number" min="0" step="1" value={form.largura}
+                onChange={e => set('largura', e.target.value)} placeholder="Largura" className="rounded-xl" />
+              <span className="text-muted-foreground font-bold">×</span>
+              <Input type="number" min="0" step="1" value={form.comprimento}
+                onChange={e => set('comprimento', e.target.value)} placeholder="Comprimento" className="rounded-xl" />
             </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Preço (MT/mês) *</label>
-              <Input type="number" min="0" value={form.preco}
-                onChange={e => set('preco', e.target.value)} placeholder="Ex: 15000" className="rounded-xl" />
-            </div>
+            {Number(form.largura) > 0 && Number(form.comprimento) > 0 && (
+              <p className="text-xs text-muted-foreground">Área: {(Number(form.largura) * Number(form.comprimento)).toLocaleString('pt-MZ')} m²</p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Preço (MT/mês) *</label>
+            <Input type="number" min="0" value={form.preco}
+              onChange={e => set('preco', e.target.value)} placeholder="Ex: 15000" className="rounded-xl" />
           </div>
 
           <div className="space-y-1">
@@ -256,7 +263,7 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           </label>
 
           <Button type="submit"
-            disabled={loading || !form.nome || !form.area || !form.localizacao || !form.preco || !form.descricao}
+            disabled={loading || !form.nome || !form.largura || !form.comprimento || !form.localizacao || !form.preco || !form.descricao}
             className="w-full h-12 rounded-xl bg-primary text-white border-0 font-semibold shadow-medium">
             {loading ? (
               <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {images.length > 0 ? 'A enviar fotos...' : 'A publicar...'}</>
@@ -275,7 +282,7 @@ const listingFields: Record<ListingType, { key: string; label: string; placehold
   'terra-procura': [
     { key: 'titulo',    label: 'Título do Pedido *',        placeholder: 'Ex: Agricultor experiente procura terreno em Maputo' },
     { key: 'localizacao', label: 'Localização preferida',   placeholder: 'Ex: Maputo, Marracuene, Gaza' },
-    { key: 'area',      label: 'Área necessária (ha)',       placeholder: 'Ex: 5', type: 'number' },
+    { key: 'area',      label: 'Área necessária (m²)',       placeholder: 'Ex: 5000', type: 'number' },
     { key: 'preco',     label: 'Orçamento máximo (MT/mês)', placeholder: 'Ex: 8000', type: 'number' },
     { key: 'descricao', label: 'Descrição *',               placeholder: 'Experiência, culturas que planta, condições...', rows: 3 },
   ],
@@ -706,7 +713,7 @@ const Marketplace = () => {
                     <p className="text-foreground/80 leading-relaxed">{p.descricao}</p>
                     <div className="grid grid-cols-2 gap-3 mt-6">
                       {[
-                        { icon: Ruler,    label: 'Área',  value: `${p.area} hectares`, color: 'text-primary' },
+                        { icon: Ruler,    label: 'Área',  value: `${p.area.toLocaleString('pt-MZ')} m²`, color: 'text-primary' },
                         { icon: TreePine, label: 'Solo',   value: p.tipo_solo,          color: 'text-accent' },
                         { icon: Droplets, label: 'Água',   value: p.disponibilidade_agua ? 'Disponível' : 'Indisponível', color: p.disponibilidade_agua ? 'text-success' : 'text-muted-foreground' },
                       ].map(({ icon: Ic, label, value, color }) => (
@@ -964,14 +971,14 @@ const Marketplace = () => {
                                   <Trash2 className="h-4 w-4" />
                                 </button>
                               )}
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center`}><Icon className="h-5 w-5" /></div>
-                                <div><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground">{l.autorNome}</p></div>
+                              <div className="flex items-center gap-3 mb-3 pr-24">
+                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center flex-shrink-0`}><Icon className="h-5 w-5" /></div>
+                                <div className="min-w-0"><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground line-clamp-1">{l.autorNome}</p></div>
                               </div>
                               <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{l.descricao}</p>
                               <div className="space-y-2 text-xs font-medium">
                                 {l.localizacao && <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {l.localizacao}</div>}
-                                {l.area && <div className="flex items-center gap-2"><Ruler className="h-3.5 w-3.5 text-muted-foreground" /> Precisa de {l.area} ha</div>}
+                                {l.area && <div className="flex items-center gap-2"><Ruler className="h-3.5 w-3.5 text-muted-foreground" /> Precisa de {l.area.toLocaleString('pt-MZ')} m²</div>}
                                 {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Orçamento: {l.preco.toLocaleString()} MT</div>}
                               </div>
                               {!isOwner && currentUser && (
@@ -1091,9 +1098,9 @@ const Marketplace = () => {
                                   <Trash2 className="h-4 w-4" />
                                 </button>
                               )}
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center`}><Icon className="h-5 w-5" /></div>
-                                <div><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground">{l.autorNome}</p></div>
+                              <div className="flex items-center gap-3 mb-3 pr-24">
+                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center flex-shrink-0`}><Icon className="h-5 w-5" /></div>
+                                <div className="min-w-0"><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground line-clamp-1">{l.autorNome}</p></div>
                               </div>
                               <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{l.descricao}</p>
                               <div className="space-y-2 text-xs font-medium">
@@ -1141,9 +1148,9 @@ const Marketplace = () => {
                                   <Trash2 className="h-4 w-4" />
                                 </button>
                               )}
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center`}><Icon className="h-5 w-5" /></div>
-                                <div><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground">{l.autorNome}</p></div>
+                              <div className="flex items-center gap-3 mb-3 pr-24">
+                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center flex-shrink-0`}><Icon className="h-5 w-5" /></div>
+                                <div className="min-w-0"><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground line-clamp-1">{l.autorNome}</p></div>
                               </div>
                               <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{l.descricao}</p>
                               <div className="space-y-2 text-xs font-medium">

@@ -588,7 +588,7 @@ const Perfil = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Account Details */}
             <Card className="border-border/50 shadow-soft rounded-lg">
-              <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4">
                 <CardTitle className="text-lg font-black font-['Outfit']">Dados da Conta</CardTitle>
                 {!editing ? (
                   <Button size="sm" variant="ghost" className="gap-2 rounded-xl" onClick={() => { setEditing(true); setName(userData?.name || ''); setPhone(userData?.phone || ''); }}>
@@ -725,13 +725,13 @@ const Perfil = () => {
                 })()}
 
                 {/* Planos em scroll horizontal no mobile, grid no desktop */}
-                <div className="flex gap-3 overflow-x-auto pb-2 sm:pb-0 snap-x snap-mandatory sm:grid grid-cols-1 sm:grid-cols-2 sm:overflow-visible -mx-1 px-1">
+                <div className="flex gap-3 overflow-x-auto pt-4 pb-2 sm:pb-0 snap-x snap-mandatory sm:grid grid-cols-1 sm:grid-cols-2 sm:overflow-visible -mx-1 px-1">
                   {activePlans.filter(p => p.id !== 'gratuito').map(plan => {
                     const isActive = userData?.plan === plan.id;
                     return (
                       <div
                         key={plan.id}
-                        className={`relative rounded-lg border-2 p-4 space-y-3 transition-all flex-shrink-0 w-[72vw] sm:w-auto snap-start ${
+                        className={`relative rounded-lg border-2 px-4 pb-4 pt-6 space-y-3 transition-all flex-shrink-0 w-[72vw] sm:w-auto snap-start ${
                           isActive ? 'border-primary bg-primary/5 shadow-soft' : `${plan.border} ${plan.bg}`
                         }`}
                       >

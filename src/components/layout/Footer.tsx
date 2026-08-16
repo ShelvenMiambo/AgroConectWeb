@@ -1,6 +1,7 @@
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import {
   Facebook, Instagram, Linkedin, Mail, MapPin, Phone,
   ArrowRight, ExternalLink, Leaf
@@ -43,33 +44,36 @@ const socialLinks = [
 ];
 
 const Footer = () => {
+  const { currentUser } = useAuth();
   return (
     <footer className="relative overflow-hidden">
       <div className="h-px w-full bg-border" />
 
-      {/* Newsletter CTA Band */}
-      <div className="bg-primary py-14">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="text-center lg:text-left">
-              <h3 className="text-2xl md:text-3xl font-black text-white font-['Outfit'] mb-2">
-                Pronto para transformar o seu negócio?
-              </h3>
-              <p className="text-white/70 text-base">
-                Crie a sua conta e comece a cultivar o seu futuro digital.
-              </p>
-            </div>
-            <div className="flex gap-3 flex-shrink-0">
-              <Link to="/marketplace">
-                <Button className="h-11 px-6 rounded-xl bg-white text-primary font-semibold hover:bg-white/90 transition-smooth border-0 shadow-medium">
-                  Começar Agora
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+      {/* Faixa de apelo à ação — só para visitantes (não faz sentido para quem já entrou) */}
+      {!currentUser && (
+        <div className="bg-primary py-14">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+              <div className="text-center lg:text-left">
+                <h3 className="text-2xl md:text-3xl font-black text-white font-['Outfit'] mb-2">
+                  Pronto para transformar o seu negócio?
+                </h3>
+                <p className="text-white/70 text-base">
+                  Crie a sua conta e comece a cultivar o seu futuro digital.
+                </p>
+              </div>
+              <div className="flex gap-3 flex-shrink-0">
+                <Link to="/login">
+                  <Button className="h-11 px-6 rounded-xl bg-white text-primary font-semibold hover:bg-white/90 transition-smooth border-0 shadow-medium">
+                    Criar conta grátis
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Footer Body */}
       <div className="bg-foreground dark:bg-card text-background dark:text-card-foreground">
