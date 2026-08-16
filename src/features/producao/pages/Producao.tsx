@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
     Sprout, Calendar, TrendingUp, Plus,
-    Eye, Loader2, X, MapPin
+    Eye, Loader2, X, MapPin, ShoppingBag
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/features/auth/context/AuthContext";
@@ -102,6 +103,7 @@ const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () 
 /* ── Main Production Component ──────────────────────── */
 const Producao = () => {
     const { currentUser } = useAuth();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'dashboard' | 'planos'>('dashboard');
     const [planos, setPlanos] = useState<PlanoProducao[]>([]);
     const [detailPlano, setDetailPlano] = useState<PlanoProducao | null>(null);
@@ -137,6 +139,22 @@ const Producao = () => {
         ativos: planos.filter(p => p.status !== 'Finalizado').length,
         area: planos.reduce((sum, p) => sum + p.area, 0),
         colheita: planos.find(p => p.status === 'Quase Pronto')?.dataColheita || 'Nenhuma'
+    };
+
+    // Está perto (ou passou) a data de colheita? -> altura de vender.
+    const pertoColheita = (p: PlanoProducao) => {
+        if (!p.dataColheita || p.status === 'Finalizado') return false;
+        const dias = (new Date(p.dataColheita).getTime() - Date.now()) / 86400000;
+        return dias <= 30; // dentro de 30 dias ou já passou
+    };
+
+    // Leva ao marketplace com o anúncio de venda já pré-preenchido.
+    const venderColheita = (p: PlanoProducao) => {
+        navigate('/marketplace', { state: { venderCultura: {
+            titulo: `${p.cultura} — colheita`,
+            descricao: `Colheita de ${p.cultura} em ${p.propriedade}. Área: ${p.area.toLocaleString('pt-MZ')} m². `
+                + (p.dataColheita ? `Disponível por volta de ${new Date(p.dataColheita).toLocaleDateString('pt-MZ')}.` : ''),
+        } } });
     };
 
     const renderDashboard = () => (
@@ -321,6 +339,11 @@ const Producao = () => {
                                             <Button variant="outline" onClick={() => setDetailPlano(p)} className="w-full rounded-xl gap-2 font-bold group">
                                                 Detalhes do Cultivo <Eye className="h-4 w-4 transition-transform group-hover:scale-110" />
                                             </Button>
+                                            {pertoColheita(p) && (
+                                                <Button onClick={() => venderColheita(p)} className="w-full rounded-xl gap-2 font-bold bg-primary hover:bg-primary/90 text-primary-foreground border-0">
+                                                    <ShoppingBag className="h-4 w-4" /> Vender a colheita
+                                                </Button>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 ))}

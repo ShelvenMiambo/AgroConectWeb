@@ -26,7 +26,7 @@ import { toggleFavorito } from "@/features/marketplace/services/favoritos";
 import { createNegociacao } from "@/features/negociacoes/services/negociacoes";
 import ChatModal from "@/features/negociacoes/components/ChatModal";
 import type { Property, Listing, ListingType, Negociacao } from "@/types";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 type MarketTab = 'terrenos' | 'produtos';
 
@@ -310,11 +310,11 @@ const listingTitles: Record<ListingType, string> = {
   'produto-procura': 'Preciso de Produtos Agrícolas',
 };
 
-const ListingModal = ({ listingType, onClose, onSaved }: { listingType: ListingType; onClose: () => void; onSaved: () => void }) => {
+const ListingModal = ({ listingType, onClose, onSaved, initial }: { listingType: ListingType; onClose: () => void; onSaved: () => void; initial?: Record<string, string> }) => {
   const { currentUser, userData } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
-  const [form, setForm]       = useState<Record<string, string>>({});
+  const [form, setForm]       = useState<Record<string, string>>(initial ?? {});
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
   const meta = listingMeta[listingType];
   const fields = listingFields[listingType];
@@ -521,6 +521,7 @@ const Marketplace = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
   const [showListingModal, setShowListingModal] = useState<ListingType | null>(null);
+  const [listingInitial, setListingInitial] = useState<Record<string, string> | undefined>(undefined);
   const [deletingId, setDeletingId]   = useState<string | null>(null);
   const [contactTarget, setContactTarget] = useState<ContactTarget | null>(null);
   const [chatNeg, setChatNeg] = useState<Negociacao | null>(null);
@@ -572,6 +573,20 @@ const Marketplace = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Vindo da Produção ("Vender a colheita"): abre o anúncio já pré-preenchido
+  const location = useLocation();
+  useEffect(() => {
+    const vender = (location.state as any)?.venderCultura;
+    if (vender?.titulo) {
+      setActiveTab('produtos');
+      setListingInitial({ titulo: vender.titulo, descricao: vender.descricao || '' });
+      setShowListingModal('produto-oferta');
+      // limpa o state para não reabrir ao navegar
+      window.history.replaceState({}, '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   // Carregar favoritos persistidos do perfil do utilizador
   useEffect(() => { setSaved(userData?.favoritos ?? []); }, [userData?.favoritos]);
@@ -815,7 +830,7 @@ const Marketplace = () => {
   return (
     <div className="min-h-screen bg-background">
       {showPublish && <PublishModal onClose={() => setShowPublish(false)} onSaved={load} />}
-      {showListingModal && <ListingModal listingType={showListingModal} onClose={() => setShowListingModal(null)} onSaved={load} />}
+      {showListingModal && <ListingModal listingType={showListingModal} initial={listingInitial} onClose={() => { setShowListingModal(null); setListingInitial(undefined); }} onSaved={load} />}
       {modais}
 
       <Header />
