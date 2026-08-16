@@ -13,6 +13,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { getPlanos, addPlano } from "@/features/producao/services/producao";
+import ClimaCard from "@/features/producao/components/ClimaCard";
 import type { PlanoProducao } from "@/types";
 
 /* ── Add Plano Modal ────────────────────────────────── */
@@ -140,6 +141,9 @@ const Producao = () => {
 
     const renderDashboard = () => (
         <div className="space-y-6">
+            {/* Clima na zona do agricultor */}
+            <ClimaCard />
+
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
