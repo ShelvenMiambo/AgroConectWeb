@@ -72,6 +72,35 @@ export const adminToggleVerificado = async (uid: string, current: boolean) => {
   return novo;
 };
 
+export type AdminPlan = 'gratuito' | 'mensal' | 'trimestral' | 'anual';
+
+/**
+ * Ativa/altera manualmente o plano de um utilizador (o admin faz isto depois de
+ * confirmar o pagamento no painel da debitopay). Calcula a data de expiração
+ * conforme o plano. Só funciona para admins — o trigger `protect_profile_fields`
+ * impede que um utilizador normal altere o próprio plano.
+ * Devolve o plano e a data de expiração (ISO) aplicados.
+ */
+export const adminSetUserPlan = async (
+  uid: string,
+  plan: AdminPlan,
+): Promise<{ plan: AdminPlan; expira: string | null }> => {
+  const now = new Date();
+  let expira: Date | null = new Date(now);
+  if (plan === 'mensal')          expira.setMonth(expira.getMonth() + 1);
+  else if (plan === 'trimestral') expira.setMonth(expira.getMonth() + 3);
+  else if (plan === 'anual')      expira.setFullYear(expira.getFullYear() + 1);
+  else                            expira = null; // gratuito: sem expiração
+
+  await supabase.from('profiles').update({
+    plan,
+    plan_ativado_em: plan === 'gratuito' ? null : now.toISOString(),
+    plan_expira_em:  expira ? expira.toISOString() : null,
+  }).eq('id', uid);
+
+  return { plan, expira: expira ? expira.toISOString() : null };
+};
+
 /* ─── PLAN CONFIG ─────────────────────────────────────── */
 export interface PlanPriceConfig { mensal: number; trimestral: number; anual: number; }
 export interface AppSettings { isPromotionActive: boolean; }

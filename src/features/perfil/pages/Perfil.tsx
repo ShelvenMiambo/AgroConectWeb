@@ -286,6 +286,80 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
   );
 };
 
+/* ─── Pagamento via debitopay (teste M-Pesa) ───────────
+   Link de pagamento hospedado (valor fixo, só M-Pesa). Como um link simples
+   não diz à app quem pagou, nesta fase de teste o plano é ativado à mão pelo
+   admin depois de confirmar o pagamento no painel da debitopay. */
+const DEBITOPAY_LINK = 'https://debitopay.com/l/agroconecta-bwix';
+const DEBITOPAY_AMOUNT = 10; // MT — valor fixo configurado no link
+
+const DebitoPayModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () => void }) => {
+  const [aberto, setAberto] = useState(false); // se já abriu a página de pagamento
+
+  const abrirPagamento = () => {
+    window.open(DEBITOPAY_LINK, '_blank', 'noopener,noreferrer');
+    setAberto(true);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 fade-in-up overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/30">
+          <div>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Pagamento M-Pesa</p>
+            <h3 className="font-black text-xl font-['Outfit']">Plano {plan.label}</h3>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {!aberto ? (
+            <>
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
+                <span className="text-muted-foreground text-sm">Total a pagar</span>
+                <span className="text-2xl font-black text-primary font-['Outfit']">{DEBITOPAY_AMOUNT} MT</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg">M</div>
+                <div><p className="font-bold text-sm">M-Pesa</p><p className="text-xs text-muted-foreground">Vodacom Moçambique</p></div>
+              </div>
+              <div className="bg-muted/40 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
+                <p>1. Abre a página de pagamento segura (debitopay).</p>
+                <p>2. Introduz o teu número M-Pesa e confirma no telemóvel.</p>
+                <p>3. Recebes confirmação por SMS/WhatsApp.</p>
+              </div>
+              <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-700 dark:text-amber-500">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <p>Fase de teste: o plano é ativado pela equipa depois de confirmarmos o pagamento (pode demorar um pouco).</p>
+              </div>
+              <Button onClick={abrirPagamento} className="w-full h-12 rounded-xl font-bold gap-2 text-white border-0 bg-primary">
+                Pagar {DEBITOPAY_AMOUNT} MT via M-Pesa
+              </Button>
+            </>
+          ) : (
+            <div className="text-center space-y-4 py-4">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <Phone className="h-9 w-9 text-primary" />
+              </div>
+              <h3 className="text-xl font-black font-['Outfit']">Conclui o pagamento</h3>
+              <p className="text-sm text-muted-foreground">
+                Abrimos a página de pagamento M-Pesa numa nova aba. Depois de pagares,
+                o teu <strong>Plano {plan.label}</strong> é ativado pela equipa assim que
+                confirmarmos o pagamento.
+              </p>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={abrirPagamento}>Reabrir pagamento</Button>
+                <Button className="flex-1 rounded-xl bg-primary text-white border-0" onClick={onClose}>Concluído</Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ─── Main Profile Page ─────────────────────────────── */
 const Perfil = () => {
   const { currentUser, userData, logout } = useAuth();
@@ -300,7 +374,8 @@ const Perfil = () => {
     p.id === 'gratuito' ? p : { ...p, price: config.prices[p.id as keyof typeof config.prices] ?? p.price }
   );
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
-  
+  const [debitoPlan, setDebitoPlan]     = useState<typeof plans[0] | null>(null);
+
   const [reputacao, setReputacao] = useState<ResumoAvaliacoes>({ media: 0, total: 0 });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);   // foto escolhida, a aguardar recorte
@@ -434,6 +509,7 @@ const Perfil = () => {
     <div className="min-h-screen bg-background">
       <Header />
       {selectedPlan && <PaymentModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />}
+      {debitoPlan && <DebitoPayModal plan={debitoPlan} onClose={() => setDebitoPlan(null)} />}
 
       {/* Recortar a foto de perfil escolhida */}
       {cropFile && (
@@ -773,7 +849,7 @@ const Perfil = () => {
                           <Button
                             size="sm"
                             className={`w-full h-9 rounded-xl font-bold text-xs border-0 ${plan.cta.classes}`}
-                            onClick={() => setSelectedPlan(plan)}
+                            onClick={() => plan.id === 'mensal' ? setDebitoPlan(plan) : setSelectedPlan(plan)}
                           >
                             {plan.cta.label}
                           </Button>

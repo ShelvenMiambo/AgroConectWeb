@@ -12,6 +12,7 @@ import type { Property, Negociacao, PlanoProducao } from '@/types';
 import {
   adminGetUsers, adminGetProperties, adminGetNegociacoes, adminGetPlanos,
   adminToggleRole, adminVerifyProperty, adminToggleVerificado, adminDeleteUser,
+  adminSetUserPlan, type AdminPlan,
   adminGetPlanPrices, adminSetPlanPrices, adminGetAppSettings, adminSetAppSettings,
   type PlanPriceConfig,
 } from '@/features/admin/services/adminService';
@@ -327,7 +328,27 @@ export default function Admin() {
                         <Td><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">{u.name?.charAt(0) || '?'}</div><span className="font-semibold">{u.name}</span>{u.verificado && <VerifiedBadge withText />}</div></Td>
                         <Td cls="text-muted-foreground max-w-[160px] truncate">{u.email}</Td>
                         <Td><span className="text-xs capitalize">{u.userType || '—'}</span></Td>
-                        <Td><Badge variant="outline" className={`text-[10px] rounded-full ${planColor[u.plan || 'gratuito']}`}>{u.plan || 'gratuito'}</Badge></Td>
+                        <Td>
+                          <select
+                            value={u.plan || 'gratuito'}
+                            disabled={updating === u.uid}
+                            title="Ativar/alterar plano (após confirmar o pagamento na debitopay)"
+                            className={`text-[10px] font-semibold rounded-full border px-2 py-1 bg-card cursor-pointer disabled:opacity-50 ${planColor[u.plan || 'gratuito']}`}
+                            onChange={async (e) => {
+                              const novo = e.target.value as AdminPlan;
+                              setUpdating(u.uid);
+                              try {
+                                const { plan, expira } = await adminSetUserPlan(u.uid, novo);
+                                setUsers(p => p.map(x => x.uid === u.uid ? { ...x, plan, planExpiraEm: expira ?? undefined } : x));
+                              } finally { setUpdating(null); }
+                            }}
+                          >
+                            <option value="gratuito">gratuito</option>
+                            <option value="mensal">mensal</option>
+                            <option value="trimestral">trimestral</option>
+                            <option value="anual">anual</option>
+                          </select>
+                        </Td>
                         <Td cls="text-muted-foreground">{fmt(u.createdAt)}</Td>
                         <Td><Badge variant="outline" className={`rounded-full text-[10px] ${u.role === 'admin' ? 'text-yellow-600 bg-yellow-500/10' : 'text-green-700 bg-green-500/10'}`}>{u.role === 'admin' ? <><Crown className="h-3 w-3 mr-1 inline" />Admin</> : <><UserCheck className="h-3 w-3 mr-1 inline" />User</>}</Badge></Td>
                         <Td><Button size="sm" variant="ghost" className={`h-7 rounded-lg text-xs ${u.verificado ? 'text-sky-600 hover:text-destructive' : 'text-muted-foreground hover:text-sky-600'}`} disabled={updating === u.uid} onClick={async () => { setUpdating(u.uid); const nv = await adminToggleVerificado(u.uid, !!u.verificado); setUsers(p => p.map(x => x.uid === u.uid ? { ...x, verificado: nv } : x)); setUpdating(null); }}>{updating === u.uid ? <Loader2 className="h-3 w-3 animate-spin" /> : <><BadgeCheck className="h-3 w-3 mr-1 inline" />{u.verificado ? 'Remover' : 'Verificar'}</>}</Button></Td>
