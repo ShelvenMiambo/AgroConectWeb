@@ -193,7 +193,7 @@ const Header = () => {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+        className={`sticky top-0 z-50 w-full transition-all duration-300 safe-top ${
           scrolled || !isHome
             ? "bg-background/95 shadow-soft border-b border-border/60 backdrop-blur-xl"
             : "bg-transparent"

@@ -141,7 +141,7 @@ const Login = () => {
 
   /* ─────────── Render ─────────── */
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex safe-top">
 
       {/* ══ Painel esquerdo — fotografia (escondido em telemóvel) ══ */}
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden flex-col justify-between p-12">

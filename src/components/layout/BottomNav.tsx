@@ -17,7 +17,7 @@ const BottomNav = () => {
   if (!currentUser) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-xl border-t border-border/60 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-xl border-t border-border/60 safe-bottom">
       <div className="grid grid-cols-5 h-16">
         {navItems.map(({ href, icon: Icon, label }) => {
           const active = pathname === href;
