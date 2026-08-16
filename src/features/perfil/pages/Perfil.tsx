@@ -17,6 +17,7 @@ import { uploadAvatar } from '@/lib/services/storage';
 import AvatarCropper from '@/features/perfil/components/AvatarCropper';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import Stars from '@/components/Stars';
+import ProcessingAnimation from '@/components/ProcessingAnimation';
 import { getResumoAvaliacoes, type ResumoAvaliacoes } from '@/features/negociacoes/services/avaliacoes';
 import type { Property, Listing } from '@/types';
 import { supabase } from '@/lib/supabase';
@@ -294,27 +295,34 @@ const DEBITOPAY_LINK = 'https://debitopay.com/l/agroconecta-bwix';
 const DEBITOPAY_AMOUNT = 10; // MT — valor fixo configurado no link
 
 const DebitoPayModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () => void }) => {
-  const [aberto, setAberto] = useState(false); // se já abriu a página de pagamento
+  const [step, setStep] = useState<'intro' | 'connecting'>('intro');
 
-  const abrirPagamento = () => {
-    window.open(DEBITOPAY_LINK, '_blank', 'noopener,noreferrer');
-    setAberto(true);
+  // Mostra a nossa animação e só depois segue para a página de pagamento.
+  // Redireciona na mesma aba (evita bloqueio de pop-ups).
+  const pagar = () => {
+    setStep('connecting');
+    setTimeout(() => { window.location.href = DEBITOPAY_LINK; }, 3800);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={step === 'connecting' ? undefined : onClose} />
       <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 fade-in-up overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/30">
           <div>
             <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Pagamento M-Pesa</p>
             <h3 className="font-black text-xl font-['Outfit']">Plano {plan.label}</h3>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
+          {step === 'intro' && <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>}
         </div>
 
         <div className="p-6 space-y-5">
-          {!aberto ? (
+          {step === 'connecting' ? (
+            <div className="space-y-3">
+              <ProcessingAnimation message="A conectar M‑Pesa…" />
+              <p className="text-xs text-center text-muted-foreground">A abrir a página de pagamento segura…</p>
+            </div>
+          ) : (
             <>
               <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
                 <span className="text-muted-foreground text-sm">Total a pagar</span>
@@ -333,26 +341,10 @@ const DebitoPayModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () 
                 <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <p>Fase de teste: o plano é ativado pela equipa depois de confirmarmos o pagamento (pode demorar um pouco).</p>
               </div>
-              <Button onClick={abrirPagamento} className="w-full h-12 rounded-xl font-bold gap-2 text-white border-0 bg-primary">
+              <Button onClick={pagar} className="w-full h-12 rounded-xl font-bold gap-2 text-white border-0 bg-primary">
                 Pagar {DEBITOPAY_AMOUNT} MT via M-Pesa
               </Button>
             </>
-          ) : (
-            <div className="text-center space-y-4 py-4">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <Phone className="h-9 w-9 text-primary" />
-              </div>
-              <h3 className="text-xl font-black font-['Outfit']">Conclui o pagamento</h3>
-              <p className="text-sm text-muted-foreground">
-                Abrimos a página de pagamento M-Pesa numa nova aba. Depois de pagares,
-                o teu <strong>Plano {plan.label}</strong> é ativado pela equipa assim que
-                confirmarmos o pagamento.
-              </p>
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 rounded-xl" onClick={abrirPagamento}>Reabrir pagamento</Button>
-                <Button className="flex-1 rounded-xl bg-primary text-white border-0" onClick={onClose}>Concluído</Button>
-              </div>
-            </div>
           )}
         </div>
       </div>
