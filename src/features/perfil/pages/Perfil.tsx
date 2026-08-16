@@ -604,31 +604,31 @@ const Perfil = () => {
                 )}
               </CardHeader>
               <CardContent className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome Completo</Label>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="space-y-1.5 rounded-xl border border-border/60 bg-muted/20 p-3.5">
+                    <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Nome Completo</Label>
                     {editing ? (
                       <Input value={name} onChange={e => setName(e.target.value)} className="rounded-xl h-11" />
                     ) : (
-                      <p className="font-semibold">{userData?.name || '—'}</p>
+                      <p className="font-semibold text-base break-words">{userData?.name || '—'}</p>
                     )}
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Telefone</Label>
+                  <div className="space-y-1.5 rounded-xl border border-border/60 bg-muted/20 p-3.5">
+                    <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Telefone</Label>
                     {editing ? (
                       <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+258 8X XXX XXXX" className="rounded-xl h-11" />
                     ) : (
-                      <p className="font-semibold">{userData?.phone || 'Não definido'}</p>
+                      <p className="font-semibold text-base">{userData?.phone || 'Não definido'}</p>
                     )}
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email</Label>
-                    <p className="font-semibold flex items-center gap-2">
+                  <div className="space-y-1.5 rounded-xl border border-border/60 bg-muted/20 p-3.5">
+                    <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Email</Label>
+                    <p className="font-semibold text-base flex items-center gap-2 break-all">
                       {currentUser?.email}
-                      {currentUser?.email && <CheckCircle className="h-4 w-4 text-success" />}
+                      {currentUser?.email && <CheckCircle className="h-4 w-4 text-success flex-shrink-0" />}
                     </p>
                   </div>
-                  <div className={`space-y-1.5 ${editing ? 'col-span-2 mt-2' : ''}`}>
+                  <div className={`space-y-1.5 ${editing ? 'mt-1' : 'rounded-xl border border-border/60 bg-muted/20 p-3.5'}`}>
                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       {editing ? 'Perfis de Utilizador (Pode selecionar vários)' : 'Tipo de Conta'}
                     </Label>
