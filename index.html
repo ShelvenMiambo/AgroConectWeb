@@ -74,7 +74,7 @@
       #boot { position:fixed; inset:0; display:flex; flex-direction:column;
               align-items:center; justify-content:center; gap:14px;
               background:#12150f; color:#e9ebe3; font-family:system-ui,-apple-system,sans-serif; }
-      #boot .scene { width:min(300px,84vw); height:auto; }
+      #boot .scene { width:min(320px,88vw); height:auto; }
       #boot .n { font-size:22px; font-weight:800; letter-spacing:-.01em; }
       #boot .n b { color:#93c264; }
       #boot .t { font-size:13px; color:#9aa292; }
@@ -83,89 +83,120 @@
       .b-sun { animation:b-sun 3s ease-in-out infinite; }
       @keyframes b-sun { 0%,100%{opacity:.7} 50%{opacity:1} }
 
-      /* Plantas a crescer (em ciclo, escalonadas) */
-      .b-plant { transform-box:fill-box; transform-origin:bottom center; animation:b-grow 4.5s ease-in-out infinite; }
-      .b-plant.p2 { animation-delay:.7s } .b-plant.p3 { animation-delay:1.4s }
-      @keyframes b-grow { 0%,6%{transform:scaleY(.04)} 45%,82%{transform:scaleY(1)} 100%{transform:scaleY(.04)} }
+      /* História (ciclo de 9s):
+         1) o agricultor SAI do logo (a planta)
+         2) capina ali junto ao logo
+         3) pega no carrinho de mão e leva a colheita
+         4) até ao camião, que parte */
+      .b-farmer { animation:b-journey 9s ease-in-out infinite; }
+      @keyframes b-journey {
+        0%   { opacity:0; transform:translateX(-36px); }   /* dentro do logo */
+        7%   { opacity:1; transform:translateX(-36px); }   /* aparece no logo */
+        16%  { transform:translateX(0); }                   /* sai para o campo */
+        52%  { opacity:1; transform:translateX(0); }        /* a capinar */
+        73%  { transform:translateX(120px); }               /* leva o carrinho ao camião */
+        84%  { opacity:1; transform:translateX(120px); }
+        92%  { opacity:0; transform:translateX(120px); }
+        100% { opacity:0; transform:translateX(-36px); }
+      }
 
-      /* Camião a levar a colheita, da esquerda para a direita */
-      .b-truck { animation:b-drive 5.5s linear infinite; }
-      @keyframes b-drive { 0%{transform:translateX(-95px)} 100%{transform:translateX(285px)} }
+      /* O regador aparece na fase de rega (início); some quando começa o transporte */
+      .b-water { animation:b-water 9s ease-in-out infinite; }
+      @keyframes b-water { 0%,50%{opacity:1} 55%,100%{opacity:0} }
+
+      /* O carrinho de mão só aparece depois de regar (fase de transporte) */
+      .b-barrow { animation:b-barrow 9s ease-in-out infinite; }
+      @keyframes b-barrow { 0%,52%{opacity:0} 58%,90%{opacity:1} 100%{opacity:0} }
+
+      /* O camião parte no fim */
+      .b-truck { animation:b-leave 9s ease-in-out infinite; }
+      @keyframes b-leave {
+        0%   { opacity:0; transform:translateX(0); }
+        6%   { opacity:1; }
+        82%  { opacity:1; transform:translateX(0); }
+        96%  { opacity:1; transform:translateX(90px); }     /* arranca para a direita */
+        98%,100% { opacity:0; }
+      }
 
       @media (prefers-reduced-motion: reduce) {
-        .b-sun,.b-plant,.b-truck { animation:none; }
-        .b-plant { transform:none; }
+        .b-farmer,.b-barrow,.b-truck,.b-sun { animation:none; }
+        .b-farmer,.b-barrow,.b-truck { opacity:1; transform:none; }
       }
     </style>
   </head>
   <body>
     <div id="root">
       <div id="boot">
-        <svg class="scene" viewBox="0 0 260 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <svg class="scene" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <!-- Sol -->
-          <circle class="b-sun" cx="228" cy="26" r="12" fill="#f3c049"/>
+          <circle class="b-sun" cx="270" cy="24" r="11" fill="#f3c049"/>
 
-          <!-- Chão do campo -->
-          <line x1="6" y1="116" x2="176" y2="116" stroke="#3a4a33" stroke-width="2" stroke-linecap="round"/>
+          <!-- Chão -->
+          <line x1="8" y1="120" x2="292" y2="120" stroke="#3a4a33" stroke-width="2" stroke-linecap="round"/>
 
-          <!-- Plantas a crescer -->
-          <g class="b-plant p1">
-            <line x1="96" y1="116" x2="96" y2="102" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-            <ellipse cx="92" cy="103" rx="4" ry="2.4" fill="#7cc47c" transform="rotate(-35 92 103)"/>
-            <ellipse cx="100" cy="103" rx="4" ry="2.4" fill="#7cc47c" transform="rotate(35 100 103)"/>
-          </g>
-          <g class="b-plant p2">
-            <line x1="112" y1="116" x2="112" y2="100" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-            <ellipse cx="108" cy="101" rx="4" ry="2.4" fill="#7cc47c" transform="rotate(-35 108 101)"/>
-            <ellipse cx="116" cy="101" rx="4" ry="2.4" fill="#7cc47c" transform="rotate(35 116 101)"/>
-          </g>
-          <g class="b-plant p3">
-            <line x1="128" y1="116" x2="128" y2="103" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-            <ellipse cx="124" cy="104" rx="4" ry="2.4" fill="#7cc47c" transform="rotate(-35 124 104)"/>
-            <ellipse cx="132" cy="104" rx="4" ry="2.4" fill="#7cc47c" transform="rotate(35 132 104)"/>
-          </g>
-
-          <!-- Agricultor a capinar -->
+          <!-- LOGO (a planta) — o agricultor sai daqui -->
           <g>
-            <!-- pernas -->
-            <line x1="46" y1="116" x2="49" y2="104" stroke="#3a4a33" stroke-width="3" stroke-linecap="round"/>
-            <line x1="54" y1="116" x2="51" y2="104" stroke="#3a4a33" stroke-width="3" stroke-linecap="round"/>
-            <!-- corpo -->
-            <rect x="44" y="86" width="12" height="20" rx="5" fill="#2f6a2d"/>
-            <!-- cabeça -->
-            <circle cx="50" cy="80" r="6" fill="#c68a5b"/>
-            <!-- chapéu de palha -->
-            <ellipse cx="50" cy="75" rx="10" ry="2.6" fill="#b7791f"/>
-            <path d="M44 75 Q50 68 56 75 Z" fill="#c8912a"/>
-            <!-- braço + enxada (capina) -->
-            <g>
-              <line x1="53" y1="90" x2="66" y2="96" stroke="#c68a5b" stroke-width="3" stroke-linecap="round"/>
-              <line x1="66" y1="96" x2="80" y2="82" stroke="#8a5a2b" stroke-width="2.5" stroke-linecap="round"/>
-              <rect x="79" y="78" width="7" height="4" rx="1" fill="#cbd5c0" transform="rotate(30 79 78)"/>
-              <animateTransform attributeName="transform" type="rotate"
-                values="-16 53 90; 24 53 90; -16 53 90" dur="1.2s" repeatCount="indefinite" calcMode="spline"
-                keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
-            </g>
+            <rect x="14" y="62" width="42" height="42" rx="12" fill="#1e5c1e"/>
+            <line x1="22" y1="96" x2="48" y2="96" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            <line x1="27" y1="100" x2="43" y2="100" stroke="#7cc47c" stroke-width="2" stroke-linecap="round"/>
+            <line x1="35" y1="96" x2="35" y2="82" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            <ellipse cx="35" cy="79" rx="3.2" ry="6" fill="#ffffff"/>
+            <ellipse cx="40" cy="84" rx="2.4" ry="5" fill="#7cc47c" transform="rotate(40 40 84)"/>
+            <ellipse cx="30" cy="84" rx="2.4" ry="5" fill="#7cc47c" transform="rotate(-40 30 84)"/>
           </g>
 
-          <!-- Estrada (primeiro plano) -->
-          <line x1="0" y1="134" x2="260" y2="134" stroke="#2c3227" stroke-width="10"/>
-          <line x1="0" y1="134" x2="260" y2="134" stroke="#4a5542" stroke-width="1.5" stroke-dasharray="10 10"/>
-
-          <!-- Camião a levar a colheita -->
+          <!-- CAMIÃO (parte no fim) -->
           <g class="b-truck">
-            <!-- carga (produtos) -->
-            <rect x="6" y="116" width="26" height="12" rx="2" fill="#93c264"/>
-            <circle cx="12" cy="116" r="3" fill="#7cc47c"/><circle cx="19" cy="115" r="3.2" fill="#8fbf5e"/><circle cx="26" cy="116" r="3" fill="#7cc47c"/>
-            <!-- caixa/atrelado -->
-            <rect x="4" y="118" width="30" height="12" rx="2" fill="#2f6a2d"/>
-            <!-- cabine -->
-            <rect x="34" y="120" width="14" height="10" rx="2" fill="#cbd5c0"/>
-            <rect x="37" y="122" width="7" height="5" rx="1" fill="#12150f"/>
-            <!-- rodas -->
-            <circle cx="13" cy="132" r="3.5" fill="#1a1a1a"/>
-            <circle cx="26" cy="132" r="3.5" fill="#1a1a1a"/>
-            <circle cx="42" cy="132" r="3.5" fill="#1a1a1a"/>
+            <rect x="208" y="99" width="26" height="8" rx="2" fill="#93c264"/>
+            <circle cx="214" cy="100" r="3" fill="#7cc47c"/><circle cx="221" cy="99" r="3.2" fill="#8fbf5e"/><circle cx="228" cy="100" r="3" fill="#7cc47c"/>
+            <rect x="206" y="104" width="30" height="14" rx="2" fill="#2f6a2d"/>
+            <rect x="236" y="106" width="14" height="12" rx="2" fill="#cbd5c0"/>
+            <rect x="239" y="108" width="7" height="5" rx="1" fill="#12150f"/>
+            <circle cx="214" cy="120" r="4" fill="#1a1a1a"/>
+            <circle cx="228" cy="120" r="4" fill="#1a1a1a"/>
+            <circle cx="244" cy="120" r="4" fill="#1a1a1a"/>
+          </g>
+
+          <!-- AGRICULTOR (sai do logo, capina, leva o carrinho) -->
+          <g class="b-farmer">
+            <!-- carrinho de mão (aparece na fase de transporte) -->
+            <g class="b-barrow">
+              <line x1="78" y1="106" x2="72" y2="102" stroke="#8a5a2b" stroke-width="2" stroke-linecap="round"/>
+              <polygon points="78,104 100,104 96,114 82,114" fill="#2f6a2d"/>
+              <circle cx="86" cy="102" r="2.6" fill="#93c264"/><circle cx="92" cy="101" r="2.8" fill="#8fbf5e"/><circle cx="97" cy="102" r="2.6" fill="#7cc47c"/>
+              <circle cx="88" cy="117" r="4" fill="#1a1a1a"/>
+            </g>
+            <!-- pernas -->
+            <line x1="62" y1="120" x2="65" y2="106" stroke="#3a4a33" stroke-width="3" stroke-linecap="round"/>
+            <line x1="72" y1="120" x2="69" y2="106" stroke="#3a4a33" stroke-width="3" stroke-linecap="round"/>
+            <!-- corpo -->
+            <rect x="60" y="88" width="12" height="20" rx="5" fill="#2f6a2d"/>
+            <!-- cabeça -->
+            <circle cx="66" cy="82" r="6" fill="#c68a5b"/>
+            <!-- chapéu de palha -->
+            <ellipse cx="66" cy="77" rx="10" ry="2.6" fill="#b7791f"/>
+            <path d="M60 77 Q66 70 72 77 Z" fill="#c8912a"/>
+            <!-- braço + regador (rega a planta do logo, à esquerda) -->
+            <g class="b-water">
+              <line x1="62" y1="91" x2="50" y2="93" stroke="#c68a5b" stroke-width="3" stroke-linecap="round"/>
+              <!-- regador -->
+              <rect x="42" y="88" width="9" height="8" rx="2" fill="#b9c2ad"/>
+              <path d="M50 89 q4 -1 4 3" fill="none" stroke="#b9c2ad" stroke-width="2"/>
+              <line x1="42" y1="90" x2="35" y2="87" stroke="#b9c2ad" stroke-width="2.5" stroke-linecap="round"/>
+              <!-- gotas de água a cair sobre a planta -->
+              <circle cx="34" cy="90" r="1.4" fill="#7cbfe0">
+                <animate attributeName="cy" values="89;99" dur="0.9s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="1;1;0" dur="0.9s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="37" cy="90" r="1.2" fill="#7cbfe0">
+                <animate attributeName="cy" values="89;99" dur="0.9s" begin="0.3s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="1;1;0" dur="0.9s" begin="0.3s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="31" cy="90" r="1.2" fill="#7cbfe0">
+                <animate attributeName="cy" values="89;99" dur="0.9s" begin="0.6s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="1;1;0" dur="0.9s" begin="0.6s" repeatCount="indefinite"/>
+              </circle>
+            </g>
           </g>
         </svg>
         <div class="n">Agro<b>Conecta</b></div>
