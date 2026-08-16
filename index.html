@@ -75,6 +75,8 @@
               align-items:center; justify-content:center; gap:14px;
               background:#12150f; color:#e9ebe3; font-family:system-ui,-apple-system,sans-serif; }
       #boot .scene { width:min(320px,88vw); height:auto; }
+      #boot .n { font-size:22px; font-weight:800; letter-spacing:-.01em; }
+      #boot .n b { color:#93c264; }
       #boot .t { font-size:13px; color:#9aa292; }
 
       /* Sol a pulsar */
@@ -123,15 +125,7 @@
   <body>
     <div id="root">
       <div id="boot">
-        <svg class="scene" viewBox="0 -40 300 196" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <!-- Marca em arco, no topo -->
-          <defs><path id="b-arc" d="M 40 -6 A 250 250 0 0 1 260 -6" fill="none"/></defs>
-          <text font-family="'Outfit',system-ui,sans-serif" font-weight="800" font-size="22" letter-spacing="0.4">
-            <textPath href="#b-arc" startOffset="50%" text-anchor="middle">
-              <tspan fill="#e9ebe3">Agro</tspan><tspan fill="#93c264">Conecta</tspan>
-            </textPath>
-          </text>
-
+        <svg class="scene" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <!-- Sol -->
           <circle class="b-sun" cx="270" cy="24" r="11" fill="#f3c049"/>
 
@@ -203,8 +197,10 @@
             </g>
           </g>
         </svg>
-        <!-- Linha de estado, por baixo da estrada. Aqui entra a mensagem de
-             processamento quando reaproveitarmos este ecrã para USSD/pagamentos. -->
+        <!-- Marca e estado, por baixo da estrada. A linha de estado é onde entra
+             a mensagem de processamento quando reaproveitarmos este ecrã para
+             USSD/pagamentos. -->
+        <div class="n">Agro<b>Conecta</b></div>
         <div class="t">A preparar o terreno…</div>
       </div>
     </div>
