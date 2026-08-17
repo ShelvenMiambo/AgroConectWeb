@@ -80,7 +80,7 @@ const OnboardingModal = () => {
             <div className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center shadow-glow mx-auto mb-6 transform -rotate-6">
               <Leaf className="h-10 w-10 text-white" />
             </div>
-            <h2 className="text-3xl font-black font-['Fraunces'] leading-tight">
+            <h2 className="text-3xl font-black font-['Poppins'] leading-tight">
               Bem-vindo à <span className="text-gradient-primary">AgroConecta</span>
             </h2>
             <p className="text-muted-foreground text-base leading-relaxed">
@@ -102,7 +102,7 @@ const OnboardingModal = () => {
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-xl font-bold font-['Fraunces']">Configure o seu perfil</h3>
+                <h3 className="text-xl font-bold font-['Poppins']">Configure o seu perfil</h3>
                 <p className="text-xs text-muted-foreground">Como pretende usar a plataforma?</p>
               </div>
             </div>

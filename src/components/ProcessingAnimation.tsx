@@ -99,7 +99,7 @@ export default function ProcessingAnimation({
       </svg>
 
       <div className="text-center">
-        <p className={`font-black font-['Fraunces'] text-[#e9ebe3] ${fullscreen ? 'text-2xl' : 'text-lg'}`}>Agro<span className="text-[#93c264]">Conecta</span></p>
+        <p className={`font-black font-['Poppins'] text-[#e9ebe3] ${fullscreen ? 'text-2xl' : 'text-lg'}`}>Agro<span className="text-[#93c264]">Conecta</span></p>
         <p className="text-sm text-[#9aa292] mt-1">{message}</p>
         {submessage && <p className="text-xs text-[#7d8574] mt-3 max-w-xs mx-auto leading-relaxed">{submessage}</p>}
       </div>

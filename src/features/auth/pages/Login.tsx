@@ -159,10 +159,10 @@ const Login = () => {
         <div className="relative z-10 flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
-              <span className="text-white font-black font-['Fraunces']">AC</span>
+              <span className="text-white font-black font-['Poppins']">AC</span>
             </div>
             <div>
-              <p className="text-lg font-black text-white font-['Fraunces']">AgroConecta</p>
+              <p className="text-lg font-black text-white font-['Poppins']">AgroConecta</p>
               <p className="text-xs text-white/60 tracking-widest uppercase">Moçambique</p>
             </div>
           </Link>
@@ -170,7 +170,7 @@ const Login = () => {
 
         {/* Content */}
         <div className="relative z-10">
-          <h2 className="text-4xl font-black text-white font-['Fraunces'] mb-4 leading-tight">
+          <h2 className="text-4xl font-black text-white font-['Poppins'] mb-4 leading-tight">
             Cultive o seu<br /><span className="text-gradient-gold">futuro digital</span>
           </h2>
           <p className="text-white/75 text-base mb-8 leading-relaxed max-w-xs">
@@ -200,9 +200,9 @@ const Login = () => {
         <div className="lg:hidden mb-8">
           <Link to="/" className="flex items-center gap-3 justify-center">
             <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-medium">
-              <span className="text-white font-black font-['Fraunces']">AC</span>
+              <span className="text-white font-black font-['Poppins']">AC</span>
             </div>
-            <span className="text-xl font-black text-primary font-['Fraunces']">AgroConecta</span>
+            <span className="text-xl font-black text-primary font-['Poppins']">AgroConecta</span>
           </Link>
         </div>
 
@@ -215,7 +215,7 @@ const Login = () => {
                 <ArrowLeft className="h-4 w-4" /> Voltar ao login
               </button>
               <div className="mb-8">
-                <h1 className="text-3xl font-black font-['Fraunces'] mb-2">Recuperar senha</h1>
+                <h1 className="text-3xl font-black font-['Poppins'] mb-2">Recuperar senha</h1>
                 <p className="text-muted-foreground text-sm">
                   Introduza o seu email e enviamos um link para redefinir a sua palavra-passe.
                 </p>
@@ -244,7 +244,7 @@ const Login = () => {
           {mode === 'update' && (
             <>
               <div className="mb-8">
-                <h1 className="text-3xl font-black font-['Fraunces'] mb-2">Definir nova palavra-passe</h1>
+                <h1 className="text-3xl font-black font-['Poppins'] mb-2">Definir nova palavra-passe</h1>
                 <p className="text-muted-foreground text-sm">
                   Escolha uma nova palavra-passe para a sua conta.
                 </p>
@@ -287,7 +287,7 @@ const Login = () => {
           {mode !== 'reset' && mode !== 'update' && (
             <>
               <div className="mb-8">
-                <h1 className="text-3xl font-black font-['Fraunces'] mb-2">
+                <h1 className="text-3xl font-black font-['Poppins'] mb-2">
                   {mode === 'login' ? 'Bem-vindo de volta' : 'Criar conta gratuita'}
                 </h1>
                 <p className="text-muted-foreground text-sm">

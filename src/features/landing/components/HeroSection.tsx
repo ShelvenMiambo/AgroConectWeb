@@ -30,7 +30,7 @@ const HeroSection = () => {
       {/* Conteúdo */}
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 lg:pt-28 pb-16 sm:pb-20 lg:pb-24">
         <div className="max-w-2xl">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-['Fraunces'] leading-[1.05] tracking-tight mb-5 sm:mb-6 text-white">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-['Poppins'] leading-[1.05] tracking-tight mb-5 sm:mb-6 text-white">
             Encontre terra.
             <br />
             Venda a sua colheita.

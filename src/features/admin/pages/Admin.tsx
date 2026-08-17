@@ -163,7 +163,7 @@ export default function Admin() {
                 <AlertTriangle className="h-6 w-6 text-destructive" />
               </div>
               <div>
-                <h3 className="font-black text-lg font-['Fraunces']">Apagar Utilizador?</h3>
+                <h3 className="font-black text-lg font-['Poppins']">Apagar Utilizador?</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Todos os dados de <strong className="text-foreground">{confirmDelete.name}</strong> serão eliminados permanentemente: perfil, propriedades, negociações e planos de produção.
                 </p>
@@ -218,7 +218,7 @@ export default function Admin() {
         <div className="p-5 border-b border-border/60">
           <Link to="/" className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center"><span className="text-white font-black text-sm">AC</span></div>
-            <div><p className="font-black text-sm text-primary font-['Fraunces']">AgroConecta</p><p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Admin</p></div>
+            <div><p className="font-black text-sm text-primary font-['Poppins']">AgroConecta</p><p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Admin</p></div>
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-0.5">
@@ -240,7 +240,7 @@ export default function Admin() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar — desktop only */}
         <header className="hidden lg:flex sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/60 px-4 lg:px-6 py-3 items-center justify-between gap-4">
-          <h1 className="text-lg font-black font-['Fraunces']">{navItems.find(n => n.key === tab)?.label}</h1>
+          <h1 className="text-lg font-black font-['Poppins']">{navItems.find(n => n.key === tab)?.label}</h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button variant="outline" size="sm" className="rounded-xl gap-1.5 h-8" onClick={load} disabled={loading}><RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />Atualizar</Button>
@@ -249,7 +249,7 @@ export default function Admin() {
         </header>
         {/* Mobile section title */}
         <div className="lg:hidden px-4 pt-4 pb-2">
-          <h1 className="text-lg font-black font-['Fraunces']">{navItems.find(n => n.key === tab)?.label}</h1>
+          <h1 className="text-lg font-black font-['Poppins']">{navItems.find(n => n.key === tab)?.label}</h1>
         </div>
 
         <main className="flex-1 p-4 lg:p-6 space-y-6 overflow-auto">
@@ -268,7 +268,7 @@ export default function Admin() {
                 ].map(s => (
                   <div key={s.label} className="rounded-lg border border-border/60 bg-card p-4 shadow-soft">
                     <div className={`w-9 h-9 rounded-xl ${s.bg} flex items-center justify-center mb-3`}><s.icon className={`h-4 w-4 ${s.color}`} /></div>
-                    <p className="text-xl font-black font-['Fraunces']">{loading ? '—' : s.value}</p>
+                    <p className="text-xl font-black font-['Poppins']">{loading ? '—' : s.value}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5 font-semibold">{s.label}</p>
                   </div>
                 ))}
@@ -276,7 +276,7 @@ export default function Admin() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Subscriptions breakdown */}
                 <div className="rounded-lg border border-border/60 bg-card p-5 shadow-soft">
-                  <h3 className="font-bold font-['Fraunces'] mb-4 flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" />Subscrições</h3>
+                  <h3 className="font-bold font-['Poppins'] mb-4 flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" />Subscrições</h3>
                   <div className="space-y-3">
                     {[
                       { label: 'Gratuito', count: users.filter(u => !u.plan || u.plan === 'gratuito').length, color: 'bg-muted-foreground/30', price: null },
@@ -297,7 +297,7 @@ export default function Admin() {
                 </div>
                 {/* Recent users */}
                 <div className="rounded-lg border border-border/60 bg-card p-5 shadow-soft">
-                  <h3 className="font-bold font-['Fraunces'] mb-4 flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Últimos Utilizadores</h3>
+                  <h3 className="font-bold font-['Poppins'] mb-4 flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Últimos Utilizadores</h3>
                   <div className="space-y-2">
                     {loading ? <div className="h-32 bg-muted animate-pulse rounded-xl" /> : users.slice(0, 5).map(u => (
                       <div key={u.uid} className="flex items-center gap-3">
@@ -316,7 +316,7 @@ export default function Admin() {
           {tab === 'users' && (
             <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
               <div className="p-5 border-b border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div><h2 className="font-bold font-['Fraunces']">Utilizadores ({filteredUsers.length}/{users.length})</h2><p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1"><BadgeCheck className="h-3.5 w-3.5 text-sky-500" /> {users.filter(u => u.verificado).length} verificado(s)</p></div>
+                <div><h2 className="font-bold font-['Poppins']">Utilizadores ({filteredUsers.length}/{users.length})</h2><p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1"><BadgeCheck className="h-3.5 w-3.5 text-sky-500" /> {users.filter(u => u.verificado).length} verificado(s)</p></div>
                 <div className="relative w-full sm:w-56"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar..." className="pl-9 h-9 rounded-xl" /></div>
               </div>
               <div className="overflow-x-auto">
@@ -372,7 +372,7 @@ export default function Admin() {
           {/* PROPERTIES */}
           {tab === 'properties' && (
             <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
-              <div className="p-5 border-b border-border/60"><h2 className="font-bold font-['Fraunces']">Todas as Propriedades ({properties.length})</h2></div>
+              <div className="p-5 border-b border-border/60"><h2 className="font-bold font-['Poppins']">Todas as Propriedades ({properties.length})</h2></div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-border/60 bg-muted/40"><Th c="Propriedade" /><Th c="Localização" /><Th c="Área" /><Th c="Preço" /><Th c="Proprietário" /><Th c="Publicado" /><Th c="Estado" /></tr></thead>
@@ -403,7 +403,7 @@ export default function Admin() {
           {/* NEGOTIATIONS */}
           {tab === 'negotiations' && (
             <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
-              <div className="p-5 border-b border-border/60"><h2 className="font-bold font-['Fraunces']">Todas as Negociações ({negotiations.length})</h2></div>
+              <div className="p-5 border-b border-border/60"><h2 className="font-bold font-['Poppins']">Todas as Negociações ({negotiations.length})</h2></div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-border/60 bg-muted/40"><Th c="Propriedade" /><Th c="Arrendatário" /><Th c="Proprietário" /><Th c="Mensagem" /><Th c="Data" /><Th c="Estado" /></tr></thead>
@@ -427,7 +427,7 @@ export default function Admin() {
           {/* PRODUCTION */}
           {tab === 'production' && (
             <div className="rounded-lg border border-border/60 bg-card shadow-soft overflow-hidden">
-              <div className="p-5 border-b border-border/60"><h2 className="font-bold font-['Fraunces']">Todos os Planos de Produção ({plans.length})</h2></div>
+              <div className="p-5 border-b border-border/60"><h2 className="font-bold font-['Poppins']">Todos os Planos de Produção ({plans.length})</h2></div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-border/60 bg-muted/40"><Th c="Cultura" /><Th c="Propriedade" /><Th c="Área" /><Th c="Início" /><Th c="Colheita" /><Th c="Progresso" /><Th c="Estado" /></tr></thead>
@@ -463,7 +463,7 @@ export default function Admin() {
                 <div className="p-5 border-b border-border/60 flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center"><Tag className="h-4 w-4 text-primary" /></div>
                   <div>
-                    <h2 className="font-bold font-['Fraunces']">Preços dos Planos</h2>
+                    <h2 className="font-bold font-['Poppins']">Preços dos Planos</h2>
                     <p className="text-xs text-muted-foreground">Valores em Meticais (MT). Alterações aplicam-se imediatamente a todos os utilizadores.</p>
                   </div>
                 </div>
@@ -510,7 +510,7 @@ export default function Admin() {
                 <div className="p-5 border-b border-border/60 flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center"><Crown className="h-4 w-4 text-amber-500" /></div>
                   <div>
-                    <h2 className="font-bold font-['Fraunces']">Modo Promoção de Lançamento</h2>
+                    <h2 className="font-bold font-['Poppins']">Modo Promoção de Lançamento</h2>
                     <p className="text-xs text-muted-foreground">Quando ativo, todos os utilizadores gratuitos têm acesso premium durante o período de lançamento.</p>
                   </div>
                 </div>
