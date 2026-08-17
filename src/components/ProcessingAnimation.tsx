@@ -13,10 +13,14 @@ export default function ProcessingAnimation({
   message = 'A carregar…',
   submessage,
   fullscreen = false,
+  onCancel,
+  cancelLabel = 'Cancelar',
 }: {
   message?: string;
   submessage?: string;
   fullscreen?: boolean;
+  onCancel?: () => void;
+  cancelLabel?: string;
 }) {
   const svgClass = fullscreen ? 'w-[min(440px,86vw)] h-auto' : 'w-[min(280px,82%)] h-auto';
 
@@ -99,6 +103,14 @@ export default function ProcessingAnimation({
         <p className="text-sm text-[#9aa292] mt-1">{message}</p>
         {submessage && <p className="text-xs text-[#7d8574] mt-3 max-w-xs mx-auto leading-relaxed">{submessage}</p>}
       </div>
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          className="mt-3 h-10 px-5 rounded-xl border border-[#3a4a33] text-sm font-semibold text-[#c7cebd] hover:bg-white/5 transition-colors"
+        >
+          {cancelLabel}
+        </button>
+      )}
     </>
   );
 

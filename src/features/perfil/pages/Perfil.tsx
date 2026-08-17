@@ -102,11 +102,20 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
   const [processing, setProcessing]   = useState(false);
   const [errorMsg, setErrorMsg]       = useState('');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cancelRef = useRef(false);
 
   // Clean up polling on unmount
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
+  // Sair da animação de espera (não trava o pagamento no telemóvel, se já foi enviado).
+  const cancelar = () => {
+    cancelRef.current = true;
+    if (pollRef.current) clearInterval(pollRef.current);
+    onClose();
+  };
+
   const concluir = (ok: boolean, msg?: string) => {
+    if (cancelRef.current) return;
     setProcessing(false);
     if (ok) { setStep('success'); }
     else { setErrorMsg(msg || 'Pagamento não confirmado. Verifique o telemóvel e tente novamente.'); setStep('error'); }
@@ -114,6 +123,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
 
   const handlePayment = async () => {
     if (!currentUser || !isValidPhone(phone)) return;
+    cancelRef.current = false;
     setProcessing(true);
     setStep('waiting');
 
@@ -148,7 +158,9 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
       <ProcessingAnimation
         fullscreen
         message="A conectar M‑Pesa…"
-        submessage={`Enviámos um pedido para ${formatPhone(phone)}. Confirme com o seu PIN no telemóvel. Não feche esta janela.`}
+        submessage={`Enviámos um pedido para ${formatPhone(phone)}. Confirme com o seu PIN no telemóvel.`}
+        onCancel={cancelar}
+        cancelLabel="Cancelar"
       />
     );
   }
