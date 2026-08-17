@@ -126,7 +126,8 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
 
     // M-Pesa é síncrono: normalmente já vem 'success' (plano ativado no servidor)
     // ou falha. O plano NÃO é ativado no cliente (o trigger só deixa admins).
-    if (result.status === 'success') { concluir(true); return; }
+    if (result.status === 'success' && result.activated !== false) { concluir(true); return; }
+    if (result.status === 'success' && result.activated === false) { concluir(false, result.error); return; }
     if (!result.success && result.status !== 'pending') { concluir(false, result.error); return; }
 
     // Raro: ficou 'pending' → consulta o estado até ~2 min.
