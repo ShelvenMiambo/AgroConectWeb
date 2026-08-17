@@ -190,8 +190,12 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  jwt_role text := coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role', '');
 begin
-  if not public.is_admin() then
+  -- Só admins (ou o servidor via service_role, ex.: ativação de plano após
+  -- pagamento) podem mudar role/plan. Um utilizador normal não consegue.
+  if not public.is_admin() and jwt_role <> 'service_role' then
     new.role := old.role;
     new.plan := old.plan;
     new.plan_ativado_em := old.plan_ativado_em;
