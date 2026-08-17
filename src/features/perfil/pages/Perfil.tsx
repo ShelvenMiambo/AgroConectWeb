@@ -25,8 +25,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import {
-  initiatePayment, checkPaymentStatus, activatePlan,
-  isValidPhone, formatPhone, type PlanId, type PaymentMethod
+  initiatePayment, checkPaymentStatus,
+  isValidPhone, formatPhone, type PlanId
 } from '@/lib/paysuiteService';
 import { usePlanConfig } from '@/hooks/usePlanConfig';
 
@@ -97,15 +97,20 @@ const userTypeLabel: Record<string, string> = {
 /* ─── Payment Modal (M-Pesa / eMola) ───────────────── */
 const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () => void }) => {
   const { currentUser } = useAuth();
-  const [step, setStep]         = useState<'method' | 'mpesa' | 'emola' | 'waiting' | 'success' | 'error'>('method');
+  const [step, setStep]         = useState<'form' | 'waiting' | 'success' | 'error'>('form');
   const [phone, setPhone]       = useState('');
   const [processing, setProcessing]   = useState(false);
   const [errorMsg, setErrorMsg]       = useState('');
-  const [method, setMethod]           = useState<PaymentMethod>('mpesa');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Clean up polling on unmount
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+  const concluir = (ok: boolean, msg?: string) => {
+    setProcessing(false);
+    if (ok) { setStep('success'); }
+    else { setErrorMsg(msg || 'Pagamento não confirmado. Verifique o telemóvel e tente novamente.'); setStep('error'); }
+  };
 
   const handlePayment = async () => {
     if (!currentUser || !isValidPhone(phone)) return;
@@ -115,46 +120,35 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
     const result = await initiatePayment({
       uid: currentUser.uid,
       plan: plan.id as PlanId,
-      amount: plan.price,
       phone: formatPhone(phone),
-      method,
+      method: 'mpesa',
     });
 
-    if (!result.success || !result.transactionId) {
-      setErrorMsg(result.error || 'Erro ao iniciar pagamento.');
-      setStep('error');
-      setProcessing(false);
-      return;
-    }
+    // M-Pesa é síncrono: normalmente já vem 'success' (plano ativado no servidor)
+    // ou falha. O plano NÃO é ativado no cliente (o trigger só deixa admins).
+    if (result.status === 'success') { concluir(true); return; }
+    if (!result.success && result.status !== 'pending') { concluir(false, result.error); return; }
 
-    // Poll every 4 seconds for up to 2 minutes
-    const txId = result.transactionId;
+    // Raro: ficou 'pending' → consulta o estado até ~2 min.
+    const pid = result.paymentId;
+    if (!pid) { concluir(false, result.error); return; }
     let attempts = 0;
     pollRef.current = setInterval(async () => {
       attempts++;
-      const status = await checkPaymentStatus(txId);
-      if (status === 'success') {
-        clearInterval(pollRef.current!);
-        await activatePlan(currentUser.uid, plan.id as PlanId);
-        setStep('success');
-        setProcessing(false);
-      } else if (status === 'failed' || attempts > 30) {
-        clearInterval(pollRef.current!);
-        setErrorMsg('Pagamento não confirmado. Verifique o seu telemóvel e tente novamente.');
-        setStep('error');
-        setProcessing(false);
-      }
+      const status = await checkPaymentStatus(pid);
+      if (status === 'success') { clearInterval(pollRef.current!); concluir(true); }
+      else if (status === 'failed' || attempts > 30) { clearInterval(pollRef.current!); concluir(false); }
     }, 4000);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={step === 'success' ? undefined : onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={step === 'success' || step === 'waiting' ? undefined : onClose} />
       <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 fade-in-up overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/30">
           <div>
-            <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Pagamento Seguro</p>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Pagamento M-Pesa</p>
             <h3 className="font-black text-xl font-['Outfit']">Plano {plan.label}</h3>
           </div>
           {step !== 'success' && step !== 'waiting' && <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>}
@@ -173,176 +167,65 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               </Button>
             </div>
           ) : step === 'waiting' ? (
-            <div className="text-center space-y-6 py-6">
-              <div className="relative w-20 h-20 mx-auto">
-                <div className="absolute inset-0 rounded-full border-4 border-primary/30 animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-black font-['Outfit'] mb-1">Aguardando Confirmação</h3>
-                <p className="text-sm text-muted-foreground">
-                  Um pedido foi enviado para <strong>{formatPhone(phone)}</strong>.
-                  <br />Confirme o pagamento no seu telemóvel.
-                </p>
-              </div>
-              <div className="bg-muted/40 rounded-xl p-3 text-xs text-muted-foreground">
-                Não feche esta janela enquanto aguarda a confirmação.
-              </div>
+            <div className="space-y-3">
+              <ProcessingAnimation message="A conectar M‑Pesa…" />
+              <p className="text-sm text-center text-muted-foreground">
+                Enviámos um pedido para <strong>{formatPhone(phone)}</strong>.<br />
+                Confirme o pagamento com o seu PIN no telemóvel.
+              </p>
+              <p className="text-xs text-center text-muted-foreground">Não feche esta janela.</p>
             </div>
           ) : step === 'error' ? (
             <div className="text-center space-y-4 py-4">
               <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
                 <AlertCircle className="h-10 w-10 text-destructive" />
               </div>
-              <h3 className="text-xl font-black font-['Outfit']">Pagamento Falhado</h3>
+              <h3 className="text-xl font-black font-['Outfit']">Pagamento não concluído</h3>
               <p className="text-sm text-muted-foreground">{errorMsg}</p>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
-                <Button className="flex-1 rounded-xl bg-primary text-white border-0" onClick={() => { setStep('method'); setPhone(''); }}>
+                <Button className="flex-1 rounded-xl bg-primary text-white border-0" onClick={() => setStep('form')}>
                   Tentar Novamente
                 </Button>
               </div>
             </div>
-          ) : step === 'method' ? (
+          ) : (
             <>
               <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
                 <span className="text-muted-foreground text-sm">Total a pagar</span>
                 <span className="text-2xl font-black text-primary font-['Outfit']">{plan.price} MT</span>
               </div>
-              <p className="text-sm font-semibold text-center text-muted-foreground">Escolha o método de pagamento</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => { setStep('mpesa'); setMethod('mpesa'); }}
-                  className="flex flex-col items-center gap-3 p-5 rounded-lg border-2 border-border/50 hover:border-primary/50 hover:bg-muted/50 transition-all group"
-                >
-                  <div className="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg group-hover:scale-110 transition-transform">M</div>
-                  <div className="text-center">
-                    <p className="font-bold text-sm">M-Pesa</p>
-                    <p className="text-[10px] text-muted-foreground">Vodacom Mçbq</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => { setStep('emola'); setMethod('emola'); }}
-                  className="flex flex-col items-center gap-3 p-5 rounded-lg border-2 border-border/50 hover:border-primary/50 hover:bg-muted/50 transition-all group"
-                >
-                  <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center font-black text-blue-600 text-lg group-hover:scale-110 transition-transform">e</div>
-                  <div className="text-center">
-                    <p className="font-bold text-sm">eMola</p>
-                    <p className="text-[10px] text-muted-foreground">Movitel</p>
-                  </div>
-                </button>
-              </div>
-              <p className="text-[11px] text-center text-muted-foreground">
-                Pagamentos processados via PaySuite. Os seus dados estao seguros.
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/40 border border-border/50 mb-2">
-                {step === 'mpesa' ? (
-                  <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg">M</div>
-                ) : (
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center font-black text-blue-600 text-lg">e</div>
-                )}
-                <div>
-                  <p className="font-bold text-sm">{step === 'mpesa' ? 'M-Pesa' : 'eMola'}</p>
-                  <p className="text-xs text-muted-foreground">Total: <strong>{plan.price} MT</strong></p>
-                </div>
-                <button className="ml-auto text-xs text-primary hover:underline" onClick={() => setStep('method')}>Alterar</button>
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg">M</div>
+                <div><p className="font-bold text-sm">M-Pesa</p><p className="text-xs text-muted-foreground">Vodacom Moçambique</p></div>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">Número {step === 'mpesa' ? 'M-Pesa' : 'eMola'}</Label>
+                <Label className="text-sm font-semibold">Número M-Pesa</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="+258 8X XXX XXXX"
+                    placeholder="+258 84 XXX XXXX"
+                    inputMode="tel"
                     className="pl-10 h-12 rounded-xl border-border/70"
                   />
                 </div>
                 {phone.length >= 9 && !isValidPhone(phone) && (
-                  <p className="text-xs text-destructive">Número inválido. Use M-Pesa (84/86) ou eMola (86/87).</p>
+                  <p className="text-xs text-destructive">Número inválido. Use um número M-Pesa (84/85).</p>
                 )}
               </div>
               <div className="bg-muted/40 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-                <p>1. Introduza o seu número acima</p>
-                <p>2. Receberá um pedido de confirmação no seu telemóvel</p>
-                <p>3. Confirme o pagamento e o plano é ativado instantaneamente</p>
+                <p>1. Introduza o seu número M-Pesa.</p>
+                <p>2. Receberá um pedido no telemóvel — confirme com o seu PIN.</p>
+                <p>3. O plano é ativado automaticamente.</p>
               </div>
               <Button
                 onClick={handlePayment}
                 disabled={!isValidPhone(phone) || processing}
                 className="w-full h-12 rounded-xl font-bold gap-2 text-white border-0 bg-primary"
               >
-                Pagar {plan.price} MT agora
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ─── Pagamento via debitopay (teste M-Pesa) ───────────
-   Link de pagamento hospedado (valor fixo, só M-Pesa). Como um link simples
-   não diz à app quem pagou, nesta fase de teste o plano é ativado à mão pelo
-   admin depois de confirmar o pagamento no painel da debitopay. */
-const DEBITOPAY_LINK = 'https://debitopay.com/l/agroconecta-bwix';
-const DEBITOPAY_AMOUNT = 10; // MT — valor fixo configurado no link
-
-const DebitoPayModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () => void }) => {
-  const [step, setStep] = useState<'intro' | 'connecting'>('intro');
-
-  // Mostra a nossa animação e só depois segue para a página de pagamento.
-  // Redireciona na mesma aba (evita bloqueio de pop-ups).
-  const pagar = () => {
-    setStep('connecting');
-    setTimeout(() => { window.location.href = DEBITOPAY_LINK; }, 3800);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={step === 'connecting' ? undefined : onClose} />
-      <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 fade-in-up overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/30">
-          <div>
-            <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Pagamento M-Pesa</p>
-            <h3 className="font-black text-xl font-['Outfit']">Plano {plan.label}</h3>
-          </div>
-          {step === 'intro' && <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>}
-        </div>
-
-        <div className="p-6 space-y-5">
-          {step === 'connecting' ? (
-            <div className="space-y-3">
-              <ProcessingAnimation message="A conectar M‑Pesa…" />
-              <p className="text-xs text-center text-muted-foreground">A abrir a página de pagamento segura…</p>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
-                <span className="text-muted-foreground text-sm">Total a pagar</span>
-                <span className="text-2xl font-black text-primary font-['Outfit']">{DEBITOPAY_AMOUNT} MT</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50">
-                <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg">M</div>
-                <div><p className="font-bold text-sm">M-Pesa</p><p className="text-xs text-muted-foreground">Vodacom Moçambique</p></div>
-              </div>
-              <div className="bg-muted/40 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-                <p>1. Abre a página de pagamento segura (debitopay).</p>
-                <p>2. Introduz o teu número M-Pesa e confirma no telemóvel.</p>
-                <p>3. Recebes confirmação por SMS/WhatsApp.</p>
-              </div>
-              <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-700 dark:text-amber-500">
-                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <p>Fase de teste: o plano é ativado pela equipa depois de confirmarmos o pagamento (pode demorar um pouco).</p>
-              </div>
-              <Button onClick={pagar} className="w-full h-12 rounded-xl font-bold gap-2 text-white border-0 bg-primary">
-                Pagar {DEBITOPAY_AMOUNT} MT via M-Pesa
+                Pagar {plan.price} MT via M-Pesa
               </Button>
             </>
           )}
@@ -366,7 +249,6 @@ const Perfil = () => {
     p.id === 'gratuito' ? p : { ...p, price: config.prices[p.id as keyof typeof config.prices] ?? p.price }
   );
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
-  const [debitoPlan, setDebitoPlan]     = useState<typeof plans[0] | null>(null);
 
   const [reputacao, setReputacao] = useState<ResumoAvaliacoes>({ media: 0, total: 0 });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -501,7 +383,6 @@ const Perfil = () => {
     <div className="min-h-screen bg-background">
       <Header />
       {selectedPlan && <PaymentModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />}
-      {debitoPlan && <DebitoPayModal plan={debitoPlan} onClose={() => setDebitoPlan(null)} />}
 
       {/* Recortar a foto de perfil escolhida */}
       {cropFile && (
@@ -841,7 +722,7 @@ const Perfil = () => {
                           <Button
                             size="sm"
                             className={`w-full h-9 rounded-xl font-bold text-xs border-0 ${plan.cta.classes}`}
-                            onClick={() => plan.id === 'mensal' ? setDebitoPlan(plan) : setSelectedPlan(plan)}
+                            onClick={() => setSelectedPlan(plan)}
                           >
                             {plan.cta.label}
                           </Button>

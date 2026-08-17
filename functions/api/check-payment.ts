@@ -1,17 +1,17 @@
 /**
- * Cloudflare Pages Function — PaySuite Payment Status Proxy
- * Rota: /api/check-payment?id={transactionId}
+ * Cloudflare Pages Function — Debito Pay: consulta de estado
+ * Rota: /api/check-payment?id={payment_id}
  *
- * Verifica o estado de um pagamento PaySuite no servidor.
+ * Fallback para reconciliação quando o pagamento fica "pending" (M-Pesa é
+ * síncrono, por isso normalmente não é necessário). Chama o Payment
+ * Orchestrator com { action: 'check-status', payment_id }.
  */
-
 interface Env {
-  VITE_PAYSUITE_API_KEY: string;
+  DEBITOPAY_API_KEY: string;
 }
 
-const PAYSUITE_BASE_URL = 'https://app.paysuite.co.mz/api/v1';
+const DEBITOPAY_URL = 'https://gyqoaningqhurhvdugne.supabase.co/functions/v1/payment-orchestrator';
 
-// Aceita os domínios do AgroConecta (Cloudflare Pages, Firebase Hosting) e localhost (dev)
 const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconect[\w-]*\.(pages\.dev|app|web\.app|firebaseapp\.com)$/;
 const LOCALHOST = ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:8080'];
 
@@ -26,37 +26,36 @@ function corsHeaders(origin: string | null): Record<string, string> {
 }
 
 export async function onRequestOptions(context: { request: Request }) {
-  const origin = context.request.headers.get('Origin');
-  return new Response(null, { status: 204, headers: corsHeaders(origin) });
+  return new Response(null, { status: 204, headers: corsHeaders(context.request.headers.get('Origin')) });
 }
 
 export async function onRequestGet(context: { request: Request; env: Env }) {
   const { request, env } = context;
-  const origin = request.headers.get('Origin');
-  const headers = corsHeaders(origin);
+  const headers = corsHeaders(request.headers.get('Origin'));
 
-  if (!env.VITE_PAYSUITE_API_KEY) {
-    return new Response(JSON.stringify({ error: 'Pagamentos não configurados.' }), { status: 503, headers });
+  if (!env.DEBITOPAY_API_KEY) {
+    return new Response(JSON.stringify({ status: 'failed' }), { status: 200, headers });
   }
 
-  const url = new URL(request.url);
-  const transactionId = url.searchParams.get('id');
-
-  if (!transactionId) {
-    return new Response(JSON.stringify({ error: 'ID de transação em falta.' }), { status: 400, headers });
+  const paymentId = new URL(request.url).searchParams.get('id');
+  if (!paymentId) {
+    return new Response(JSON.stringify({ error: 'ID em falta.' }), { status: 400, headers });
   }
 
   try {
-    const res = await fetch(`${PAYSUITE_BASE_URL}/payments/${transactionId}`, {
-      headers: { 'Authorization': `Bearer ${env.VITE_PAYSUITE_API_KEY}` },
+    const res = await fetch(DEBITOPAY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.DEBITOPAY_API_KEY}` },
+      body: JSON.stringify({ action: 'check-status', payment_id: paymentId }),
     });
+    if (!res.ok) return new Response(JSON.stringify({ status: 'pending' }), { status: 200, headers });
 
-    if (!res.ok) {
-      return new Response(JSON.stringify({ status: 'failed' }), { status: 200, headers });
-    }
-
-    const data = await res.json() as { status?: string };
-    return new Response(JSON.stringify({ status: data.status }), { status: 200, headers });
+    const data = await res.json() as { payment?: { status?: string } };
+    const raw = (data.payment?.status || '').toLowerCase();
+    const status = raw === 'success' ? 'success'
+                 : (raw === 'failed' || raw === 'expired') ? 'failed'
+                 : 'pending';
+    return new Response(JSON.stringify({ status }), { status: 200, headers });
   } catch {
     return new Response(JSON.stringify({ status: 'pending' }), { status: 200, headers });
   }

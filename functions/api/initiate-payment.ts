@@ -1,27 +1,34 @@
 /**
- * Cloudflare Pages Function — PaySuite Payment Proxy
+ * Cloudflare Pages Function — Debito Pay (M-Pesa) proxy
  * Rota: /api/initiate-payment
  *
- * Faz a chamada à API PaySuite no servidor para evitar CORS.
- * A VITE_PAYSUITE_API_KEY nunca é exposta ao browser.
+ * O cliente envia { uid, plan, phone }. Esta Function chama o Payment
+ * Orchestrator da Debito Pay no servidor (com a API key secreta), dispara o
+ * push USSD do M-Pesa e — como o M-Pesa é SÍNCRONO — recebe já o resultado.
+ * Se o pagamento tiver sucesso, ativa o plano no Supabase com a service_role
+ * (contorna o trigger que só deixa admins mudar o plano). O valor é decidido
+ * no servidor (a partir da config de preços), nunca a partir do cliente.
+ *
+ * Secrets necessários no Cloudflare:
+ *   DEBITOPAY_API_KEY, DEBITOPAY_MERCHANT_ID, DEBITOPAY_WALLET_CODE,
+ *   SUPABASE_SERVICE_ROLE_KEY, (SUPABASE_URL ou VITE_SUPABASE_URL)
  */
-
 interface Env {
-  VITE_PAYSUITE_API_KEY: string;
+  DEBITOPAY_API_KEY: string;
+  DEBITOPAY_MERCHANT_ID: string;
+  DEBITOPAY_WALLET_CODE: string;
+  SUPABASE_URL?: string;
+  VITE_SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
-interface PaymentRequestBody {
-  amount: number;
-  phone: string;
-  reference: string;
-  description: string;
-  callback_url: string;
-  method: 'mpesa' | 'emola';
-}
+interface Body { uid: string; plan: string; phone: string; }
 
-const PAYSUITE_BASE_URL = 'https://app.paysuite.co.mz/api/v1';
+const DEBITOPAY_URL = 'https://gyqoaningqhurhvdugne.supabase.co/functions/v1/payment-orchestrator';
+const PLANOS = ['mensal', 'trimestral', 'anual'] as const;
+const PRECOS_FALLBACK: Record<string, number> = { mensal: 1, trimestral: 1, anual: 1 };
 
-// Aceita os domínios do AgroConecta (Cloudflare Pages, Firebase Hosting) e localhost (dev)
+// Aceita os domínios do AgroConecta (Cloudflare Pages / Firebase) e localhost.
 const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconect[\w-]*\.(pages\.dev|app|web\.app|firebaseapp\.com)$/;
 const LOCALHOST = ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:8080'];
 
@@ -36,69 +43,125 @@ function corsHeaders(origin: string | null): Record<string, string> {
 }
 
 export async function onRequestOptions(context: { request: Request }) {
-  const origin = context.request.headers.get('Origin');
-  return new Response(null, { status: 204, headers: corsHeaders(origin) });
+  return new Response(null, { status: 204, headers: corsHeaders(context.request.headers.get('Origin')) });
+}
+
+function supabaseUrl(env: Env): string {
+  return (env.SUPABASE_URL || env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
+}
+
+/** Preço do plano lido da config (Admin → preços). Fallback seguro se falhar. */
+async function precoDoPlano(plan: string, env: Env): Promise<number> {
+  try {
+    const res = await fetch(`${supabaseUrl(env)}/rest/v1/config?id=eq.plans&select=data`, {
+      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` },
+    });
+    if (res.ok) {
+      const rows = await res.json() as { data?: Record<string, number> }[];
+      const p = rows?.[0]?.data?.[plan];
+      if (typeof p === 'number' && p > 0) return p;
+    }
+  } catch { /* usa fallback */ }
+  return PRECOS_FALLBACK[plan] ?? 1;
+}
+
+/** Ativa o plano no perfil (service_role — contorna RLS e o trigger). */
+async function ativarPlano(uid: string, plan: string, env: Env): Promise<void> {
+  const expira = new Date();
+  if (plan === 'anual')           expira.setFullYear(expira.getFullYear() + 1);
+  else if (plan === 'trimestral') expira.setMonth(expira.getMonth() + 3);
+  else                            expira.setMonth(expira.getMonth() + 1);
+
+  const res = await fetch(`${supabaseUrl(env)}/rest/v1/profiles?id=eq.${encodeURIComponent(uid)}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({
+      plan,
+      plan_ativado_em: new Date().toISOString(),
+      plan_expira_em: expira.toISOString(),
+    }),
+  });
+  if (!res.ok) throw new Error(`Supabase update ${res.status}: ${await res.text()}`);
 }
 
 export async function onRequestPost(context: { request: Request; env: Env }) {
   const { request, env } = context;
-  const origin = request.headers.get('Origin');
-  const headers = corsHeaders(origin);
+  const headers = corsHeaders(request.headers.get('Origin'));
 
-  if (!env.VITE_PAYSUITE_API_KEY) {
-    return new Response(JSON.stringify({ error: 'Pagamentos não configurados.' }), { status: 503, headers });
+  if (!env.DEBITOPAY_API_KEY || !env.DEBITOPAY_MERCHANT_ID || !env.DEBITOPAY_WALLET_CODE) {
+    return new Response(JSON.stringify({ success: false, error: 'Pagamentos não configurados.' }), { status: 503, headers });
+  }
+  if (!env.SUPABASE_SERVICE_ROLE_KEY || !supabaseUrl(env)) {
+    return new Response(JSON.stringify({ success: false, error: 'Configuração de ativação em falta.' }), { status: 503, headers });
   }
 
-  let body: PaymentRequestBody;
+  let body: Body;
+  try { body = await request.json() as Body; }
+  catch { return new Response(JSON.stringify({ success: false, error: 'Pedido inválido.' }), { status: 400, headers }); }
+
+  const { uid, plan, phone } = body;
+  if (!uid || !phone || !PLANOS.includes(plan as typeof PLANOS[number])) {
+    return new Response(JSON.stringify({ success: false, error: 'Campos obrigatórios em falta.' }), { status: 400, headers });
+  }
+
+  const amount = await precoDoPlano(plan, env);
+
+  let dp: any;
   try {
-    body = await request.json() as PaymentRequestBody;
-  } catch {
-    return new Response(JSON.stringify({ error: 'Pedido inválido.' }), { status: 400, headers });
-  }
-
-  const { amount, phone, reference, description, callback_url, method } = body;
-
-  if (!amount || !phone || !reference) {
-    return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta.' }), { status: 400, headers });
-  }
-
-  const endpoint = method === 'emola'
-    ? `${PAYSUITE_BASE_URL}/payments/emola/push`
-    : `${PAYSUITE_BASE_URL}/payments/mpesa/push`;
-
-  try {
-    const res = await fetch(endpoint, {
+    const res = await fetch(DEBITOPAY_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${env.VITE_PAYSUITE_API_KEY}`,
-      },
-      body: JSON.stringify({ amount, phone, reference, description, callback_url }),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.DEBITOPAY_API_KEY}` },
+      body: JSON.stringify({
+        action: 'process',
+        payment_method: 'mpesa',
+        merchant_id: env.DEBITOPAY_MERCHANT_ID,
+        wallet_code: env.DEBITOPAY_WALLET_CODE,
+        amount,
+        currency: 'MZN',
+        phone,
+        source: 'agroconecta',
+        source_id: `AGRO-${uid}-${plan.toUpperCase()}`,
+      }),
     });
-
-    let data: unknown;
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      data = await res.json();
-    } else {
-      const text = await res.text();
-      console.error('[PaySuite initiate] non-JSON response:', res.status, text.slice(0, 300));
-      data = { message: `PaySuite status ${res.status}: ${text.slice(0, 100)}` };
+    dp = await res.json().catch(() => ({}));
+    if (!res.ok || dp?.success === false) {
+      const error = dp?.error || `Erro do serviço de pagamento (${res.status}).`;
+      console.error('[DebitoPay initiate]', res.status, dp);
+      return new Response(JSON.stringify({ success: false, error }), { status: 200, headers });
     }
-
-    if (!res.ok) {
-      console.error('[PaySuite initiate]', res.status, data);
-      return new Response(JSON.stringify({
-        error: (data as { message?: string })?.message || `Erro PaySuite: ${res.status}`,
-      }), { status: res.status, headers });
-    }
-
-    return new Response(JSON.stringify(data), { status: 200, headers });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[PaySuite initiate] network error:', message);
-    return new Response(JSON.stringify({
-      error: `Não foi possível contactar a PaySuite. Verifique se a chave API está correta. (${message})`,
-    }), { status: 502, headers });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error('[DebitoPay initiate] network', message);
+    return new Response(JSON.stringify({ success: false, error: 'Sem ligação ao serviço de pagamento. Tente de novo.' }), { status: 502, headers });
   }
+
+  const status = String(dp?.status || '').toLowerCase();
+  const paymentId = dp?.payment_id ?? null;
+  const transactionId = dp?.transactionId || dp?.reference || null;
+
+  if (status === 'success') {
+    try {
+      await ativarPlano(uid, plan, env);
+      return new Response(JSON.stringify({ success: true, status: 'success', activated: true, payment_id: paymentId, transactionId }), { status: 200, headers });
+    } catch (e: unknown) {
+      // Pagamento recebido mas ativação falhou → precisa de ativação manual no Admin.
+      console.error('[DebitoPay initiate] activation failed', e instanceof Error ? e.message : e);
+      return new Response(JSON.stringify({
+        success: true, status: 'success', activated: false, payment_id: paymentId, transactionId,
+        error: 'Pagamento recebido, mas a ativação automática falhou. O suporte irá ativar o seu plano.',
+      }), { status: 200, headers });
+    }
+  }
+
+  if (status === 'pending') {
+    return new Response(JSON.stringify({ success: true, status: 'pending', payment_id: paymentId, transactionId }), { status: 200, headers });
+  }
+
+  // failed / expired / desconhecido
+  return new Response(JSON.stringify({ success: false, status: status || 'failed', error: 'Pagamento não concluído. Verifique e tente novamente.' }), { status: 200, headers });
 }
