@@ -5,14 +5,24 @@
  * As keyframes (b-sun, b-journey, b-water, b-barrow, b-leave) estão definidas
  * globalmente no <style> do index.html, por isso aqui só se replica o SVG.
  *
- * Usos:
- *  - transição antes de abrir o pagamento (debitopay);
- *  - futuro ecrã de processamento de pagamento (USSD / M-Pesa / eMola).
+ * Modos:
+ *  - normal: painel escuro arredondado (dentro de um cartão/modal);
+ *  - fullscreen: ocupa todo o ecrã (ex.: espera do pagamento M-Pesa / USSD).
  */
-export default function ProcessingAnimation({ message = 'A carregar…' }: { message?: string }) {
-  return (
-    <div className="w-full rounded-2xl bg-[#12150f] px-4 py-6 flex flex-col items-center gap-3">
-      <svg className="w-[min(280px,82%)] h-auto" viewBox="0 0 300 132" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+export default function ProcessingAnimation({
+  message = 'A carregar…',
+  submessage,
+  fullscreen = false,
+}: {
+  message?: string;
+  submessage?: string;
+  fullscreen?: boolean;
+}) {
+  const svgClass = fullscreen ? 'w-[min(440px,86vw)] h-auto' : 'w-[min(280px,82%)] h-auto';
+
+  const content = (
+    <>
+      <svg className={svgClass} viewBox="0 0 300 132" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         {/* Sol */}
         <circle className="b-sun" cx="270" cy="24" r="11" fill="#f3c049" />
 
@@ -85,9 +95,24 @@ export default function ProcessingAnimation({ message = 'A carregar…' }: { mes
       </svg>
 
       <div className="text-center">
-        <p className="text-lg font-black font-['Outfit'] text-[#e9ebe3]">Agro<span className="text-[#93c264]">Conecta</span></p>
-        <p className="text-sm text-[#9aa292] mt-0.5">{message}</p>
+        <p className={`font-black font-['Outfit'] text-[#e9ebe3] ${fullscreen ? 'text-2xl' : 'text-lg'}`}>Agro<span className="text-[#93c264]">Conecta</span></p>
+        <p className="text-sm text-[#9aa292] mt-1">{message}</p>
+        {submessage && <p className="text-xs text-[#7d8574] mt-3 max-w-xs mx-auto leading-relaxed">{submessage}</p>}
       </div>
+    </>
+  );
+
+  if (fullscreen) {
+    return (
+      <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-[#12150f] px-6">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full rounded-2xl bg-[#12150f] px-4 py-6 flex flex-col items-center gap-3">
+      {content}
     </div>
   );
 }

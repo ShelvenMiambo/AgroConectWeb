@@ -142,9 +142,20 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
     }, 4000);
   };
 
+  // Espera em ecrã inteiro (a animação enquanto o M-Pesa/USSD é confirmado).
+  if (step === 'waiting') {
+    return (
+      <ProcessingAnimation
+        fullscreen
+        message="A conectar M‑Pesa…"
+        submessage={`Enviámos um pedido para ${formatPhone(phone)}. Confirme com o seu PIN no telemóvel. Não feche esta janela.`}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={step === 'success' || step === 'waiting' ? undefined : onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={step === 'success' ? undefined : onClose} />
       <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 fade-in-up overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/30">
@@ -166,15 +177,6 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               <Button className="w-full h-12 rounded-xl bg-primary text-white border-0 font-bold" onClick={() => { onClose(); window.location.reload(); }}>
                 <CheckCircle className="h-4 w-4 mr-2" /> Continuar para o AgroConecta
               </Button>
-            </div>
-          ) : step === 'waiting' ? (
-            <div className="space-y-3">
-              <ProcessingAnimation message="A conectar M‑Pesa…" />
-              <p className="text-sm text-center text-muted-foreground">
-                Enviámos um pedido para <strong>{formatPhone(phone)}</strong>.<br />
-                Confirme o pagamento com o seu PIN no telemóvel.
-              </p>
-              <p className="text-xs text-center text-muted-foreground">Não feche esta janela.</p>
             </div>
           ) : step === 'error' ? (
             <div className="text-center space-y-4 py-4">
