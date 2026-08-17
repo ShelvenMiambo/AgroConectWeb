@@ -215,7 +215,7 @@ const Header = () => {
                 </svg>
               </div>
               <div className="flex flex-col leading-none">
-                <span className="text-base font-black font-['Outfit'] transition-colors">
+                <span className="text-base font-black font-['Poppins'] transition-colors">
                   <span className={scrolled || !isHome ? "text-primary" : "text-white"}>Agro</span>
                   <span className="text-accent">Conecta</span>
                 </span>
@@ -549,7 +549,7 @@ const Header = () => {
           <div className="p-6 sm:p-8">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-2xl font-black font-['Outfit'] mb-1">
+                <h2 className="text-2xl font-black font-['Poppins'] mb-1">
                   Olá, {userData?.name?.split(' ')[0] || 'Bem-vindo'}! 👋
                 </h2>
                 <p className="text-muted-foreground text-sm">

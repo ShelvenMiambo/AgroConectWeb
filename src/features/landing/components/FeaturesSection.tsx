@@ -88,7 +88,7 @@ const FeaturesSection = () => {
           ref={titleRef}
           className={`text-center max-w-3xl mx-auto mb-20 transition-all duration-700 ${titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
-          <h2 className="text-4xl md:text-5xl font-black mb-5 font-['Outfit'] tracking-tight text-balance">
+          <h2 className="text-4xl md:text-5xl font-black mb-5 font-['Poppins'] tracking-tight text-balance">
             O que pode fazer aqui
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
@@ -99,7 +99,7 @@ const FeaturesSection = () => {
         {/* Como Funciona Steps */}
         <div className={`mb-24 transition-all duration-700 ${featVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
           <div className="text-center mb-12">
-            <h3 className="text-2xl md:text-3xl font-black font-['Outfit'] tracking-tight">Como funciona</h3>
+            <h3 className="text-2xl md:text-3xl font-black font-['Poppins'] tracking-tight">Como funciona</h3>
             <p className="text-muted-foreground mt-2">Quatro passos, do registo ao negócio fechado</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
@@ -116,7 +116,7 @@ const FeaturesSection = () => {
                 <div className={`w-16 h-16 rounded-full ${step.bg} border-2 border-background flex items-center justify-center mb-5`}>
                   <step.icon className={`h-7 w-7 ${step.color}`} />
                 </div>
-                <h4 className="font-bold text-lg mb-2 font-['Outfit']">{step.title}</h4>
+                <h4 className="font-bold text-lg mb-2 font-['Poppins']">{step.title}</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
               </div>
             ))}
@@ -145,7 +145,7 @@ const FeaturesSection = () => {
                   <div className="flex-shrink-0 rounded-md bg-white/15 p-2 backdrop-blur-sm">
                     <feature.icon className="h-5 w-5 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold font-['Outfit'] text-white">{feature.title}</h3>
+                  <h3 className="text-xl font-bold font-['Poppins'] text-white">{feature.title}</h3>
                 </div>
               </div>
 
@@ -187,7 +187,7 @@ const FeaturesSection = () => {
                 <div className="p-3 rounded-md bg-primary/10 dark:bg-primary/15 mb-4">
                   <feature.icon className="h-5 w-5 text-primary" />
                 </div>
-                <h4 className="font-bold text-sm mb-1.5 font-['Outfit']">{feature.title}</h4>
+                <h4 className="font-bold text-sm mb-1.5 font-['Poppins']">{feature.title}</h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
               </div>
             ))}

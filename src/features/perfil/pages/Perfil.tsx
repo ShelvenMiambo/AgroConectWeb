@@ -173,7 +173,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
         <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/30">
           <div>
             <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Pagamento M-Pesa</p>
-            <h3 className="font-black text-xl font-['Outfit']">Plano {plan.label}</h3>
+            <h3 className="font-black text-xl font-['Poppins']">Plano {plan.label}</h3>
           </div>
           {step !== 'success' && step !== 'waiting' && <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>}
         </div>
@@ -184,7 +184,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               <div className="w-20 h-20 rounded-full bg-success/15 flex items-center justify-center mx-auto">
                 <CheckCircle className="h-10 w-10 text-success" />
               </div>
-              <h3 className="text-2xl font-black font-['Outfit']">Subscrição Ativa!</h3>
+              <h3 className="text-2xl font-black font-['Poppins']">Subscrição Ativa!</h3>
               <p className="text-muted-foreground text-sm">O seu plano <strong>{plan.label}</strong> foi ativado com sucesso. Bem-vindo ao Premium!</p>
               <Button className="w-full h-12 rounded-xl bg-primary text-white border-0 font-bold" onClick={() => { onClose(); window.location.reload(); }}>
                 <CheckCircle className="h-4 w-4 mr-2" /> Continuar para o AgroConecta
@@ -195,7 +195,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
               <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
                 <AlertCircle className="h-10 w-10 text-destructive" />
               </div>
-              <h3 className="text-xl font-black font-['Outfit']">Pagamento não concluído</h3>
+              <h3 className="text-xl font-black font-['Poppins']">Pagamento não concluído</h3>
               <p className="text-sm text-muted-foreground">{errorMsg}</p>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>Fechar</Button>
@@ -208,7 +208,7 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
             <>
               <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
                 <span className="text-muted-foreground text-sm">Total a pagar</span>
-                <span className="text-2xl font-black text-primary font-['Outfit']">{plan.price} MT</span>
+                <span className="text-2xl font-black text-primary font-['Poppins']">{plan.price} MT</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50">
                 <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg">M</div>
@@ -428,7 +428,7 @@ const Perfil = () => {
       )}
 
       <main className="container mx-auto px-4 lg:px-8 py-10 max-w-5xl pb-24 md:pb-10">
-        <h1 className="text-3xl md:text-4xl font-black font-['Outfit'] mb-8">
+        <h1 className="text-3xl md:text-4xl font-black font-['Poppins'] mb-8">
           O Meu <span className="text-primary">Perfil</span>
         </h1>
 
@@ -477,7 +477,7 @@ const Perfil = () => {
                     />
                   </div>
                 </div>
-                <h2 className="text-xl font-black font-['Outfit'] leading-tight flex items-center gap-1.5">
+                <h2 className="text-xl font-black font-['Poppins'] leading-tight flex items-center gap-1.5">
                   {userData?.name || 'Utilizador'}
                   {userData?.verificado && <VerifiedBadge size="md" />}
                 </h2>
@@ -553,7 +553,7 @@ const Perfil = () => {
             {/* Account Details */}
             <Card className="border-border/50 shadow-soft rounded-lg">
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4">
-                <CardTitle className="text-lg font-black font-['Outfit']">Dados da Conta</CardTitle>
+                <CardTitle className="text-lg font-black font-['Poppins']">Dados da Conta</CardTitle>
                 {!editing ? (
                   <Button size="sm" variant="ghost" className="gap-2 rounded-xl" onClick={() => { setEditing(true); setName(userData?.name || ''); setPhone(userData?.phone || ''); }}>
                     <Edit3 className="h-4 w-4" /> Editar
@@ -652,7 +652,7 @@ const Perfil = () => {
               <div className="bg-gradient-to-r from-amber-500/10 via-primary/5 to-emerald-500/10 border border-primary/20 text-foreground p-4 rounded-lg flex items-start gap-3 shadow-soft">
                 <Crown className="h-5 w-5 text-amber-500 animate-pulse mt-0.5 flex-shrink-0" />
                 <div className="space-y-0.5">
-                  <h4 className="font-black text-sm font-['Outfit'] flex items-center gap-2">
+                  <h4 className="font-black text-sm font-['Poppins'] flex items-center gap-2">
                     Promoção de Lançamento: 5 Meses 100% Grátis!
                     <Badge className="bg-primary text-white border-0 font-bold text-[9px] px-2 animate-bounce">Ativa</Badge>
                   </h4>
@@ -665,7 +665,7 @@ const Perfil = () => {
 
             <Card className="border-border/50 shadow-soft rounded-lg">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-black font-['Outfit'] flex items-center gap-2">
+                <CardTitle className="text-lg font-black font-['Poppins'] flex items-center gap-2">
                   <Crown className="h-5 w-5 text-primary" /> Planos de Subscrição
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">Desbloqueie funcionalidades premium e contacte proprietários diretamente.</p>
@@ -718,10 +718,10 @@ const Perfil = () => {
                             <div className={`w-8 h-8 rounded-xl ${plan.bg} border ${plan.border} flex items-center justify-center`}>
                               <plan.icon className={`h-4 w-4 ${plan.color}`} />
                             </div>
-                            <p className="font-black text-sm font-['Outfit']">{plan.label}</p>
+                            <p className="font-black text-sm font-['Poppins']">{plan.label}</p>
                           </div>
                           <div className="text-right">
-                            <p className={`text-xl font-black font-['Outfit'] ${plan.color}`}>{plan.price}<span className="text-xs font-semibold text-muted-foreground"> MT</span></p>
+                            <p className={`text-xl font-black font-['Poppins'] ${plan.color}`}>{plan.price}<span className="text-xs font-semibold text-muted-foreground"> MT</span></p>
                             {plan.period && <p className="text-[10px] text-muted-foreground">por {plan.period}</p>}
                           </div>
                         </div>
@@ -769,7 +769,7 @@ const Perfil = () => {
             {/* Minhas Publicações */}
             <Card className="border-border/50 shadow-soft rounded-lg">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-black font-['Outfit'] flex items-center gap-2">
+                <CardTitle className="text-lg font-black font-['Poppins'] flex items-center gap-2">
                   <Package className="h-5 w-5 text-primary" /> Minhas Publicações
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">Faça a gestão dos seus anúncios e pedidos ativos.</p>
@@ -819,7 +819,7 @@ const Perfil = () => {
             {/* Danger Zone */}
             <Card className="border-destructive/30 shadow-soft rounded-lg bg-destructive/5">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-black font-['Outfit'] flex items-center gap-2 text-destructive">
+                <CardTitle className="text-lg font-black font-['Poppins'] flex items-center gap-2 text-destructive">
                   <AlertCircle className="h-5 w-5" /> Zona de Perigo
                 </CardTitle>
                 <p className="text-sm text-destructive/80">Ações destrutivas que não podem ser desfeitas.</p>

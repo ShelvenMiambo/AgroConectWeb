@@ -60,7 +60,7 @@ export default function ClimaCard() {
             <div className="flex items-center gap-4 mb-4">
               <div className="text-4xl leading-none">{atual?.emoji}</div>
               <div>
-                <p className="text-3xl font-black font-['Outfit'] leading-none">{prev.atualTemp}°C</p>
+                <p className="text-3xl font-black font-['Poppins'] leading-none">{prev.atualTemp}°C</p>
                 <p className="text-xs text-muted-foreground mt-1">{atual?.texto}</p>
               </div>
             </div>

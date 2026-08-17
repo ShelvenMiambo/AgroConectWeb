@@ -158,7 +158,7 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 max-h-[90vh] overflow-y-auto fade-in-up">
         <div className="flex items-center justify-between p-5 border-b border-border/60">
-          <h2 className="font-black text-xl font-['Outfit'] flex items-center gap-2">
+          <h2 className="font-black text-xl font-['Poppins'] flex items-center gap-2">
             <Leaf className="h-5 w-5 text-primary" /> Publicar Terra
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
@@ -359,7 +359,7 @@ const ListingModal = ({ listingType, onClose, onSaved, initial }: { listingType:
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md bg-card rounded-lg shadow-strong border border-border/60 max-h-[90vh] overflow-y-auto fade-in-up">
         <div className="flex items-center justify-between p-5 border-b border-border/60">
-          <h2 className="font-black text-lg font-['Outfit'] flex items-center gap-2">
+          <h2 className="font-black text-lg font-['Poppins'] flex items-center gap-2">
             <IconComp className="h-5 w-5 text-primary" /> {listingTitles[listingType]}
           </h2>
           <button aria-label="Fechar" onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
@@ -449,7 +449,7 @@ const ContactModal = ({
             <div className="w-16 h-16 rounded-full bg-amber-500/15 flex items-center justify-center mx-auto">
               <Crown className="h-8 w-8 text-amber-500" />
             </div>
-            <h3 className="text-xl font-black font-['Outfit']">Subscrição Premium Necessária</h3>
+            <h3 className="text-xl font-black font-['Poppins']">Subscrição Premium Necessária</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               As negociações seguras no AgroConecta exigem uma subscrição ativa.
               <br />Subscreva a um plano para iniciar negociações ilimitadas e contactar proprietários!
@@ -465,7 +465,7 @@ const ContactModal = ({
           <>
             <div className="flex justify-between items-start mb-5">
               <div>
-                <h3 className="text-lg font-black font-['Outfit']">Contactar</h3>
+                <h3 className="text-lg font-black font-['Poppins']">Contactar</h3>
                 <p className="text-sm text-muted-foreground">{target.refNome}{target.refLocal ? ` · ${target.refLocal}` : ''}</p>
               </div>
               <button aria-label="Fechar" onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
@@ -689,7 +689,7 @@ const Marketplace = () => {
             <div className="lg:col-span-3 space-y-6">
               <Gallery urls={p.imageUrls ?? []} nome={p.nome} />
               <div>
-                <h1 className="text-3xl font-black font-['Outfit'] mb-2">{p.nome}</h1>
+                <h1 className="text-3xl font-black font-['Poppins'] mb-2">{p.nome}</h1>
                 <div className="flex items-center gap-2 text-muted-foreground mb-4">
                   <MapPin className="h-4 w-4" /><span>{p.localizacao}</span>
                   {p.verificado && <Badge className="bg-success text-white border-0 gap-1 ml-2"><CheckCircle className="h-3 w-3" /> Verificado</Badge>}
@@ -759,7 +759,7 @@ const Marketplace = () => {
                 <CardContent className="p-6 space-y-5">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Arrendamento mensal</p>
-                    <p className="text-3xl font-black text-primary font-['Outfit']">{p.preco.toLocaleString('pt-MZ')} MT</p>
+                    <p className="text-3xl font-black text-primary font-['Poppins']">{p.preco.toLocaleString('pt-MZ')} MT</p>
                   </div>
 
                   {userData?.plan === 'gratuito' && !config.isPromotionActive && !isOwner ? (
@@ -839,7 +839,7 @@ const Marketplace = () => {
         <div className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/5 border-b border-border/60 pt-10 pb-14">
           <div className="absolute inset-0 dot-pattern opacity-40" />
           <div className="relative container mx-auto px-4 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-5xl font-black mb-4 font-['Outfit']">
+            <h1 className="text-4xl md:text-5xl font-black mb-4 font-['Poppins']">
               <span className="text-primary">{ht.title.split(' ')[0]}</span> {ht.title.split(' ').slice(1).join(' ')}
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
@@ -1053,7 +1053,7 @@ const Marketplace = () => {
                                 )}
                               </div>
                               <div className="p-5">
-                                <h3 className="font-bold text-base group-hover:text-primary transition-colors font-['Outfit'] line-clamp-1 mb-1">{p.nome}</h3>
+                                <h3 className="font-bold text-base group-hover:text-primary transition-colors font-['Poppins'] line-clamp-1 mb-1">{p.nome}</h3>
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
                                   <MapPin className="h-3 w-3" /> {p.localizacao}
                                 </div>
@@ -1066,7 +1066,7 @@ const Marketplace = () => {
                                   </span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                  <span className="text-lg font-black text-primary font-['Outfit']">{p.preco.toLocaleString('pt-MZ')} MT</span>
+                                  <span className="text-lg font-black text-primary font-['Poppins']">{p.preco.toLocaleString('pt-MZ')} MT</span>
                                   <span className="text-xs text-muted-foreground">/mês</span>
                                 </div>
                               </div>

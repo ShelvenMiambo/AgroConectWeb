@@ -55,7 +55,7 @@ const Footer = () => {
           <div className="container mx-auto px-4 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
               <div className="text-center lg:text-left">
-                <h3 className="text-2xl md:text-3xl font-black text-white font-['Outfit'] mb-2">
+                <h3 className="text-2xl md:text-3xl font-black text-white font-['Poppins'] mb-2">
                   Pronto para transformar o seu negócio?
                 </h3>
                 <p className="text-white/70 text-base">
@@ -84,10 +84,10 @@ const Footer = () => {
             <div className="lg:col-span-2 space-y-6">
               <Link to="/" className="flex items-center gap-3 group">
                 <div className="h-10 w-10 rounded-md bg-primary flex items-center justify-center">
-                  <span className="text-white font-black font-['Outfit']">AC</span>
+                  <span className="text-white font-black font-['Poppins']">AC</span>
                 </div>
                 <div>
-                  <div className="text-lg font-black text-background dark:text-card-foreground font-['Outfit']">AgroConecta</div>
+                  <div className="text-lg font-black text-background dark:text-card-foreground font-['Poppins']">AgroConecta</div>
                   <div className="text-xs text-background/50 dark:text-card-foreground/50 font-medium tracking-widest uppercase">Moçambique</div>
                 </div>
               </Link>
@@ -131,7 +131,7 @@ const Footer = () => {
             {/* Nav Columns */}
             {footerNav.map(({ title, links }) => (
               <div key={title} className="space-y-5">
-                <h4 className="text-sm font-bold text-background dark:text-card-foreground tracking-widest uppercase font-['Outfit']">
+                <h4 className="text-sm font-bold text-background dark:text-card-foreground tracking-widest uppercase font-['Poppins']">
                   {title}
                 </h4>
                 <ul className="space-y-3">

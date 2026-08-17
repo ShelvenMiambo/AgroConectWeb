@@ -60,7 +60,7 @@ const AddPlanoModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-card w-full max-w-md rounded-lg shadow-strong border border-border/60 overflow-hidden fade-in-up">
                 <div className="flex items-center justify-between p-5 border-b border-border/60">
-                    <h2 className="font-black text-xl font-['Outfit']">Novo Plano de Cultivo</h2>
+                    <h2 className="font-black text-xl font-['Poppins']">Novo Plano de Cultivo</h2>
                     <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-5 space-y-4">
@@ -184,7 +184,7 @@ const Producao = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{s.label}</p>
-                                    <p className="text-xl font-black font-['Outfit']">{s.value}</p>
+                                    <p className="text-xl font-black font-['Poppins']">{s.value}</p>
                                 </div>
                                 <div className={`p-2 rounded-xl bg-muted/60 ${s.color}`}><s.icon className="h-5 w-5" /></div>
                             </div>
@@ -238,7 +238,7 @@ const Producao = () => {
                     <div className="bg-card w-full max-w-md rounded-lg shadow-strong border border-border/60 overflow-hidden fade-in-up" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between p-5 border-b border-border/60">
                             <div>
-                                <h2 className="font-black text-xl font-['Outfit']">{detailPlano.cultura}</h2>
+                                <h2 className="font-black text-xl font-['Poppins']">{detailPlano.cultura}</h2>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {detailPlano.propriedade}</p>
                             </div>
                             <button onClick={() => setDetailPlano(null)} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
@@ -281,7 +281,7 @@ const Producao = () => {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
                     <div className="text-center md:text-left">
-                        <h1 className="text-3xl md:text-4xl font-black font-['Outfit'] mb-2">
+                        <h1 className="text-3xl md:text-4xl font-black font-['Poppins'] mb-2">
                              Gestão de <span className="text-primary">Produção</span>
                         </h1>
                         <p className="text-muted-foreground max-w-lg text-sm">
@@ -329,7 +329,7 @@ const Producao = () => {
                                                 <Badge className={getStatusColor(p.status)}>{p.status}</Badge>
                                                 <p className="text-[10px] text-muted-foreground font-bold uppercase">{p.area.toLocaleString('pt-MZ')} m²</p>
                                             </div>
-                                            <CardTitle className="text-xl font-black font-['Outfit']">{p.cultura}</CardTitle>
+                                            <CardTitle className="text-xl font-black font-['Poppins']">{p.cultura}</CardTitle>
                                             <CardDescription className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {p.propriedade}</CardDescription>
                                         </CardHeader>
                                         <CardContent className="p-5 space-y-5">
