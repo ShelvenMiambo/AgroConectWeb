@@ -1,46 +1,27 @@
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
-import {
-  Facebook, Instagram, Linkedin, Mail, MapPin, Phone,
-  ArrowRight, ExternalLink, Leaf
-} from "lucide-react";
+import { MapPin, ArrowRight, Leaf } from "lucide-react";
 
+// Só links reais (rotas que existem). Nada de páginas inventadas.
 const footerNav = [
   {
     title: "Plataforma",
     links: [
-      { label: "Marketplace de Terras", href: "/marketplace" },
-      { label: "Assistente IA", href: "/assistente-ia" },
-      { label: "Gestão de Produção", href: "/producao" },
+      { label: "Marketplace de terra", href: "/marketplace" },
+      { label: "Assistente agrícola", href: "/assistente-ia" },
+      { label: "Gestão de produção", href: "/producao" },
       { label: "Negociações", href: "/negociacoes" },
-    ]
+    ],
   },
   {
-    title: "Suporte",
+    title: "Conta",
     links: [
-      { label: "Centro de Ajuda", href: "#" },
-      { label: "Guias de Uso", href: "#" },
-      { label: "Contactar Suporte", href: "#" },
-      { label: "Comunidade", href: "#" },
-    ]
+      { label: "Entrar / Registar", href: "/login" },
+      { label: "O meu perfil", href: "/perfil" },
+      { label: "Planos e subscrição", href: "/perfil" },
+    ],
   },
-  {
-    title: "Empresa",
-    links: [
-      { label: "Sobre Nós", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Carreiras", href: "#" },
-      { label: "Imprensa", href: "#" },
-    ]
-  }
-];
-
-const socialLinks = [
-  { icon: Facebook, label: "Facebook", href: "#" },
-  { icon: Instagram, label: "Instagram", href: "#" },
-  { icon: Linkedin, label: "LinkedIn", href: "#" },
 ];
 
 const Footer = () => {
@@ -49,22 +30,22 @@ const Footer = () => {
     <footer className="relative overflow-hidden">
       <div className="h-px w-full bg-border" />
 
-      {/* Faixa de apelo à ação — só para visitantes (não faz sentido para quem já entrou) */}
+      {/* Faixa de apelo à ação — só para visitantes */}
       {!currentUser && (
         <div className="bg-primary py-14">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
               <div className="text-center lg:text-left">
                 <h3 className="text-2xl md:text-3xl font-black text-white font-['Poppins'] mb-2">
-                  Pronto para transformar o seu negócio?
+                  Comece hoje no AgroConecta
                 </h3>
-                <p className="text-white/70 text-base">
-                  Crie a sua conta e comece a cultivar o seu futuro digital.
+                <p className="text-white/80 text-base">
+                  Crie a conta grátis e publique o seu primeiro anúncio em minutos.
                 </p>
               </div>
-              <div className="flex gap-3 flex-shrink-0">
+              <div className="flex-shrink-0">
                 <Link to="/login">
-                  <Button className="h-11 px-6 rounded-xl bg-white text-primary font-semibold hover:bg-white/90 transition-smooth border-0 shadow-medium">
+                  <Button className="h-11 px-6 rounded-lg bg-white text-primary font-semibold hover:bg-white/90 transition-colors border-0">
                     Criar conta grátis
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -75,14 +56,14 @@ const Footer = () => {
         </div>
       )}
 
-      {/* Main Footer Body */}
+      {/* Corpo */}
       <div className="bg-foreground dark:bg-card text-background dark:text-card-foreground">
         <div className="container mx-auto px-4 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
 
-            {/* Brand Column — 2 cols */}
+            {/* Marca */}
             <div className="lg:col-span-2 space-y-6">
-              <Link to="/" className="flex items-center gap-3 group">
+              <Link to="/" className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-md bg-primary flex items-center justify-center">
                   <span className="text-white font-black font-['Poppins']">AC</span>
                 </div>
@@ -92,43 +73,18 @@ const Footer = () => {
                 </div>
               </Link>
 
-              <p className="text-background/70 dark:text-card-foreground/70 text-sm leading-relaxed max-w-xs">
-                Revolucionando a agricultura moçambicana através da tecnologia acessível,
-                conectando pessoas e promovendo o crescimento sustentável.
+              <p className="text-background/70 dark:text-card-foreground/70 text-sm leading-relaxed max-w-sm">
+                Ligamos agricultores, donos de terreno e compradores em Moçambique:
+                marketplace de terra e produtos, gestão de produção e negociação — num só sítio.
               </p>
 
-              {/* Contact Info */}
-              <div className="space-y-3">
-                <a href="#" className="flex items-center gap-2.5 text-sm text-background/70 dark:text-card-foreground/70 hover:text-background dark:hover:text-card-foreground transition-colors group">
-                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                  Maputo, Moçambique
-                </a>
-                <a href="tel:+258000000000" className="flex items-center gap-2.5 text-sm text-background/70 dark:text-card-foreground/70 hover:text-background dark:hover:text-card-foreground transition-colors group">
-                  <Phone className="h-4 w-4 text-primary flex-shrink-0" />
-                  +258 84 000 0000
-                </a>
-                <a href="mailto:info@agroconect.mz" className="flex items-center gap-2.5 text-sm text-background/70 dark:text-card-foreground/70 hover:text-background dark:hover:text-card-foreground transition-colors">
-                  <Mail className="h-4 w-4 text-primary flex-shrink-0" />
-                  info@agroconect.mz
-                </a>
-              </div>
-
-              {/* Socials */}
-              <div className="flex gap-2">
-                {socialLinks.map(({ icon: Icon, label, href }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    aria-label={label}
-                    className="h-9 w-9 rounded-lg flex items-center justify-center bg-background/10 dark:bg-card-foreground/10 hover:bg-primary/20 text-background/70 dark:text-card-foreground/70 hover:text-primary transition-colors"
-                  >
-                    <Icon className="h-4 w-4" />
-                  </a>
-                ))}
+              <div className="flex items-center gap-2.5 text-sm text-background/70 dark:text-card-foreground/70">
+                <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                Maputo, Moçambique
               </div>
             </div>
 
-            {/* Nav Columns */}
+            {/* Navegação (só rotas reais) */}
             {footerNav.map(({ title, links }) => (
               <div key={title} className="space-y-5">
                 <h4 className="text-sm font-bold text-background dark:text-card-foreground tracking-widest uppercase font-['Poppins']">
@@ -139,10 +95,9 @@ const Footer = () => {
                     <li key={label}>
                       <Link
                         to={href}
-                        className="text-sm text-background/60 dark:text-card-foreground/60 hover:text-background dark:hover:text-card-foreground transition-colors inline-flex items-center gap-1 group"
+                        className="text-sm text-background/60 dark:text-card-foreground/60 hover:text-background dark:hover:text-card-foreground transition-colors"
                       >
                         {label}
-                        <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </Link>
                     </li>
                   ))}
@@ -152,22 +107,24 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
+        {/* Barra inferior */}
         <div className="border-t border-background/10 dark:border-card-foreground/10">
           <div className="container mx-auto px-4 lg:px-8 py-5">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-background/50 dark:text-card-foreground/50">
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1">
-                <span>© 2026 AgroConecta. Todos os direitos reservados.</span>
-                <div className="hidden md:block w-px h-3 bg-current opacity-30" />
-                <div className="flex gap-4">
-                  {["Privacidade", "Termos", "Cookies"].map(label => (
-                    <a key={label} href="#" className="hover:text-background dark:hover:text-card-foreground transition-colors">{label}</a>
-                  ))}
-                </div>
-              </div>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-background/50 dark:text-card-foreground/50">
+              <span>© 2026 AgroConecta · Moçambique</span>
               <div className="flex items-center gap-1.5">
                 <Leaf className="h-3.5 w-3.5 text-primary" />
-                <span>Feito com orgulho em Moçambique &bull; <a href="https://shelvenmiambo-portfolio.vercel.app/" target="_blank" rel="noopener noreferrer" className="hover:text-background dark:hover:text-card-foreground transition-colors underline underline-offset-2">Shelven Miambo</a></span>
+                <span>
+                  Feito em Moçambique por{" "}
+                  <a
+                    href="https://shelvenmiambo-portfolio.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-background dark:hover:text-card-foreground transition-colors underline underline-offset-2"
+                  >
+                    Shelven Miambo
+                  </a>
+                </span>
               </div>
             </div>
           </div>

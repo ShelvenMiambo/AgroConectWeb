@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   MapPin, Bot, Sprout, Handshake,
-  MessageSquare, BarChart3, Smartphone, Globe, Shield,
+  MessageSquare, Smartphone, Banknote, CloudSun, BadgeCheck,
   ArrowRight, Check, UserPlus, Search, Crown
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -47,11 +47,11 @@ const features = [
 ];
 
 const additionalFeatures = [
-  { icon: MessageSquare, title: "Chat Integrado", description: "Comunicação direta entre utilizadores com texto, voz e imagens." },
-  { icon: BarChart3,     title: "Relatórios IA",   description: "Dashboards com métricas e previsões para o seu negócio." },
-  { icon: Smartphone,   title: "Mobile-First",     description: "Interface otimizada para telemóveis, funciona offline." },
-  { icon: Globe,        title: "Multilíngue",      description: "Suporte para Português, Makua, Sena e Changana." },
-  { icon: Shield,       title: "100% Seguro",      description: "Dados protegidos e verificação de identidade." }
+  { icon: MessageSquare, title: "Chat nas negociações",      description: "Converse e feche acordos dentro da plataforma, com o histórico guardado." },
+  { icon: Banknote,      title: "Pagamentos M-Pesa / eMola", description: "Subscreva os planos por mobile money, direto do telemóvel." },
+  { icon: CloudSun,      title: "Clima e calendário",        description: "Previsão do tempo e calendário de tarefas por cultura." },
+  { icon: BadgeCheck,    title: "Perfis verificados",        description: "Selo de verificação e avaliações para negociar com confiança." },
+  { icon: Smartphone,    title: "Funciona no telemóvel",     description: "Instale no ecrã inicial e use como uma aplicação." }
 ];
 
 // Intersection observer hook
@@ -212,11 +212,11 @@ const FeaturesSection = () => {
               </Link>
             </div>
             <p className="text-sm text-muted-foreground flex items-center gap-3 flex-wrap justify-center">
-              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Sem cartão de crédito</span>
+              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Conta gratuita</span>
               <span className="text-muted-foreground/40">·</span>
-              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Configure em 2 minutos</span>
+              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Pagamentos M-Pesa / eMola</span>
               <span className="text-muted-foreground/40">·</span>
-              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Cancele quando quiser</span>
+              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Feito para Moçambique</span>
             </p>
           </div>
         </div>
