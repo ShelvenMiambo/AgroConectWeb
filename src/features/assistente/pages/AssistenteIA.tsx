@@ -105,7 +105,7 @@ const AssistenteIA = () => {
           <div className="inline-flex p-4 rounded-lg bg-primary shadow-md mb-5">
             <Bot className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-black font-['Poppins'] mb-3">
+          <h1 className="text-3xl md:text-4xl font-black font-['Fraunces'] mb-3">
             <span className="text-primary">Assistente IA</span> Agrícola
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto text-sm">
@@ -222,7 +222,7 @@ const AssistenteIA = () => {
           ].map(({ icon: Ic, title, desc, color, bg }, i) => (
             <div key={i} className="flex flex-col items-center text-center p-5 rounded-lg border border-border/60 bg-card hover:shadow-soft transition-smooth">
               <div className={`p-3 rounded-xl ${bg} mb-3`}><Ic className={`h-6 w-6 ${color}`} /></div>
-              <h3 className="font-bold text-sm mb-1 font-['Poppins']">{title}</h3>
+              <h3 className="font-bold text-sm mb-1 font-['Fraunces']">{title}</h3>
               <p className="text-xs text-muted-foreground">{desc}</p>
             </div>
           ))}

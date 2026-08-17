@@ -37,7 +37,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
           <Shield className="h-10 w-10 text-destructive" />
         </div>
         <div>
-          <h1 className="text-2xl font-black font-['Poppins'] mb-2">Acesso Negado</h1>
+          <h1 className="text-2xl font-black font-['Fraunces'] mb-2">Acesso Negado</h1>
           <p className="text-muted-foreground max-w-sm">
             Não tem permissões para aceder a esta área. Contacte o administrador do sistema.
           </p>

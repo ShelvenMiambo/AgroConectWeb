@@ -248,7 +248,7 @@ const Negociacoes = () => {
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
             <Lock className="h-10 w-10 text-primary" />
           </div>
-          <h2 className="text-3xl font-black font-['Poppins'] mb-4">Acesso Premium Necessário</h2>
+          <h2 className="text-3xl font-black font-['Fraunces'] mb-4">Acesso Premium Necessário</h2>
           <p className="text-muted-foreground max-w-md mx-auto mb-8">
             A gestão de negociações e o contacto direto com proprietários/agricultores são funcionalidades exclusivas para utilizadores premium. Atualize o seu plano para desbloquear as negociações reais.
           </p>
@@ -280,7 +280,7 @@ const Negociacoes = () => {
         {/* Page header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
           <div className="text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-black font-['Poppins'] mb-2">
+            <h1 className="text-3xl md:text-4xl font-black font-['Fraunces'] mb-2">
               Negociações <span className="text-primary">Seguras</span>
             </h1>
             <p className="text-muted-foreground text-sm max-w-lg">
@@ -307,7 +307,7 @@ const Negociacoes = () => {
             { label: 'Recusadas',value: stats.recusada,  color: 'text-red-500',      bg: 'bg-red-500/10' },
           ].map(s => (
             <div key={s.label} className={`rounded-lg border border-border/50 ${s.bg} p-4 text-center`}>
-              <p className={`text-2xl font-black font-['Poppins'] ${s.color}`}>{s.value}</p>
+              <p className={`text-2xl font-black font-['Fraunces'] ${s.color}`}>{s.value}</p>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{s.label}</p>
             </div>
           ))}

@@ -35,7 +35,7 @@ export default function AvaliarModal({ negociacaoId, autorUid, alvoUid, alvoNome
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-card w-full max-w-md rounded-lg shadow-strong border border-border/60 overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-border/60">
-          <h2 className="font-black text-lg font-['Poppins']">Avaliar {alvoNome}</h2>
+          <h2 className="font-black text-lg font-['Fraunces']">Avaliar {alvoNome}</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
         </div>
 
