@@ -18,9 +18,10 @@ interface ChatRequest {
 }
 
 const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconect[\w-]*\.(pages\.dev|app)$/;
-// 'gemini-flash-latest' aponta sempre para o modelo Flash recomendado e tem
-// quota no plano gratuito deste projeto (o 'gemini-2.0-flash' tinha limite 0).
-const MODEL = 'gemini-flash-latest';
+// Modelos a tentar por ordem. 'gemini-flash-latest' tem quota no plano gratuito
+// deste projeto, mas às vezes fica sobrecarregado (503 "high demand") — nesse
+// caso tenta-se o próximo. Cada modelo é tentado 2x com um pequeno backoff.
+const MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_TURNS = 10;
 
@@ -97,45 +98,63 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   // .trim() protege contra espaços/quebras de linha coladas ao valor da variável
   // no Cloudflare (causa um 400 com corpo vazio, por URL malformado).
   const apiKey = (env.VITE_GEMINI_API_KEY || '').trim();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: `${sanitizeText(systemPrompt || '')}\nIdioma: ${sanitizeText(langNote || 'pt')}` }],
-        },
-        contents: alternating,
-        generationConfig: { temperature: 0.5, maxOutputTokens: 2048, topP: 0.9 },
-      }),
-    });
+  const payload = JSON.stringify({
+    systemInstruction: {
+      parts: [{ text: `${sanitizeText(systemPrompt || '')}\nIdioma: ${sanitizeText(langNote || 'pt')}` }],
+    },
+    contents: alternating,
+    generationConfig: { temperature: 0.5, maxOutputTokens: 2048, topP: 0.9 },
+  });
 
-    if (!res.ok) {
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+  let lastStatus = 0;
+
+  // Tenta cada modelo até 2x. Sobrecarga (503/UNAVAILABLE) ou limite (429) →
+  // espera um pouco e tenta de novo / passa ao modelo seguinte. Erros de
+  // configuração (400/401/403) param logo (não adianta tentar outros).
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      let res: Response;
+      try {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+        });
+      } catch {
+        lastStatus = 0;
+        await sleep(600);
+        continue;
+      }
+
+      if (res.ok) {
+        const data = await res.json() as { candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[] };
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return new Response(JSON.stringify({ reply: text }), { status: 200, headers });
+        const reason = data?.candidates?.[0]?.finishReason;
+        if (reason === 'SAFETY') return new Response(JSON.stringify({ error: 'Resposta bloqueada por filtros de segurança. Reformule.' }), { status: 200, headers });
+        return new Response(JSON.stringify({ error: 'Sem resposta. Reformule a pergunta.' }), { status: 200, headers });
+      }
+
       const rawText = await res.text().catch(() => '');
       let errMsg = '';
       try { errMsg = (JSON.parse(rawText) as { error?: { message?: string } })?.error?.message || ''; } catch { errMsg = rawText.slice(0, 200); }
-      console.error('[ai-chat] Gemini error:', res.status, errMsg);
-      if (res.status === 429) return new Response(JSON.stringify({ error: 'Limite atingido. Aguarde 30s.' }), { status: 429, headers });
+      lastStatus = res.status;
+      console.error(`[ai-chat] ${model} error:`, res.status, errMsg);
+
+      // Erros de configuração: não vale a pena tentar outros modelos.
       if (res.status === 400) return new Response(JSON.stringify({ error: `Pedido inválido: ${errMsg}` }), { status: 400, headers });
       if (res.status === 401 || res.status === 403) return new Response(JSON.stringify({ error: `Chave inválida: ${errMsg}` }), { status: 403, headers });
-      return new Response(JSON.stringify({ error: `Serviço indisponível (${res.status}): ${errMsg}` }), { status: 502, headers });
+
+      // 429 / 500 / 503 / etc. → backoff antes de nova tentativa ou próximo modelo.
+      await sleep(attempt === 0 ? 900 : 300);
     }
-
-    const data = await res.json() as { candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[] };
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!text) {
-      const reason = data?.candidates?.[0]?.finishReason;
-      if (reason === 'SAFETY') {
-        return new Response(JSON.stringify({ error: 'Resposta bloqueada por filtros de segurança. Reformule.' }), { status: 200, headers });
-      }
-      return new Response(JSON.stringify({ error: 'Sem resposta. Reformule a pergunta.' }), { status: 200, headers });
-    }
-
-    return new Response(JSON.stringify({ reply: text }), { status: 200, headers });
-  } catch {
-    return new Response(JSON.stringify({ error: 'Erro de rede. Tente novamente.' }), { status: 502, headers });
   }
+
+  // Esgotou as tentativas em todos os modelos.
+  if (lastStatus === 429) {
+    return new Response(JSON.stringify({ error: 'A IA recebeu muitos pedidos. Aguarde uns segundos e tente de novo.' }), { status: 429, headers });
+  }
+  return new Response(JSON.stringify({ error: 'A IA está com muita procura neste momento. Tente novamente em alguns segundos.' }), { status: 503, headers });
 }
