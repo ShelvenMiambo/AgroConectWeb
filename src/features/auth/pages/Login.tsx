@@ -47,10 +47,10 @@ type UpdateData   = z.infer<typeof updateSchema>;
 type Mode         = 'login' | 'register' | 'reset' | 'update';
 
 const perks = [
-  'Marketplace de terras em todo Moçambique',
-  'Assistente IA agrícola em 4 idiomas',
-  'Gestão inteligente de produção',
-  'Contratos digitais seguros',
+  'Marketplace de terra e produtos',
+  'Assistente agrícola (também por voz)',
+  'Gestão de produção com calendário',
+  'Pagamentos por M-Pesa e eMola',
 ];
 
 const errorMap: Record<string, string> = {
@@ -158,7 +158,7 @@ const Login = () => {
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
+            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
               <span className="text-white font-black font-['Poppins']">AC</span>
             </div>
             <div>
@@ -171,15 +171,15 @@ const Login = () => {
         {/* Content */}
         <div className="relative z-10">
           <h2 className="text-4xl font-black text-white font-['Poppins'] mb-4 leading-tight">
-            Cultive o seu<br /><span className="text-gradient-gold">futuro digital</span>
+            Encontre terra.<br />Venda a colheita.
           </h2>
           <p className="text-white/75 text-base mb-8 leading-relaxed max-w-xs">
-            A plataforma que liga agricultores, donos de terra e compradores em Moçambique.
+            Marketplace de terra e produtos, negociação e gestão de produção — para Moçambique.
           </p>
           <ul className="space-y-3">
             {perks.map(perk => (
               <li key={perk} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                   <CheckCircle className="h-3 w-3 text-white" />
                 </div>
                 <span className="text-sm text-white/85">{perk}</span>
@@ -199,7 +199,7 @@ const Login = () => {
         {/* Mobile logo */}
         <div className="lg:hidden mb-8">
           <Link to="/" className="flex items-center gap-3 justify-center">
-            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-medium">
+            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-medium">
               <span className="text-white font-black font-['Poppins']">AC</span>
             </div>
             <span className="text-xl font-black text-primary font-['Poppins']">AgroConecta</span>
@@ -233,7 +233,7 @@ const Login = () => {
                   </div>
                   {resetForm.formState.errors.email && <p className="text-xs text-destructive">{resetForm.formState.errors.email.message}</p>}
                 </div>
-                <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-semibold shadow-medium hover:-translate-y-0.5 transition-spring">
+                <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white border-0 font-semibold shadow-medium transition-colors">
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Send className="h-4 w-4 mr-2" /> Enviar email de recuperação</>}
                 </Button>
               </form>
@@ -300,7 +300,7 @@ const Login = () => {
               {error && <div className="mb-5 p-4 rounded-xl bg-destructive/10 border border-destructive/25 text-destructive text-sm font-medium flex items-start gap-2"><AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />{error}</div>}
 
               {/* Google */}
-              <Button type="button" variant="outline" className="w-full h-12 rounded-xl font-semibold mb-5 gap-3 border-border/70 hover:bg-muted transition-spring" onClick={handleGoogle} disabled={loading}>
+              <Button type="button" variant="outline" className="w-full h-12 rounded-xl font-semibold mb-5 gap-3 border-border/70 hover:bg-muted transition-colors" onClick={handleGoogle} disabled={loading}>
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -348,7 +348,7 @@ const Login = () => {
                     Esqueceu a palavra-passe?
                   </button>
 
-                  <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-semibold text-base shadow-medium hover:-translate-y-0.5 hover:shadow-strong transition-spring">
+                  <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white border-0 font-semibold text-base shadow-medium transition-colors">
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Entrar <ArrowRight className="ml-2 h-4 w-4" /></>}
                   </Button>
                 </form>
@@ -446,9 +446,9 @@ const Login = () => {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Ao registar-se aceita os nossos <a href="#" className="text-primary hover:underline">Termos</a> e <a href="#" className="text-primary hover:underline">Política de Privacidade</a>.
+                    Ao registar-se aceita os nossos <span className="font-medium text-foreground/80">Termos</span> e <span className="font-medium text-foreground/80">Política de Privacidade</span>.
                   </p>
-                  <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-semibold text-base shadow-medium hover:-translate-y-0.5 hover:shadow-strong transition-spring">
+                  <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white border-0 font-semibold text-base shadow-medium transition-colors">
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Criar Conta <Leaf className="ml-2 h-4 w-4" /></>}
                   </Button>
                 </form>
