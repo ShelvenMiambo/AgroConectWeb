@@ -177,7 +177,7 @@ const Producao = () => {
                 {[
                     { label: 'Planos Ativos', value: stats.ativos, icon: Sprout, color: 'text-primary' },
                     { label: 'Área Total', value: `${stats.area.toLocaleString('pt-MZ')} m²`, icon: TrendingUp, color: 'text-accent' },
-                    { label: 'P. Colheita', value: stats.colheita === 'Nenhuma' ? '-' : new Date(stats.colheita).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short' }), icon: Calendar, color: 'text-success' },
+                    { label: 'Próx. colheita', value: stats.colheita === 'Nenhuma' ? '-' : new Date(stats.colheita).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short' }), icon: Calendar, color: 'text-success' },
                 ].map((s, i) => (
                     <Card key={i} className="border-border/50 shadow-soft">
                         <CardContent className="p-5">
@@ -203,7 +203,14 @@ const Producao = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {planos.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano registado.</p>
+                        <div className="text-center py-8">
+                            <Sprout className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
+                            <p className="font-semibold text-foreground">Ainda não tem cultivos</p>
+                            <p className="text-sm text-muted-foreground mt-1 mb-4 max-w-xs mx-auto">Crie o seu primeiro plano e receba o calendário de tarefas por cultura.</p>
+                            <Button onClick={() => setShowAddModal(true)} className="rounded-xl bg-primary text-white border-0 gap-2 font-semibold">
+                                <Plus className="h-4 w-4" /> Criar plano de cultivo
+                            </Button>
+                        </div>
                     ) : planos.slice(0, 4).map(p => (
                         <div key={p.id} className="p-4 rounded-lg border border-border/50 bg-muted/20 space-y-3">
                             <div className="flex justify-between items-start">
@@ -314,7 +321,7 @@ const Producao = () => {
                 {loading ? (
                     <div className="flex flex-col items-center py-20 gap-4">
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <p className="text-muted-foreground animate-pulse">A carregar gestão de dados...</p>
+                        <p className="text-muted-foreground animate-pulse">A carregar os seus cultivos…</p>
                     </div>
                 ) : (
                     <div className="fade-in">
