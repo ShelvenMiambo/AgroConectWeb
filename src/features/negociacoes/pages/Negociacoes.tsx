@@ -170,16 +170,19 @@ const NegociacaoCard = ({
 };
 
 /* ── Empty state ───────────────────────────────────── */
-const EmptyState = () => (
+const EmptyState = ({ onIr }: { onIr: () => void }) => (
   <div className="text-center py-20 col-span-full">
     <div className="w-20 h-20 rounded-lg bg-muted/50 border border-dashed border-border flex items-center justify-center mx-auto mb-5">
       <Inbox className="h-10 w-10 text-muted-foreground/40" />
     </div>
-    <h3 className="text-lg font-bold mb-2">Sem negociações ainda</h3>
-    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-      Navegue até ao <span className="text-primary font-semibold">Marketplace</span>, encontre uma propriedade
-      e clique em <em>"Contactar via Negociações"</em> para iniciar o processo.
+    <h3 className="text-lg font-bold mb-2">Ainda não tem negociações</h3>
+    <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-5">
+      No Marketplace, encontre um terreno ou produto e toque em{' '}
+      <span className="text-primary font-semibold">Contactar</span> para iniciar uma negociação por chat.
     </p>
+    <Button onClick={onIr} className="rounded-xl bg-primary text-white border-0 gap-2 font-semibold">
+      <MapPin className="h-4 w-4" /> Ir para o Marketplace
+    </Button>
   </div>
 );
 
@@ -284,7 +287,7 @@ const Negociacoes = () => {
               Negociações <span className="text-primary">Seguras</span>
             </h1>
             <p className="text-muted-foreground text-sm max-w-lg">
-              Gerencie as propostas de arrendamento entre agricultores e proprietários de terrenos.
+              Faça a gestão das suas propostas e converse com a outra parte por chat, num só lugar.
             </p>
           </div>
           <Button
@@ -341,7 +344,7 @@ const Negociacoes = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {filtered.length === 0 ? <EmptyState /> : filtered.map(n => (
+            {filtered.length === 0 ? <EmptyState onIr={() => navigate('/marketplace')} /> : filtered.map(n => (
               <NegociacaoCard
                 key={n.id}
                 n={n}
