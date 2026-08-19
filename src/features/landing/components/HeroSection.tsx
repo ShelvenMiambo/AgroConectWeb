@@ -37,9 +37,9 @@ const HeroSection = () => {
           </h1>
 
           <p className="text-base sm:text-lg text-white/85 leading-relaxed mb-8 sm:mb-10 max-w-lg">
-            O AgroConecta liga agricultores, donos de terreno e compradores em Moçambique,
-            com marketplace de terrenos e produtos, gestão de produção e negociação dentro
-            da plataforma.
+            Marketplace de terrenos e produtos, negociação por chat na própria plataforma
+            e pagamento dos planos por M‑Pesa ou eMola. Com assistente agrícola por voz e
+            calendário de cultivo — feito para Moçambique.
           </p>
 
           <div className="flex flex-wrap gap-3 sm:gap-4">

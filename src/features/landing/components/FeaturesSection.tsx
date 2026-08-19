@@ -10,9 +10,9 @@ import { Link } from "react-router-dom";
 const features = [
   {
     icon: MapPin,
-    title: "Marketplace de terrenos",
-    description: "Encontre e arrende terrenos agrícolas com características detalhadas, fotografias e localização.",
-    benefits: ["Filtros por zona e área", "Fotografias do terreno", "Contacto com o proprietário"],
+    title: "Marketplace de terra e produtos",
+    description: "Terrenos e produtos agrícolas com fotos, área, tipo de solo, acesso a água e localização.",
+    benefits: ["Pesquisa por zona e área", "Fotos em cada anúncio", "Telefones ocultos — negoceia pelo chat"],
     href: "/marketplace",
     image: "/images/marketplace-debulha.webp",
     alt: "Comunidade a debulhar milho, Moçambique",
@@ -20,8 +20,8 @@ const features = [
   {
     icon: Bot,
     title: "Assistente agrícola",
-    description: "Tire dúvidas sobre cultivo, pragas, clima e boas práticas, por escrito ou por voz.",
-    benefits: ["Respostas em português", "Pergunte por voz", "Conteúdo técnico"],
+    description: "Pergunte sobre cultivo, pragas, clima e boas práticas — por texto ou por voz, em português.",
+    benefits: ["Ex.: «Quando plantar milho?»", "Pergunte por voz", "Resposta em segundos"],
     href: "/assistente-ia",
     image: "/images/assistente-inspecao.webp",
     alt: "Agricultora a inspecionar a plantação de tomate",
@@ -29,8 +29,8 @@ const features = [
   {
     icon: Sprout,
     title: "Gestão de produção",
-    description: "Planeie e acompanhe os seus cultivos, com registo de ocorrências e alertas por fase.",
-    benefits: ["Planos de cultivo", "Alertas de rega e colheita", "Histórico por campanha"],
+    description: "Planeie os cultivos com calendário de tarefas por cultura, previsão do tempo local e registo de ocorrências.",
+    benefits: ["Calendário por cultura (milho, feijão, arroz…)", "Previsão do tempo da sua zona", "Vender a colheita no marketplace"],
     href: "/producao",
     image: "/images/producao-maos-milho.webp",
     alt: "Mãos com grãos de milho debulhado",
@@ -38,8 +38,8 @@ const features = [
   {
     icon: Handshake,
     title: "Negociações na plataforma",
-    description: "Proponha, converse e feche acordos sem sair do site, com o histórico todo guardado.",
-    benefits: ["Propostas de arrendamento", "Conversa integrada", "Histórico completo"],
+    description: "Proponha, converse e feche acordos dentro da plataforma; o proprietário aceita ou recusa. Fica tudo registado.",
+    benefits: ["Propostas e chat integrados", "Histórico guardado", "Avaliações após o negócio"],
     href: "/negociacoes",
     image: "/images/negociacoes-venda.webp",
     alt: "Pesagem e ensacamento de milho para venda",
@@ -92,7 +92,7 @@ const FeaturesSection = () => {
             O que pode fazer aqui
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Desde encontrar um terreno até fechar o negócio, sem sair da plataforma.
+            Encontrar terra, vender colheita, planear a produção e negociar — no mesmo sítio.
           </p>
         </div>
 
@@ -100,17 +100,17 @@ const FeaturesSection = () => {
         <div className={`mb-24 transition-all duration-700 ${featVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
           <div className="text-center mb-12">
             <h3 className="text-2xl md:text-3xl font-black font-['Poppins'] tracking-tight">Como funciona</h3>
-            <p className="text-muted-foreground mt-2">Quatro passos, do registo ao negócio fechado</p>
+            <p className="text-muted-foreground mt-2">Do registo ao negócio, em quatro passos</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
             {/* Connecting line for desktop */}
             <div className="hidden md:block absolute top-8 left-[12%] right-[12%] h-px bg-border z-0" />
-            
+
             {[
-              { icon: UserPlus, title: "1. Crie o seu Perfil", desc: "Selecione perfis combinados (ex: Agricultor + Dono de Terreno).", color: "text-primary", bg: "bg-primary/10" },
-              { icon: Search, title: "2. Publique ou Explore", desc: "Liste a sua propriedade, produtos ou explore o Marketplace.", color: "text-primary", bg: "bg-primary/10" },
-              { icon: Crown, title: "3. Adira ao Premium", desc: "Subscreva um pacote para desbloquear mensagens e contactos.", color: "text-warning", bg: "bg-warning/10" },
-              { icon: Handshake, title: "4. Feche Negócio", desc: "Negoceie de forma segura através da nossa plataforma dedicada.", color: "text-success", bg: "bg-success/10" }
+              { icon: UserPlus, title: "1. Crie a conta (grátis)", desc: "Escolha o seu perfil — pode combinar vários (ex.: Agricultor + Dono de terreno).", color: "text-primary", bg: "bg-primary/10" },
+              { icon: Search, title: "2. Explore ou publique", desc: "Pesquise terrenos e produtos por zona, ou publique o seu anúncio com fotos.", color: "text-primary", bg: "bg-primary/10" },
+              { icon: MessageSquare, title: "3. Negoceie no chat", desc: "Fale com a outra parte na plataforma — os telefones ficam ocultos nos anúncios.", color: "text-primary", bg: "bg-primary/10" },
+              { icon: Crown, title: "4. Feche com um plano", desc: "Subscreva por M-Pesa ou eMola para desbloquear contactos e negociações ilimitadas.", color: "text-warning", bg: "bg-warning/10" }
             ].map((step, idx) => (
               <div key={idx} className="relative z-10 flex flex-col items-center text-center">
                 <div className={`w-16 h-16 rounded-full ${step.bg} border-2 border-background flex items-center justify-center mb-5`}>

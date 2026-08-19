@@ -84,9 +84,9 @@ const OnboardingModal = () => {
               Bem-vindo à <span className="text-gradient-primary">AgroConecta</span>
             </h2>
             <p className="text-muted-foreground text-base leading-relaxed">
-              Olá, <span className="font-bold text-foreground">{userData?.name || currentUser?.displayName || 'Utilizador'}</span>!{' '}
-              Ficamos felizes por se juntar à maior rede agrícola de Moçambique.
-              Para começar, precisamos de configurar o seu perfil.
+              Olá, <span className="font-bold text-foreground">{userData?.name || currentUser?.displayName || 'Utilizador'}</span>.{' '}
+              Vamos configurar o seu perfil — leva menos de um minuto e é o que
+              liga a sua conta ao que precisa (terra, produtos ou compradores).
             </p>
             <Button
               onClick={() => setStep(2)}

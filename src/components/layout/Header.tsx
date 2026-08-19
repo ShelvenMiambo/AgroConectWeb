@@ -528,7 +528,7 @@ const Header = () => {
               </Link>
             )}
             <p className="text-xs text-center text-muted-foreground">
-              Feito com carinho em Moçambique
+              Plataforma agrícola · Moçambique
             </p>
           </div>
         </div>
@@ -550,10 +550,10 @@ const Header = () => {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-2xl font-black font-['Poppins'] mb-1">
-                  Olá, {userData?.name?.split(' ')[0] || 'Bem-vindo'}! 👋
+                  Olá, {userData?.name?.split(' ')[0] || 'bem-vindo'}
                 </h2>
                 <p className="text-muted-foreground text-sm">
-                  Aqui está tudo o que pode explorar no AgroConecta.
+                  As suas ferramentas, num só lugar.
                 </p>
               </div>
               <button
