@@ -778,8 +778,13 @@ const Perfil = () => {
                 {loadingData ? (
                   <div className="flex justify-center p-6"><Loader2 className="h-6 w-6 text-primary animate-spin" /></div>
                 ) : userProperties.length === 0 && userListings.length === 0 ? (
-                  <div className="text-center py-6 border-2 border-dashed border-border/60 rounded-xl">
-                    <p className="text-sm text-muted-foreground">Ainda não tem publicações ativas.</p>
+                  <div className="text-center py-8 border-2 border-dashed border-border/60 rounded-xl">
+                    <Package className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="font-semibold text-foreground">Ainda não tem publicações</p>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Publique um terreno ou produto no Marketplace.</p>
+                    <Button onClick={() => navigate('/marketplace')} className="rounded-xl bg-primary text-white border-0 gap-2 font-semibold">
+                      <MapPin className="h-4 w-4" /> Ir para o Marketplace
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
