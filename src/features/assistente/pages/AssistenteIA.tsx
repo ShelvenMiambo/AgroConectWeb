@@ -216,7 +216,7 @@ const AssistenteIA = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: Languages, title: '4 idiomas locais',        desc: 'Português, Makua, Sena e Changana',   color: 'text-primary', bg: 'bg-primary/8' },
+            { icon: Languages, title: 'Português + línguas locais', desc: 'Responde em português; tenta Makua, Sena e Changana.', color: 'text-primary', bg: 'bg-primary/8' },
             { icon: MapPin,    title: 'Focado em Moçambique',    desc: 'Culturas, clima e solos do país',     color: 'text-accent',  bg: 'bg-accent/8' },
             { icon: BookOpen,  title: 'Conselhos práticos',      desc: 'Recomendações que pode aplicar já',   color: 'text-success', bg: 'bg-success/8' },
           ].map(({ icon: Ic, title, desc, color, bg }, i) => (
