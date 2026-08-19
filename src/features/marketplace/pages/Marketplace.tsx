@@ -30,6 +30,24 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 type MarketTab = 'terrenos' | 'produtos';
 
+/** Estado vazio: distingue "sem resultados de pesquisa" de "ainda vazio → publique o primeiro". */
+const EmptyState = ({ icon: Icon, filtrado, vazioTitulo, vazioSub, accao }: {
+  icon: any; filtrado: boolean; vazioTitulo: string; vazioSub?: string; accao?: any;
+}) => (
+  <div className="text-center py-14 px-4 border-2 border-dashed border-border/60 rounded-lg">
+    <Icon className="h-9 w-9 text-muted-foreground/40 mx-auto mb-3" />
+    {filtrado ? (
+      <p className="text-muted-foreground">Sem resultados para a sua pesquisa.</p>
+    ) : (
+      <>
+        <p className="font-semibold text-foreground">{vazioTitulo}</p>
+        {vazioSub && <p className="text-sm text-muted-foreground mt-1 mb-4 max-w-xs mx-auto">{vazioSub}</p>}
+        {accao}
+      </>
+    )}
+  </div>
+);
+
 const listingMeta: Record<string, { label: string; icon: any; badge: string; color: string }> = {
   'terra-procura':   { label: 'Procura Terra',    icon: Sprout,     badge: 'Agricultor', color: 'text-green-600 bg-green-500/10 border-green-500/30' },
   'produto-oferta':  { label: 'Vende Produto',    icon: ShoppingBag, badge: 'Vendedor',   color: 'text-blue-600 bg-blue-500/10 border-blue-500/30' },
@@ -931,7 +949,7 @@ const Marketplace = () => {
                     <SelectItem value="nao">Sem Água</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input placeholder="Área mínima (ha)" value={filters.areaMin}
+                <Input placeholder="Área mínima (m²)" value={filters.areaMin}
                   onChange={e => setFilters(f => ({ ...f, areaMin: e.target.value }))}
                   type="number" className="h-11 rounded-xl" />
               </div>
@@ -1059,7 +1077,7 @@ const Marketplace = () => {
                                 </div>
                                 <p className="text-xs text-muted-foreground line-clamp-2 mb-4">{p.descricao}</p>
                                 <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
-                                  <span className="flex items-center gap-1"><Ruler className="h-3 w-3" />{p.area}ha</span>
+                                  <span className="flex items-center gap-1"><Ruler className="h-3 w-3" />{p.area?.toLocaleString('pt-MZ')} m²</span>
                                   <span className="flex items-center gap-1"><TreePine className="h-3 w-3" />{p.tipo_solo}</span>
                                   <span className={`flex items-center gap-1 ${p.disponibilidade_agua ? 'text-success' : ''}`}>
                                     <Droplets className="h-3 w-3" />{p.disponibilidade_agua ? 'Água' : 'Seco'}
@@ -1075,10 +1093,17 @@ const Marketplace = () => {
                         })}
                       </div>
                     ) : (
-                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-lg">
-                        <MapPin className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
-                        <p className="text-muted-foreground">Nenhuma terra encontrada.</p>
-                      </div>
+                      <EmptyState
+                        icon={MapPin}
+                        filtrado={!!searchTerm || activeFilters > 0}
+                        vazioTitulo="Ainda não há terrenos publicados"
+                        vazioSub="Seja o primeiro a anunciar terra na sua zona."
+                        accao={userTypes.includes('proprietario') && (
+                          <Button onClick={() => setShowPublish(true)} className="rounded-xl bg-primary text-white border-0 gap-2 font-semibold">
+                            <Plus className="h-4 w-4" /> Publicar a minha terra
+                          </Button>
+                        )}
+                      />
                     )}
                     {propsHasMore && !searchTerm && activeFilters === 0 && (
                       <div className="flex justify-center mt-6">
@@ -1139,10 +1164,17 @@ const Marketplace = () => {
                         })}
                       </div>
                     ) : (
-                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-lg">
-                        <ShoppingBag className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
-                        <p className="text-muted-foreground">Nenhum produto à venda no momento.</p>
-                      </div>
+                      <EmptyState
+                        icon={ShoppingBag}
+                        filtrado={!!searchTerm}
+                        vazioTitulo="Ainda não há produtos à venda"
+                        vazioSub="Seja o primeiro a vender a sua colheita aqui."
+                        accao={userTypes.includes('vendedor') && (
+                          <Button onClick={() => setShowListingModal('produto-oferta')} className="rounded-xl bg-primary text-white border-0 gap-2 font-semibold">
+                            <Plus className="h-4 w-4" /> Publicar produto para venda
+                          </Button>
+                        )}
+                      />
                     )}
                   </div>
 
@@ -1189,10 +1221,17 @@ const Marketplace = () => {
                         })}
                       </div>
                     ) : (
-                      <div className="text-center py-12 border-2 border-dashed border-border/60 rounded-lg">
-                        <Package className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
-                        <p className="text-muted-foreground">Nenhum pedido de compra no momento.</p>
-                      </div>
+                      <EmptyState
+                        icon={Package}
+                        filtrado={!!searchTerm}
+                        vazioTitulo="Ainda não há pedidos de compradores"
+                        vazioSub="Publique o que procura e deixe os vendedores chegarem a si."
+                        accao={userTypes.includes('comprador') && (
+                          <Button onClick={() => setShowListingModal('produto-procura')} className="rounded-xl bg-primary text-white border-0 gap-2 font-semibold">
+                            <Plus className="h-4 w-4" /> Publicar pedido de produto
+                          </Button>
+                        )}
+                      />
                     )}
                   </div>
 
