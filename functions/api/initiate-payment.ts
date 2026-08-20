@@ -26,8 +26,8 @@ interface Body { uid: string; plan: string; phone: string; }
 
 const DEBITOPAY_URL = 'https://gyqoaningqhurhvdugne.supabase.co/functions/v1/payment-orchestrator';
 const PLANOS = ['mensal', 'trimestral', 'anual'] as const;
-// M-Pesa exige mínimo 10 MT. Fallback usado só se a config não tiver preços.
-const PRECOS_FALLBACK: Record<string, number> = { mensal: 10, trimestral: 25, anual: 90 };
+// Fallback usado só se a config não tiver preços. (M-Pesa exige mínimo 10 MT.)
+const PRECOS_FALLBACK: Record<string, number> = { mensal: 100, trimestral: 270, anual: 1000 };
 
 // Aceita os domínios do AgroConecta (Cloudflare Pages / Firebase) e localhost.
 const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconect[\w-]*\.(pages\.dev|app|web\.app|firebaseapp\.com)$/;

@@ -12,12 +12,11 @@ export interface PlanConfig {
   isPromotionActive: boolean;
 }
 
-// Nota: o M-Pesa exige um valor mínimo de 10 MT por pagamento.
-// Estes são valores de arranque — ajustar os reais em Admin → preços dos planos.
+// Preços reais (fim dos testes). Ajustáveis em Admin → preços dos planos.
 export const DEFAULT_PRICES: PlanPrices = {
-  mensal: 10,
-  trimestral: 25,
-  anual: 90,
+  mensal: 100,
+  trimestral: 270,  // ~10% vs 3× mensal
+  anual: 1000,      // ~17% vs 12× mensal
 };
 
 const DEFAULT_CONFIG: PlanConfig = {

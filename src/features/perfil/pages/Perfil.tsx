@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   User, Mail, Phone, Leaf, Shield, CheckCircle,
   Crown, Handshake, MapPin, LogOut, Edit3, Save,
-  Loader2, Sprout, Star, Zap, X, AlertCircle, Calendar, Trash2, Package, Trash, Home, Camera
+  Loader2, Sprout, Star, Zap, X, AlertCircle, Calendar, Trash2, Package, Trash, Home, Camera, RotateCw
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getProperties, deleteProperty } from '@/features/marketplace/services/properties';
@@ -92,6 +92,76 @@ const userTypeLabel: Record<string, string> = {
   vendedor:     'Vendedor Agrícola',
   comprador:    'Comprador / Fornecedor',
   pendente:     'Perfil Incompleto',
+};
+
+/* ─── Cartão de plano estilo "cartão premium" (vira ao clicar) ───────── */
+const cardFinish: Record<string, { bg: string; ink: string; sub: string; chip: string; accent: string; leaf: string; ring?: boolean }> = {
+  mensal:     { bg: 'linear-gradient(135deg,#b98a41,#7c5220)', ink: '#f4efe4', sub: 'rgba(244,239,228,.65)', chip: '#e9cd85', accent: '#f4efe4', leaf: '#a8e0a0' },
+  trimestral: { bg: 'linear-gradient(135deg,#2e7d32,#164016)', ink: '#f4efe4', sub: 'rgba(244,239,228,.65)', chip: '#e9cd85', accent: '#f4efe4', leaf: '#a8e0a0', ring: true },
+  anual:      { bg: 'linear-gradient(135deg,#1e2b23,#0b140f)', ink: '#e7dcc2', sub: 'rgba(231,220,194,.55)', chip: '#d9b45b', accent: '#d9b45b', leaf: '#8fbf6a' },
+};
+
+const CardLogo = ({ color, leaf }: { color: string; leaf: string }) => (
+  <svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true">
+    <rect width="48" height="48" rx="13" fill="rgba(255,255,255,.14)" />
+    <path d="M11 33 H37" stroke={color} strokeWidth="2.6" strokeLinecap="round" />
+    <path d="M24 33 V18" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M23.5 21C23.5 14.5 19 11 12 11 12 17.5 17 21 23.5 21Z" fill={leaf} />
+    <path d="M25 19C25 12.5 30 9 37 9 37 15.5 32 19 25 19Z" fill={color} />
+  </svg>
+);
+
+const PlanoCard = ({ plan, isActive, onSubscribe }: { plan: typeof plans[0]; isActive: boolean; onSubscribe: () => void }) => {
+  const [flipped, setFlipped] = useState(false);
+  const f = cardFinish[plan.id] || cardFinish.mensal;
+  return (
+    <div className="[perspective:1200px] w-full cursor-pointer select-none" style={{ aspectRatio: '1.7 / 1' }}
+      onClick={() => setFlipped(v => !v)}>
+      <div className="relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d]"
+        style={{ transform: flipped ? 'rotateY(180deg)' : 'none' }}>
+
+        {/* Frente — cartão premium */}
+        <div className="absolute inset-0 rounded-2xl p-4 flex flex-col justify-between [backface-visibility:hidden] overflow-hidden"
+          style={{ background: f.bg, color: f.ink, boxShadow: f.ring ? '0 0 0 2px hsl(var(--primary))' : undefined }}>
+          {plan.badge && <span className="absolute top-3 right-3 text-[10px] font-bold rounded-md px-2 py-0.5" style={{ background: '#f4efe4', color: '#164016' }}>{plan.badge}</span>}
+          {isActive && <span className="absolute top-3 right-3 text-[10px] font-bold rounded-md px-2 py-0.5 bg-success text-white">Ativo</span>}
+          <div className="flex items-center gap-2">
+            <CardLogo color={f.accent} leaf={f.leaf} />
+            <span className="font-semibold tracking-wide text-sm">AgroConecta</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <svg width="34" height="26" viewBox="0 0 36 27" aria-hidden="true"><rect width="36" height="27" rx="5" fill={f.chip}/><rect x="4" y="4" width="28" height="19" rx="3" fill="none" stroke="#a9832c" strokeWidth="1"/><path d="M4 13.5h28M18 4v19" stroke="#a9832c" strokeWidth="1"/></svg>
+            <svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke={f.ink} strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M6 8a8 8 0 0 1 0 8"/><path d="M10 6a12 12 0 0 1 0 12"/><path d="M14 4.5a15 15 0 0 1 0 15"/></svg>
+            <span className="ml-auto text-[10px] flex items-center gap-1" style={{ color: f.sub }}><RotateCw className="h-3 w-3" /> ver benefícios</span>
+          </div>
+          <div className="font-mono tracking-[0.2em] text-sm">•••• •••• •••• {plan.price} MT</div>
+          <div className="flex items-end justify-between">
+            <div><div className="text-[9px] uppercase tracking-wider" style={{ color: f.sub }}>Plano</div><div className="text-sm font-semibold">{plan.label}</div></div>
+            <div className="text-right"><div className="text-[9px] uppercase tracking-wider" style={{ color: f.sub }}>{plan.period ? 'por ' + plan.period : ''}</div><div className="text-sm font-semibold">{plan.price} MT</div></div>
+          </div>
+        </div>
+
+        {/* Traseira — benefícios */}
+        <div className="absolute inset-0 rounded-2xl p-4 flex flex-col [backface-visibility:hidden] bg-card border border-border/60"
+          style={{ transform: 'rotateY(180deg)' }}>
+          <p className="font-black text-sm font-['Poppins'] mb-2">Plano {plan.label}</p>
+          <ul className="space-y-1 flex-1 overflow-hidden">
+            {plan.features.map(ft => (
+              <li key={ft} className="flex items-start gap-1.5 text-[11px] text-foreground/80"><CheckCircle className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />{ft}</li>
+            ))}
+          </ul>
+          {isActive ? (
+            <p className="text-center text-xs text-success font-semibold">Plano atual</p>
+          ) : (
+            <Button size="sm" className="w-full h-8 rounded-lg font-bold text-[11px] bg-primary hover:bg-primary/90 text-white border-0"
+              onClick={(e) => { e.stopPropagation(); onSubscribe(); }}>
+              Subscrever · {plan.price} MT
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 /* ─── Payment Modal (M-Pesa / eMola) ───────────────── */
@@ -693,66 +763,16 @@ const Perfil = () => {
                   return null;
                 })()}
 
-                {/* Planos em scroll horizontal no mobile, grid no desktop */}
-                <div className="flex gap-3 overflow-x-auto pt-4 pb-2 sm:pb-0 snap-x snap-mandatory sm:grid grid-cols-1 sm:grid-cols-2 sm:overflow-visible -mx-1 px-1">
-                  {activePlans.filter(p => p.id !== 'gratuito').map(plan => {
-                    const isActive = userData?.plan === plan.id;
-                    return (
-                      <div
-                        key={plan.id}
-                        className={`relative rounded-lg border-2 px-4 pb-4 pt-6 space-y-3 transition-all flex-shrink-0 w-[72vw] sm:w-auto snap-start ${
-                          isActive ? 'border-primary bg-primary/5 shadow-soft' : `${plan.border} ${plan.bg}`
-                        }`}
-                      >
-                        {plan.badge && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                            <Badge className="bg-primary text-white border-0 font-bold text-[10px] px-3 shadow-soft whitespace-nowrap">
-                              {plan.badge}
-                            </Badge>
-                          </div>
-                        )}
-                        {isActive && (
-                          <div className="absolute -top-3 right-3">
-                            <Badge className="bg-success text-white border-0 font-bold text-[10px] px-2">
-                              <CheckCircle className="h-3 w-3 mr-1" /> Ativo
-                            </Badge>
-                          </div>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-xl ${plan.bg} border ${plan.border} flex items-center justify-center`}>
-                              <plan.icon className={`h-4 w-4 ${plan.color}`} />
-                            </div>
-                            <p className="font-black text-sm font-['Poppins']">{plan.label}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className={`text-xl font-black font-['Poppins'] ${plan.color}`}>{plan.price}<span className="text-xs font-semibold text-muted-foreground"> MT</span></p>
-                            {plan.period && <p className="text-[10px] text-muted-foreground">por {plan.period}</p>}
-                          </div>
-                        </div>
-                        <ul className="space-y-1">
-                          {plan.features.map(f => (
-                            <li key={f} className="flex items-start gap-1.5 text-xs text-foreground/80">
-                              <CheckCircle className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
-                              {f}
-                            </li>
-                          ))}
-                        </ul>
-                        {plan.cta && !isActive && (
-                          <Button
-                            size="sm"
-                            className={`w-full h-9 rounded-xl font-bold text-xs border-0 ${plan.cta.classes}`}
-                            onClick={() => setSelectedPlan(plan)}
-                          >
-                            {plan.cta.label}
-                          </Button>
-                        )}
-                        {isActive && (
-                          <p className="text-center text-xs text-success font-semibold">Plano atual</p>
-                        )}
-                      </div>
-                    );
-                  })}
+                {/* Cartões de plano estilo "cartão premium" — clica para virar e ver os benefícios */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+                  {activePlans.filter(p => p.id !== 'gratuito').map(plan => (
+                    <PlanoCard
+                      key={plan.id}
+                      plan={plan}
+                      isActive={userData?.plan === plan.id}
+                      onSubscribe={() => setSelectedPlan(plan)}
+                    />
+                  ))}
                 </div>
 
                 {/* Plano gratuito — compacto no fundo */}
