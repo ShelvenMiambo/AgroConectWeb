@@ -64,8 +64,15 @@ const Footer = () => {
             {/* Marca */}
             <div className="lg:col-span-2 space-y-6">
               <Link to="/" className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-md bg-primary flex items-center justify-center">
-                  <span className="text-white font-black font-['Poppins']">AC</span>
+                <div className="h-10 w-10 flex-shrink-0">
+                  <svg viewBox="0 0 48 48" className="h-full w-full" aria-hidden="true">
+                    <rect width="48" height="48" rx="13" fill="#1e5c1e" />
+                    <path d="M11 33 H37" stroke="#ffffff" strokeWidth="2.6" strokeLinecap="round" />
+                    <path d="M15 39 H33" stroke="#7cc47c" strokeWidth="2.6" strokeLinecap="round" />
+                    <path d="M24 33 V18" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" />
+                    <path d="M23.5 21 C23.5 14.5 19 11 12 11 C12 17.5 17 21 23.5 21 Z" fill="#7cc47c" />
+                    <path d="M25 19 C25 12.5 30 9 37 9 C37 15.5 32 19 25 19 Z" fill="#ffffff" />
+                  </svg>
                 </div>
                 <div>
                   <div className="text-lg font-black text-background dark:text-card-foreground font-['Poppins']">AgroConecta</div>

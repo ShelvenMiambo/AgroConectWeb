@@ -199,15 +199,6 @@ const Negociacoes = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 lg:px-8 py-10 max-w-5xl">
-        {config.isPromotionActive && userData?.plan === 'gratuito' && (
-          <div className="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 p-4 rounded-xl flex items-center gap-3 mb-8 animate-pulse shadow-soft">
-            <Crown className="h-6 w-6 text-amber-500 flex-shrink-0 animate-bounce" />
-            <div className="text-xs">
-              <p className="font-bold">Acesso Premium Ativo (Lançamento Gratuito - 5 Meses!)</p>
-              <p className="opacity-95">Todas as propostas, negociações e ferramentas de contacto com proprietários estão 100% gratuitas e desbloqueadas.</p>
-            </div>
-          </div>
-        )}
 
         {/* Page header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
