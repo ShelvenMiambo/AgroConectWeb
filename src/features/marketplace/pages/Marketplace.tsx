@@ -37,7 +37,7 @@ const EmptyState = ({ icon: Icon, filtrado, vazioTitulo, vazioSub, accao }: {
   <div className="text-center py-14 px-4 border-2 border-dashed border-border/60 rounded-lg">
     <Icon className="h-9 w-9 text-muted-foreground/40 mx-auto mb-3" />
     {filtrado ? (
-      <p className="text-muted-foreground">Sem resultados para a sua pesquisa.</p>
+      <p className="text-muted-foreground">Sem resultados.</p>
     ) : (
       <>
         <p className="font-semibold text-foreground">{vazioTitulo}</p>
@@ -537,6 +537,7 @@ const Marketplace = () => {
   const [saved, setSaved]             = useState<string[]>([]);
   const [filters, setFilters] = useState({ tipoSolo: '', temAgua: '', areaMin: '' });
   const [showFilters, setShowFilters] = useState(false);
+  const [soFavoritos, setSoFavoritos] = useState(false); // mostrar só os terrenos guardados
   const [showPublish, setShowPublish] = useState(false);
   const [showListingModal, setShowListingModal] = useState<ListingType | null>(null);
   const [listingInitial, setListingInitial] = useState<Record<string, string> | undefined>(undefined);
@@ -615,7 +616,8 @@ const Marketplace = () => {
     const matchSolo = !filters.tipoSolo || p.tipo_solo === filters.tipoSolo;
     const matchAgua = !filters.temAgua || (filters.temAgua === 'sim') === p.disponibilidade_agua;
     const matchArea = !filters.areaMin || p.area >= Number(filters.areaMin);
-    return matchSearch && matchSolo && matchAgua && matchArea;
+    const matchFav = !soFavoritos || (!!p.id && saved.includes(p.id));
+    return matchSearch && matchSolo && matchAgua && matchArea && matchFav;
   });
 
   const filteredListings = listings.filter(l => {
@@ -929,6 +931,17 @@ const Marketplace = () => {
                 <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
               </Button>
             )}
+
+            {activeTab === 'terrenos' && (
+              <Button variant="outline"
+                aria-pressed={soFavoritos}
+                className={`h-11 px-4 rounded-xl gap-2 flex-shrink-0 bg-card ${soFavoritos ? 'border-destructive text-destructive bg-destructive/5' : ''}`}
+                onClick={() => setSoFavoritos(v => !v)}>
+                <Heart className={`h-4 w-4 ${soFavoritos ? 'fill-current' : ''}`} />
+                <span className="hidden sm:inline">Guardados</span>
+                {saved.length > 0 && <Badge className="h-5 min-w-[1.25rem] px-1 text-[10px] bg-destructive text-white border-0">{saved.length}</Badge>}
+              </Button>
+            )}
           </div>
 
           {showFilters && activeTab === 'terrenos' && (
@@ -1094,8 +1107,8 @@ const Marketplace = () => {
                       </div>
                     ) : (
                       <EmptyState
-                        icon={MapPin}
-                        filtrado={!!searchTerm || activeFilters > 0}
+                        icon={soFavoritos ? Heart : MapPin}
+                        filtrado={!!searchTerm || activeFilters > 0 || soFavoritos}
                         vazioTitulo="Ainda não há terrenos publicados"
                         vazioSub="Seja o primeiro a anunciar terra na sua zona."
                         accao={userTypes.includes('proprietario') && (
