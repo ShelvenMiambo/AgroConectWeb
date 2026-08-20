@@ -14,7 +14,7 @@ const mapProperty = (r: any): Property => ({
   id: r.id, nome: r.nome, area: Number(r.area), localizacao: r.localizacao, tipo_solo: r.tipo_solo,
   disponibilidade_agua: r.disponibilidade_agua, preco: Number(r.preco), descricao: r.descricao,
   donoUid: r.dono_uid, donoNome: r.dono_nome, verificado: r.verificado,
-  culturas: r.culturas ?? [], imageUrls: r.image_urls ?? [], createdAt: r.created_at,
+  culturas: r.culturas ?? [], imageUrls: r.image_urls ?? [], documentoUrl: r.documento_url ?? undefined, createdAt: r.created_at,
 });
 const mapNeg = (r: any): Negociacao => ({
   id: r.id, propertyId: r.property_id, propertyNome: r.property_nome,

@@ -33,6 +33,7 @@ export interface Property {
   verificado: boolean;
   culturas: string[];
   imageUrls?: string[];   // Firebase Storage download URLs
+  documentoUrl?: string;  // caminho (privado) do documento de posse (DUAT/BI); só admin/dono acedem
   createdAt?: any;
 }
 

@@ -16,11 +16,12 @@ import {
   adminGetPlanPrices, adminSetPlanPrices, adminGetAppSettings, adminSetAppSettings,
   type PlanPriceConfig,
 } from '@/features/admin/services/adminService';
+import { getDocumentoUrl } from '@/lib/services/storage';
 import {
   Shield, Users, Crown, User, Activity, MapPin, Handshake, Sprout, Home,
   LogOut, RefreshCw, UserCheck, UserX, Search, CheckCircle, XCircle,
   Clock, Loader2, TrendingUp, DollarSign, Trash2, AlertTriangle, Settings,
-  Tag, ToggleLeft, ToggleRight, Save, Info
+  Tag, ToggleLeft, ToggleRight, Save, Info, FileText
 } from 'lucide-react';
 
 const fmt = (ts: any) => {
@@ -381,16 +382,25 @@ export default function Admin() {
                       <tr key={p.id} className="hover:bg-muted/20">
                         <Td><p className="font-semibold max-w-[140px] truncate">{p.nome}</p><p className="text-[10px] text-muted-foreground capitalize">{p.tipo_solo}</p></Td>
                         <Td cls="text-muted-foreground">{p.localizacao}</Td>
-                        <Td>{p.area} ha</Td>
+                        <Td>{p.area?.toLocaleString('pt-MZ')} m²</Td>
                         <Td>{p.preco.toLocaleString()} MT</Td>
                         <Td>{p.donoNome}</Td>
                         <Td cls="text-muted-foreground">{fmt(p.createdAt)}</Td>
                         <Td>
-                          <Button size="sm" variant="outline" className={`h-7 rounded-lg text-[10px] font-bold ${p.verificado ? 'border-green-500/30 text-green-600 bg-green-500/5' : 'border-yellow-500/30 text-yellow-600 bg-yellow-500/5'}`}
-                            disabled={updating === p.id}
-                            onClick={async () => { setUpdating(p.id!); await adminVerifyProperty(p.id!, !p.verificado); setProperties(prev => prev.map(x => x.id === p.id ? { ...x, verificado: !p.verificado } : x)); setUpdating(null); }}>
-                            {updating === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : p.verificado ? <><CheckCircle className="h-3 w-3 mr-1 inline" />Verificado</> : <><Clock className="h-3 w-3 mr-1 inline" />Verificar</>}
-                          </Button>
+                          <div className="flex items-center gap-1.5">
+                            {p.documentoUrl && (
+                              <Button size="sm" variant="outline" className="h-7 rounded-lg text-[10px] font-bold border-primary/30 text-primary bg-primary/5"
+                                title="Ver documento de posse (privado)"
+                                onClick={async () => { const url = await getDocumentoUrl(p.documentoUrl!); if (url) window.open(url, '_blank', 'noopener,noreferrer'); else alert('Não foi possível abrir o documento.'); }}>
+                                <FileText className="h-3 w-3 mr-1 inline" />Documento
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline" className={`h-7 rounded-lg text-[10px] font-bold ${p.verificado ? 'border-green-500/30 text-green-600 bg-green-500/5' : 'border-yellow-500/30 text-yellow-600 bg-yellow-500/5'}`}
+                              disabled={updating === p.id}
+                              onClick={async () => { setUpdating(p.id!); await adminVerifyProperty(p.id!, !p.verificado); setProperties(prev => prev.map(x => x.id === p.id ? { ...x, verificado: !p.verificado } : x)); setUpdating(null); }}>
+                              {updating === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : p.verificado ? <><CheckCircle className="h-3 w-3 mr-1 inline" />Verificado</> : <><Clock className="h-3 w-3 mr-1 inline" />Verificar</>}
+                            </Button>
+                          </div>
                         </Td>
                       </tr>
                     ))}
@@ -436,7 +446,7 @@ export default function Admin() {
                       <tr key={p.id} className="hover:bg-muted/20">
                         <Td><p className="font-semibold">{p.cultura}</p></Td>
                         <Td cls="text-muted-foreground">{p.propriedade}</Td>
-                        <Td>{p.area} ha</Td>
+                        <Td>{p.area?.toLocaleString('pt-MZ')} m²</Td>
                         <Td cls="text-muted-foreground">{p.dataInicio}</Td>
                         <Td cls="text-muted-foreground">{p.dataColheita}</Td>
                         <Td>

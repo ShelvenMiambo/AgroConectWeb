@@ -13,7 +13,7 @@ import {
   ArrowLeft, Droplets, Ruler, TreePine, SlidersHorizontal,
   CheckCircle, X, ChevronDown, Plus, Loader2, Leaf,
   ImagePlus, Trash2, ChevronLeft, ChevronRight, Send,
-  Home, Sprout, ShoppingBag, Package, Tag, Crown
+  Home, Sprout, ShoppingBag, Package, Tag, Crown, FileText
 } from "lucide-react";
 import { hasPhoneNumber } from "@/lib/utils";
 import { usePlanConfig } from "@/hooks/usePlanConfig";
@@ -173,6 +173,8 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   const [images, setImages]     = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef            = useRef<HTMLInputElement>(null);
+  const [docFile, setDocFile]   = useState<File | null>(null);
+  const docInputRef             = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     nome: '', largura: '', comprimento: '', localizacao: '', tipo_solo: 'franco' as Property['tipo_solo'],
     disponibilidade_agua: false, preco: '', descricao: '', culturas: '',
@@ -219,8 +221,8 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
         verificado: false,
         culturas: form.culturas.split(',').map(c => c.trim()).filter(Boolean),
         imageUrls: [],
-      }, images.length > 0 ? images : undefined);
-      onSaved(); 
+      }, images.length > 0 ? images : undefined, docFile || undefined);
+      onSaved();
       onClose();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e: any) {
@@ -337,6 +339,32 @@ const PublishModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () =
               <p className="text-xs text-muted-foreground">Marque se há acesso a água</p>
             </div>
           </label>
+
+          {/* Documento de posse — opcional e privado */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-1.5">
+              <FileText className="h-4 w-4 text-primary" /> Documento de posse <span className="text-muted-foreground font-normal">(opcional)</span>
+            </label>
+            {docFile ? (
+              <div className="flex items-center gap-2 p-3 rounded-xl border border-primary/30 bg-primary/5">
+                <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                <span className="text-sm truncate flex-1">{docFile.name}</span>
+                <button type="button" onClick={() => setDocFile(null)} className="p-1 rounded hover:bg-muted"><X className="h-4 w-4" /></button>
+              </div>
+            ) : (
+              <>
+                <input ref={docInputRef} type="file" accept="image/*,application/pdf" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) { if (f.size > 10 * 1024 * 1024) { setError('O documento não pode passar de 10 MB.'); return; } setDocFile(f); } }} />
+                <button type="button" onClick={() => docInputRef.current?.click()}
+                  className="w-full border-2 border-dashed border-border/60 rounded-xl p-4 text-center text-sm text-muted-foreground hover:border-primary/40 hover:bg-muted/50 transition-all flex items-center justify-center gap-2">
+                  <FileText className="h-4 w-4" /> Anexar DUAT ou BI (imagem ou PDF)
+                </button>
+              </>
+            )}
+            <p className="text-[11px] text-muted-foreground leading-relaxed flex items-start gap-1.5">
+              <Lock className="h-3 w-3 flex-shrink-0 mt-0.5" /> Privado — só a equipa de verificação o vê, nunca outros utilizadores. Ajuda a obter o selo “Verificado”.
+            </p>
+          </div>
 
           <Button type="submit"
             disabled={loading || !form.nome || !form.largura || !form.comprimento || !form.localizacao || !form.preco || !form.descricao}
@@ -772,6 +800,7 @@ const Marketplace = () => {
                 <div className="flex items-center gap-2 text-muted-foreground mb-4">
                   <MapPin className="h-4 w-4" /><span>{p.localizacao}</span>
                   {p.verificado && <Badge className="bg-success text-white border-0 gap-1 ml-2"><CheckCircle className="h-3 w-3" /> Verificado</Badge>}
+                  {p.documentoUrl && <Badge variant="outline" className="border-primary/40 text-primary gap-1 ml-1"><FileText className="h-3 w-3" /> Com documento</Badge>}
                 </div>
 
                 {userData?.plan === 'gratuito' && !config.isPromotionActive && !isOwner ? (
@@ -1129,6 +1158,11 @@ const Marketplace = () => {
                                 {p.verificado && (
                                   <Badge className="absolute bottom-3 left-3 bg-success/90 text-white border-0 text-xs gap-1">
                                     <CheckCircle className="h-3 w-3" /> Verificado
+                                  </Badge>
+                                )}
+                                {p.documentoUrl && (
+                                  <Badge className="absolute top-3 left-3 bg-primary/90 text-white border-0 text-xs gap-1">
+                                    <FileText className="h-3 w-3" /> Documento
                                   </Badge>
                                 )}
                                 {hasImage && (p.imageUrls!.length > 1) && (

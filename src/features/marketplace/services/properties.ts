@@ -1,7 +1,7 @@
 // Serviço de propriedades (terrenos) — Supabase.
 import { supabase } from '@/lib/supabase';
 import type { Property } from '@/types';
-import { uploadPropertyImages, deleteImagesFromStorage } from '@/lib/services/storage';
+import { uploadPropertyImages, deleteImagesFromStorage, uploadDocumento, deleteDocumento } from '@/lib/services/storage';
 import { scrubPhoneNumbers } from '@/lib/services/sanitize';
 
 /** Cursor de paginação (created_at do último item). */
@@ -24,6 +24,7 @@ function mapProperty(r: any): Property {
     verificado: r.verificado,
     culturas: r.culturas ?? [],
     imageUrls: r.image_urls ?? [],
+    documentoUrl: r.documento_url ?? undefined,
     createdAt: r.created_at,
   };
 }
@@ -46,7 +47,8 @@ export const getProperties = async (): Promise<Property[]> => {
 
 export const addProperty = async (
   data: Omit<Property, 'id' | 'createdAt'>,
-  imageFiles?: File[]
+  imageFiles?: File[],
+  documentoFile?: File
 ): Promise<string> => {
   const row = {
     nome: data.nome,
@@ -70,11 +72,16 @@ export const addProperty = async (
     const urls = await uploadPropertyImages(id, imageFiles);
     await supabase.from('properties').update({ image_urls: urls }).eq('id', id);
   }
+  if (documentoFile) {
+    const path = await uploadDocumento(data.donoUid, id, documentoFile);
+    await supabase.from('properties').update({ documento_url: path }).eq('id', id);
+  }
   return id;
 };
 
-export const deleteProperty = async (id: string, imageUrls: string[] = []): Promise<void> => {
+export const deleteProperty = async (id: string, imageUrls: string[] = [], documentoPath?: string | null): Promise<void> => {
   const { error } = await supabase.from('properties').delete().eq('id', id);
   if (error) throw error;
   if (imageUrls.length > 0) await deleteImagesFromStorage(imageUrls);
+  await deleteDocumento(documentoPath);
 };
