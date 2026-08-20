@@ -20,6 +20,7 @@ interface Env {
   SUPABASE_URL?: string;
   VITE_SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  MODO_TESTE?: string;  // 'off' = cobra o preço real; qualquer outro valor / vazio = fase de testes
 }
 
 interface Body { uid: string; plan: string; phone: string; }
@@ -28,6 +29,9 @@ const DEBITOPAY_URL = 'https://gyqoaningqhurhvdugne.supabase.co/functions/v1/pay
 const PLANOS = ['mensal', 'trimestral', 'anual'] as const;
 // Fallback usado só se a config não tiver preços. (M-Pesa exige mínimo 10 MT.)
 const PRECOS_FALLBACK: Record<string, number> = { mensal: 100, trimestral: 270, anual: 1000 };
+// Fase de testes: cobra só este valor (o preço MOSTRADO ao utilizador mantém-se o real).
+// Para LANÇAR e cobrar o valor real: pôr a env var MODO_TESTE = 'off' no Cloudflare.
+const VALOR_TESTE_MT = 10;
 
 // Aceita os domínios do AgroConecta (Cloudflare Pages / Firebase) e localhost.
 const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([\w-]+\.)?agroconect[\w-]*\.(pages\.dev|app|web\.app|firebaseapp\.com)$/;
@@ -110,7 +114,8 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     return new Response(JSON.stringify({ success: false, error: 'Campos obrigatórios em falta.' }), { status: 400, headers });
   }
 
-  const amount = await precoDoPlano(plan, env);
+  // Fase de testes: cobra só VALOR_TESTE_MT; ao lançar (env MODO_TESTE='off') cobra o preço real.
+  const amount = env.MODO_TESTE === 'off' ? await precoDoPlano(plan, env) : VALOR_TESTE_MT;
 
   let dp: any;
   try {
