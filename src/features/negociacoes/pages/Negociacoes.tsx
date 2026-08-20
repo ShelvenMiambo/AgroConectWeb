@@ -26,6 +26,16 @@ const statusConfig = {
 };
 
 /* ── Card ───────────────────────────────────────────── */
+// Formata a data (aceita string ISO do Supabase ou Timestamp antigo do Firestore).
+const fmtData = (v: any): string => {
+  if (!v) return '';
+  try {
+    const d = v?.toDate ? v.toDate() : new Date(v);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short' });
+  } catch { return ''; }
+};
+
 const NegociacaoCard = ({
   n, currentUid, onAccept, onReject, updating, onOpenChat, jaAvaliou, onAvaliar
 }: {
@@ -37,135 +47,54 @@ const NegociacaoCard = ({
   onAvaliar: (n: Negociacao) => void;
 }) => {
   const cfg   = statusConfig[n.status];
-  const Icon  = cfg.icon;
   const isOwner  = n.proprietarioUid === currentUid;
   const isPending = n.status === 'pendente';
+  const outroNome = isOwner ? n.arrendatarioNome : n.proprietarioNome;
+  const ultima = (n.mensagens && n.mensagens.length > 0)
+    ? n.mensagens[n.mensagens.length - 1].text
+    : n.mensagem;
 
   return (
-    <Card className="border-border/50 shadow-soft rounded-lg overflow-hidden hover:shadow-medium transition-colors">
-      <CardContent className="p-0">
-        {/* Header bar */}
-        <div className="flex items-center justify-between px-5 py-3 bg-muted/30 border-b border-border/50">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
-            <span className="font-bold text-sm">{n.propertyNome}</span>
-          </div>
-          <Badge variant="outline" className={`text-[11px] font-bold px-3 rounded-full ${cfg.color}`}>
-            <Icon className="h-3 w-3 mr-1" />{cfg.label}
-          </Badge>
+    <div className="hover:bg-muted/30 transition-colors">
+      {/* Linha principal (toca para abrir o chat) */}
+      <button onClick={() => onOpenChat(n)} className="w-full flex items-center gap-3 px-3 sm:px-4 py-3 text-left">
+        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-black text-base flex-shrink-0">
+          {(outroNome || '?').charAt(0).toUpperCase()}
         </div>
-
-        {/* Body */}
-        <div className="p-5 space-y-4">
-          {/* Parties */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-0.5">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Arrendatário</p>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-black">
-                  {n.arrendatarioNome.charAt(0)}
-                </div>
-                <p className="text-sm font-semibold">{n.arrendatarioNome}</p>
-              </div>
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Proprietário</p>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-accent text-[10px] font-black">
-                  {n.proprietarioNome.charAt(0)}
-                </div>
-                <p className="text-sm font-semibold">{n.proprietarioNome}</p>
-              </div>
-            </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-bold text-sm truncate">{outroNome}</p>
+            <span className="text-[11px] text-muted-foreground flex-shrink-0">{fmtData(n.createdAt)}</span>
           </div>
-
-          {/* Message */}
-          <div className="bg-muted/40 rounded-xl p-3.5">
-            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-1">Última Mensagem</p>
-            <p className="text-sm leading-relaxed line-clamp-2">
-              {n.mensagens && n.mensagens.length > 0 
-                ? n.mensagens[n.mensagens.length - 1].text 
-                : n.mensagem}
-            </p>
+          <div className="flex items-center justify-between gap-2 mt-0.5">
+            <p className="text-sm text-muted-foreground truncate">{ultima || 'Sem mensagens ainda'}</p>
+            <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${cfg.color}`}>{cfg.label}</span>
           </div>
-
-          {/* Date */}
-          {n.createdAt && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5" />
-              {n.createdAt?.toDate
-                ? n.createdAt.toDate().toLocaleDateString('pt-MZ', { day: '2-digit', month: 'long', year: 'numeric' })
-                : 'Data desconhecida'}
-            </div>
-          )}
-
-          {/* Actions: only owner can accept/reject pending requests */}
-          <div className="flex gap-3 pt-1 flex-wrap">
-            <Button
-              className="flex-1 min-w-[120px] h-10 rounded-xl bg-primary text-white border-0 font-bold gap-2 shadow-soft transition-colors"
-              onClick={() => onOpenChat(n)}
-            >
-              <MessageSquare className="h-4 w-4" />
-              Conversar
-            </Button>
-            {isOwner && isPending && (
-              <>
-                <Button
-                  className="flex-1 min-w-[100px] h-10 rounded-xl bg-green-600 hover:bg-green-700 text-white border-0 font-bold gap-2 shadow-soft"
-                  disabled={updating === n.id}
-                  onClick={() => onAccept(n.id!)}
-                >
-                  {updating === n.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                  Aceitar
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 min-w-[100px] h-10 rounded-xl border-destructive/30 text-destructive hover:bg-destructive/5 font-bold gap-2"
-                  disabled={updating === n.id}
-                  onClick={() => onReject(n.id!)}
-                >
-                  <XCircle className="h-4 w-4" />
-                  Recusar
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Avaliar a outra parte, quando o negócio foi aceite */}
-          {n.status === 'aceite' && (
-            jaAvaliou ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                Já avaliou {isOwner ? n.arrendatarioNome : n.proprietarioNome}.
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full h-10 rounded-xl border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-bold gap-2"
-                onClick={() => onAvaliar(n)}
-              >
-                <Star className="h-4 w-4" />
-                Avaliar {isOwner ? n.arrendatarioNome : n.proprietarioNome}
-              </Button>
-            )
-          )}
-
-          {/* Renter label when accepted */}
-          {!isOwner && n.status === 'aceite' && (
-            <div className="flex items-center gap-2 text-sm text-success font-semibold">
-              <CheckCircle className="h-4 w-4" />
-              Proposta aceite. Contacte o proprietário para assinar o contrato.
-            </div>
-          )}
-          {!isOwner && n.status === 'recusada' && (
-            <div className="flex items-center gap-2 text-sm text-destructive font-semibold">
-              <XCircle className="h-4 w-4" />
-              Proposta recusada pelo proprietário.
-            </div>
-          )}
+          <p className="text-[11px] text-muted-foreground/70 truncate mt-0.5 flex items-center gap-1">
+            <MapPin className="h-3 w-3 flex-shrink-0" /> {n.propertyNome}
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      </button>
+
+      {/* Ações que precisam de estar à vista */}
+      {isOwner && isPending && (
+        <div className="flex gap-2 pb-3 pl-[3.75rem] pr-3 sm:pr-4">
+          <Button size="sm" className="h-8 rounded-lg bg-green-600 hover:bg-green-700 text-white border-0 font-bold gap-1.5 text-xs" disabled={updating === n.id} onClick={() => onAccept(n.id!)}>
+            {updating === n.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />} Aceitar
+          </Button>
+          <Button size="sm" variant="outline" className="h-8 rounded-lg border-destructive/30 text-destructive hover:bg-destructive/5 font-bold gap-1.5 text-xs" disabled={updating === n.id} onClick={() => onReject(n.id!)}>
+            <XCircle className="h-3.5 w-3.5" /> Recusar
+          </Button>
+        </div>
+      )}
+      {n.status === 'aceite' && !jaAvaliou && (
+        <div className="pb-3 pl-[3.75rem] pr-3 sm:pr-4">
+          <Button size="sm" variant="outline" className="h-8 rounded-lg border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-bold gap-1.5 text-xs" onClick={() => onAvaliar(n)}>
+            <Star className="h-3.5 w-3.5" /> Avaliar {outroNome}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -301,21 +230,6 @@ const Negociacoes = () => {
           </Button>
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          {[
-            { label: 'Total',    value: stats.total,    color: 'text-foreground',   bg: 'bg-muted/50' },
-            { label: 'Pendentes', value: stats.pendente, color: 'text-yellow-600',   bg: 'bg-yellow-500/10' },
-            { label: 'Aceites',  value: stats.aceite,   color: 'text-green-600',    bg: 'bg-green-500/10' },
-            { label: 'Recusadas',value: stats.recusada,  color: 'text-red-500',      bg: 'bg-red-500/10' },
-          ].map(s => (
-            <div key={s.label} className={`rounded-lg border border-border/50 ${s.bg} p-4 text-center`}>
-              <p className={`text-2xl font-black font-['Poppins'] ${s.color}`}>{s.value}</p>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{s.label}</p>
-            </div>
-          ))}
-        </div>
-
         {/* Tabs */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {(['todas', 'pendente', 'aceite', 'recusada'] as const).map(t => (
@@ -342,9 +256,11 @@ const Negociacoes = () => {
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
             <p className="text-muted-foreground animate-pulse">A carregar negociações...</p>
           </div>
+        ) : filtered.length === 0 ? (
+          <EmptyState onIr={() => navigate('/marketplace')} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {filtered.length === 0 ? <EmptyState onIr={() => navigate('/marketplace')} /> : filtered.map(n => (
+          <div className="bg-card border border-border/60 rounded-lg overflow-hidden shadow-soft divide-y divide-border/50">
+            {filtered.map(n => (
               <NegociacaoCard
                 key={n.id}
                 n={n}
