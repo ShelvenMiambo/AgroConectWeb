@@ -211,8 +211,8 @@ const PaymentModal = ({ plan, onClose }: { plan: typeof plans[0]; onClose: () =>
                 <span className="text-2xl font-black text-primary font-['Poppins']">{plan.price} MT</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50">
-                <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-lg">M</div>
-                <div><p className="font-bold text-sm">M-Pesa</p><p className="text-xs text-muted-foreground">Vodacom Moçambique</p></div>
+                <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-10 w-auto rounded-lg flex-shrink-0" />
+                <div><p className="font-bold text-sm">Pagar com M-Pesa</p><p className="text-xs text-muted-foreground">Vodacom Moçambique</p></div>
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Número M-Pesa</Label>
@@ -669,6 +669,11 @@ const Perfil = () => {
                   <Crown className="h-5 w-5 text-primary" /> Planos de Subscrição
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">Desbloqueie funcionalidades premium e contacte proprietários diretamente.</p>
+                <div className="flex items-center gap-2.5 mt-3">
+                  <span className="text-xs text-muted-foreground">Pagamento por</span>
+                  <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-6 w-auto rounded" />
+                  <img src="/images/Emola.png" alt="e-Mola" className="h-6 w-6 rounded object-cover" />
+                </div>
               </CardHeader>
               <CardContent>
                 {/* Plano ativo em destaque no topo */}
