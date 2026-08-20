@@ -538,6 +538,7 @@ const Marketplace = () => {
   const [filters, setFilters] = useState({ tipoSolo: '', temAgua: '', areaMin: '' });
   const [showFilters, setShowFilters] = useState(false);
   const [soFavoritos, setSoFavoritos] = useState(false); // mostrar só os terrenos guardados
+  const [pubMenuOpen, setPubMenuOpen] = useState(false);  // menu "Publicar"
   const [showPublish, setShowPublish] = useState(false);
   const [showListingModal, setShowListingModal] = useState<ListingType | null>(null);
   const [listingInitial, setListingInitial] = useState<Record<string, string> | undefined>(undefined);
@@ -847,11 +848,44 @@ const Marketplace = () => {
 
   const ht = heroText();
 
+  // Opções de "Publicar" conforme o(s) perfil(is) do utilizador.
+  const pubOptions = ([
+    userTypes.includes('proprietario') && { icon: Home,        label: 'Publicar terreno',  sub: 'Ofereça a sua terra para arrendar', action: () => setShowPublish(true) },
+    userTypes.includes('agricultor')   && { icon: Sprout,      label: 'Procurar terreno',  sub: 'Pedido de terra para cultivar',     action: () => setShowListingModal('terra-procura') },
+    userTypes.includes('vendedor')     && { icon: ShoppingBag, label: 'Vender produto',    sub: 'Anuncie a sua colheita ou produtos', action: () => setShowListingModal('produto-oferta') },
+    userTypes.includes('comprador')    && { icon: Package,     label: 'Procurar produto',  sub: 'Pedido de compra',                   action: () => setShowListingModal('produto-procura') },
+  ].filter(Boolean)) as { icon: any; label: string; sub: string; action: () => void }[];
+  const runPub = (a: () => void) => { setPubMenuOpen(false); a(); };
+
   return (
     <div className="min-h-screen bg-background">
       {showPublish && <PublishModal onClose={() => setShowPublish(false)} onSaved={load} />}
       {showListingModal && <ListingModal listingType={showListingModal} initial={listingInitial} onClose={() => { setShowListingModal(null); setListingInitial(undefined); }} onSaved={load} />}
       {modais}
+
+      {/* Menu "Publicar" — escolher o que publicar */}
+      {pubMenuOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPubMenuOpen(false)} />
+          <div className="relative w-full max-w-sm bg-card rounded-xl border border-border/60 shadow-strong overflow-hidden fade-in-up">
+            <div className="flex items-center justify-between p-4 border-b border-border/60 bg-muted/30">
+              <h3 className="font-black text-lg font-['Poppins']">O que quer publicar?</h3>
+              <button onClick={() => setPubMenuOpen(false)} className="p-1.5 rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="p-2">
+              {pubOptions.map((o, i) => (
+                <button key={i} onClick={() => runPub(o.action)} className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted text-left transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><o.icon className="h-5 w-5 text-primary" /></div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm">{o.label}</p>
+                    <p className="text-xs text-muted-foreground">{o.sub}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Header />
       <main>
@@ -866,29 +900,17 @@ const Marketplace = () => {
               {ht.sub}
             </p>
 
-            {/* Contextual Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-4">
-              {userTypes.includes('proprietario') && (
-                <Button onClick={() => setShowPublish(true)} className="bg-primary text-white border-0 rounded-xl gap-2 font-semibold shadow-medium transition-colors">
-                  <Plus className="h-4 w-4" /> Publicar a Minha Terra
+            {/* Um único botão "Publicar" → menu com as opções do perfil */}
+            {pubOptions.length > 0 && (
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => pubOptions.length === 1 ? runPub(pubOptions[0].action) : setPubMenuOpen(true)}
+                  className="bg-primary hover:bg-primary/90 text-white border-0 rounded-xl gap-2 font-semibold h-12 px-7 text-base shadow-medium transition-colors">
+                  <Plus className="h-5 w-5" /> Publicar
+                  {pubOptions.length > 1 && <ChevronDown className="h-4 w-4 opacity-80" />}
                 </Button>
-              )}
-              {userTypes.includes('agricultor') && (
-                <Button onClick={() => setShowListingModal('terra-procura')} className="bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium transition-colors">
-                  <Plus className="h-4 w-4" /> Publicar Pedido de Terra
-                </Button>
-              )}
-              {userTypes.includes('vendedor') && (
-                <Button onClick={() => setShowListingModal('produto-oferta')} className="bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium transition-colors">
-                  <Plus className="h-4 w-4" /> Publicar Produto para Venda
-                </Button>
-              )}
-              {userTypes.includes('comprador') && (
-                <Button onClick={() => setShowListingModal('produto-procura')} className="bg-purple-600 hover:bg-purple-700 text-white border-0 rounded-xl gap-2 font-semibold shadow-medium transition-colors">
-                  <Plus className="h-4 w-4" /> Publicar Pedido de Produto
-                </Button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
