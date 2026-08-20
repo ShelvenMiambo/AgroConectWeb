@@ -82,6 +82,12 @@ const Footer = () => {
                 <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
                 Maputo, Moçambique
               </div>
+
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs text-background/50 dark:text-card-foreground/50">Pagamentos</span>
+                <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-6 w-auto rounded" />
+                <img src="/images/Emola.png" alt="e-Mola" className="h-6 w-6 rounded object-cover" />
+              </div>
             </div>
 
             {/* Navegação (só rotas reais) */}

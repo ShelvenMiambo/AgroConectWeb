@@ -214,10 +214,13 @@ const FeaturesSection = () => {
             <p className="text-sm text-muted-foreground flex items-center gap-3 flex-wrap justify-center">
               <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Conta gratuita</span>
               <span className="text-muted-foreground/40">·</span>
-              <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Pagamentos M-Pesa / eMola</span>
-              <span className="text-muted-foreground/40">·</span>
               <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Feito para Moçambique</span>
             </p>
+            <div className="flex items-center justify-center gap-3 pt-1">
+              <span className="text-xs text-muted-foreground">Pagamentos por</span>
+              <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-7 w-auto rounded" />
+              <img src="/images/Emola.png" alt="e-Mola" className="h-7 w-7 rounded object-cover" />
+            </div>
           </div>
         </div>
       </div>
