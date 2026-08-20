@@ -218,8 +218,8 @@ const FeaturesSection = () => {
             </p>
             <div className="flex items-center justify-center gap-3 pt-1">
               <span className="text-xs text-muted-foreground">Pagamentos por</span>
-              <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-7 w-auto rounded" />
-              <img src="/images/Emola.png" alt="e-Mola" className="h-7 w-7 rounded object-cover" />
+              <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-8 w-8 rounded object-cover" />
+              <img src="/images/Emola.png" alt="e-Mola" className="h-8 w-8 rounded object-cover" />
             </div>
           </div>
         </div>

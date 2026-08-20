@@ -671,8 +671,8 @@ const Perfil = () => {
                 <p className="text-sm text-muted-foreground">Desbloqueie funcionalidades premium e contacte proprietários diretamente.</p>
                 <div className="flex items-center gap-2.5 mt-3">
                   <span className="text-xs text-muted-foreground">Pagamento por</span>
-                  <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-6 w-auto rounded" />
-                  <img src="/images/Emola.png" alt="e-Mola" className="h-6 w-6 rounded object-cover" />
+                  <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-7 w-7 rounded object-cover" />
+                  <img src="/images/Emola.png" alt="e-Mola" className="h-7 w-7 rounded object-cover" />
                 </div>
               </CardHeader>
               <CardContent>

@@ -85,8 +85,8 @@ const Footer = () => {
 
               <div className="flex items-center gap-2.5">
                 <span className="text-xs text-background/50 dark:text-card-foreground/50">Pagamentos</span>
-                <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-6 w-auto rounded" />
-                <img src="/images/Emola.png" alt="e-Mola" className="h-6 w-6 rounded object-cover" />
+                <img src="/images/M-Pesa.png" alt="M-Pesa" className="h-7 w-7 rounded object-cover" />
+                <img src="/images/Emola.png" alt="e-Mola" className="h-7 w-7 rounded object-cover" />
               </div>
             </div>
 
