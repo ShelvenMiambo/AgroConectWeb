@@ -75,6 +75,7 @@ const Header = () => {
   const [notificationCount, setNotificationCount] = useState(0);
   const [alertsList, setAlertsList]   = useState<Alerta[]>([]);
   const [negNotifs, setNegNotifs]     = useState<Notif[]>([]); // negociações como itens de notificação
+  const [seen, setSeen]               = useState<Set<string>>(new Set()); // ids já vistos (localStorage)
   const location                      = useLocation();
   const navigate                      = useNavigate();
   const { currentUser, userData, userRole, logout } = useAuth();
@@ -159,20 +160,53 @@ const Header = () => {
       new Date(y.createdAt ?? 0).getTime() - new Date(x.createdAt ?? 0).getTime());
   }, [negNotifs, alertsList]);
 
-  // Badge = negociações por ver + alertas não lidos
+  // Carrega as notificações já "vistas" (por utilizador) do localStorage.
   useEffect(() => {
-    setNotificationCount(notifItems.filter(n => !n.lido).length);
-  }, [notifItems]);
+    if (!currentUser) { setSeen(new Set()); return; }
+    try { setSeen(new Set(JSON.parse(localStorage.getItem(`agro_notifs_vistas_${currentUser.uid}`) || '[]'))); }
+    catch { setSeen(new Set()); }
+  }, [currentUser]);
+
+  // Badge = itens não lidos e ainda não vistos.
+  useEffect(() => {
+    setNotificationCount(notifItems.filter(n => !n.lido && !seen.has(n.id)).length);
+  }, [notifItems, seen]);
+
+  // Ao ABRIR o sino, marca tudo como visto (badge → 0). Os itens ficam na lista.
+  const marcarTudoVisto = () => {
+    if (!currentUser) return;
+    const ids = notifItems.map(n => n.id);
+    setSeen(prev => {
+      const nova = new Set(prev); ids.forEach(id => nova.add(id));
+      try { localStorage.setItem(`agro_notifs_vistas_${currentUser.uid}`, JSON.stringify([...nova])); } catch { /* ignora */ }
+      return nova;
+    });
+    // Alertas: marca também como lidos no servidor (persiste entre dispositivos).
+    alertsList.forEach(a => { if (!a.lido) markAlertaAsRead(a.id).catch(() => {}); });
+    setAlertsList(prev => prev.map(a => ({ ...a, lido: true })));
+  };
+
+  const toggleSino = () => {
+    const abrir = !alertsOpen;
+    setAlertsOpen(abrir);
+    if (abrir) marcarTudoVisto();
+  };
 
   const handleNotifClick = async (n: Notif) => {
-    // Se for um alerta de produção (id 'alt-...'), marca como lido
-    if (n.id.startsWith('alt-') && !n.lido) {
-      const alertId = n.id.slice(4);
-      await markAlertaAsRead(alertId);
-      setAlertsList(prev => prev.map(a => a.id === alertId ? { ...a, lido: true } : a));
+    if (n.id.startsWith('alt-')) {
+      // Alerta de produção → marca como lido e vai para a Produção.
+      if (!n.lido) {
+        const alertId = n.id.slice(4);
+        await markAlertaAsRead(alertId);
+        setAlertsList(prev => prev.map(a => a.id === alertId ? { ...a, lido: true } : a));
+      }
+      setAlertsOpen(false);
+      navigate('/producao');
+    } else {
+      // Notificação de negociação → vai para as Negociações.
+      setAlertsOpen(false);
+      navigate('/negociacoes');
     }
-    setAlertsOpen(false);
-    navigate('/negociacoes');
   };
 
   // Fechar menu mobile ao mudar de rota
@@ -282,7 +316,7 @@ const Header = () => {
                   className={`hidden lg:flex h-9 w-9 p-0 rounded-lg transition-colors ${
                     scrolled || !isHome ? "" : "text-white hover:bg-white/15"
                   }`}
-                  onClick={() => setAlertsOpen(!alertsOpen)}
+                  onClick={toggleSino}
                   aria-label="Notificações"
                 >
                   <div className="relative">
@@ -304,16 +338,19 @@ const Header = () => {
                       {notifItems.length === 0 ? (
                         <p className="text-center text-xs text-muted-foreground p-4">Não tem notificações no momento.</p>
                       ) : (
-                        notifItems.slice(0, 8).map(n => (
+                        notifItems.slice(0, 8).map(n => {
+                          const visto = n.lido || seen.has(n.id);
+                          return (
                           <div
                             key={n.id}
                             onClick={() => handleNotifClick(n)}
-                            className={`p-3 text-sm cursor-pointer rounded-lg mb-1 transition-colors ${n.lido ? 'hover:bg-muted' : 'bg-primary/5 hover:bg-primary/10 border border-primary/20'}`}
+                            className={`p-3 text-sm cursor-pointer rounded-lg mb-1 transition-colors ${visto ? 'hover:bg-muted' : 'bg-primary/5 hover:bg-primary/10 border border-primary/20'}`}
                           >
-                            <p className={`font-semibold ${n.lido ? 'text-foreground/80' : 'text-primary'}`}>{n.titulo}</p>
+                            <p className={`font-semibold ${visto ? 'text-foreground/80' : 'text-primary'}`}>{n.titulo}</p>
                             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{n.descricao}</p>
                           </div>
-                        ))
+                          );
+                        })
                       )}
                       <div className="pt-2 text-center">
                         <Button variant="link" className="text-xs text-primary h-auto p-0" onClick={() => { setAlertsOpen(false); navigate('/negociacoes'); }}>
@@ -385,7 +422,7 @@ const Header = () => {
                 className={`lg:hidden h-9 w-9 p-0 rounded-lg relative ${
                   scrolled || !isHome ? "" : "text-white hover:bg-white/15"
                 }`}
-                onClick={() => setAlertsOpen(!alertsOpen)}
+                onClick={toggleSino}
                 aria-label="Notificações"
               >
                 <Bell className="h-4 w-4" />
