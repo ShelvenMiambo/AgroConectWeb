@@ -60,6 +60,64 @@ const soilColors: Record<string, string> = {
   franco:   "from-green-600/15 to-green-700/8",
 };
 
+/* ── Cartão de listagem (pedido / produto) — faixa colorida, sem ícones ─── */
+const listingBand: Record<string, string> = {
+  'terra-procura':   'from-green-600 to-green-800',
+  'produto-oferta':  'from-blue-600 to-blue-800',
+  'produto-procura': 'from-purple-600 to-purple-800',
+};
+const listingChip: Record<string, string> = {
+  'terra-procura':   'bg-green-500/10 text-green-700 dark:text-green-400',
+  'produto-oferta':  'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  'produto-procura': 'bg-purple-500/10 text-purple-700 dark:text-purple-400',
+};
+
+const ListingCard = ({ l, currentUid, onContact, onDelete }: {
+  l: Listing; currentUid?: string;
+  onContact: (l: Listing) => void; onDelete: (id: string) => void;
+}) => {
+  const m = listingMeta[l.listingType];
+  const isOwner = currentUid === l.autorUid;
+  const t = l.listingType;
+  const btn = t === 'produto-oferta' ? 'Contactar vendedor' : 'Responder';
+  const precoLabel = t === 'produto-oferta' ? 'Preço' : 'Orçamento';
+  return (
+    <div className="relative bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden fade-in-up flex flex-col">
+      {/* Faixa colorida: etiqueta + título (a cor indica o tipo) */}
+      <div className={`bg-gradient-to-br ${listingBand[t] || 'from-primary to-primary'} p-4`}>
+        <span className="inline-block bg-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full mb-2">{m.badge}</span>
+        <h4 className="font-bold text-white text-base leading-snug line-clamp-2 pr-8 font-['Poppins']">{l.titulo}</h4>
+      </div>
+      {isOwner && (
+        <button aria-label="Eliminar anúncio" onClick={() => onDelete(l.id!)}
+          className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/15 text-white hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
+          <Trash2 className="h-4 w-4" />
+        </button>
+      )}
+      <div className="p-4 flex flex-col gap-3 flex-1">
+        <p className="text-xs text-muted-foreground -mt-0.5">{l.autorNome}</p>
+        {l.descricao && <p className="text-sm text-muted-foreground line-clamp-2">{l.descricao}</p>}
+        {l.produtos && l.produtos.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {l.produtos.map(prod => <span key={prod} className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${listingChip[t]}`}>{prod}</span>)}
+          </div>
+        )}
+        <div className="space-y-1.5 text-xs text-muted-foreground">
+          {t === 'terra-procura' && l.area && <p>Precisa de {l.area.toLocaleString('pt-MZ')} m²</p>}
+          {l.quantidade && <p>{t === 'produto-procura' ? `Precisa de ${l.quantidade}` : l.quantidade}</p>}
+          {l.localizacao && <p>{t === 'produto-procura' ? `Entrega: ${l.localizacao}` : l.localizacao}</p>}
+          {l.preco && <p className="font-bold text-foreground">{precoLabel}: {l.preco.toLocaleString()} MT</p>}
+        </div>
+        {!isOwner && currentUid && (
+          <Button onClick={() => onContact(l)} className="w-full mt-auto h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0 font-semibold">
+            {btn}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ── Image Gallery ─────────────────────────────────── */
 const Gallery = ({ urls, nome }: { urls: string[]; nome: string }) => {
   const [idx, setIdx] = useState(0);
@@ -1027,37 +1085,11 @@ const Marketplace = () => {
                     <div className="mb-10">
                       <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Sprout className="h-5 w-5 text-green-600" /> Pedidos de Terra</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {filteredListings.filter(l => l.listingType === 'terra-procura').map((l, i) => {
-                          const m = listingMeta[l.listingType];
-                          const Icon = m.icon;
-                          const isOwner = currentUser?.uid === l.autorUid;
-                          return (
-                            <div key={l.id} className={`bg-card rounded-lg border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
-                              <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
-                              {isOwner && (
-                                <button aria-label="Eliminar anúncio" onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              )}
-                              <div className="flex items-center gap-3 mb-3 pr-24">
-                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center flex-shrink-0`}><Icon className="h-5 w-5" /></div>
-                                <div className="min-w-0"><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground line-clamp-1">{l.autorNome}</p></div>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{l.descricao}</p>
-                              <div className="space-y-2 text-xs font-medium">
-                                {l.localizacao && <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {l.localizacao}</div>}
-                                {l.area && <div className="flex items-center gap-2"><Ruler className="h-3.5 w-3.5 text-muted-foreground" /> Precisa de {l.area.toLocaleString('pt-MZ')} m²</div>}
-                                {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Orçamento: {l.preco.toLocaleString()} MT</div>}
-                              </div>
-                              {!isOwner && currentUser && (
-                                <Button onClick={() => setContactTarget({ refId: l.id!, refNome: l.titulo, refLocal: l.localizacao, donoUid: l.autorUid, donoNome: l.autorNome })}
-                                  className="w-full mt-4 h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0 font-semibold gap-2">
-                                  <Send className="h-4 w-4" /> Responder
-                                </Button>
-                              )}
-                            </div>
-                          );
-                        })}
+                        {filteredListings.filter(l => l.listingType === 'terra-procura').map(l => (
+                          <ListingCard key={l.id} l={l} currentUid={currentUser?.uid}
+                            onContact={(l) => setContactTarget({ refId: l.id!, refNome: l.titulo, refLocal: l.localizacao, donoUid: l.autorUid, donoNome: l.autorNome })}
+                            onDelete={handleDeleteListing} />
+                        ))}
                       </div>
                     </div>
                   )}
@@ -1161,42 +1193,11 @@ const Marketplace = () => {
                     <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><ShoppingBag className="h-5 w-5 text-blue-600" /> Produtos à Venda</h3>
                     {filteredListings.filter(l => l.listingType === 'produto-oferta').length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {filteredListings.filter(l => l.listingType === 'produto-oferta').map((l, i) => {
-                          const m = listingMeta[l.listingType];
-                          const Icon = m.icon;
-                          const isOwner = currentUser?.uid === l.autorUid;
-                          return (
-                            <div key={l.id} className={`bg-card rounded-lg border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
-                              <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
-                              {isOwner && (
-                                <button aria-label="Eliminar anúncio" onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              )}
-                              <div className="flex items-center gap-3 mb-3 pr-24">
-                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center flex-shrink-0`}><Icon className="h-5 w-5" /></div>
-                                <div className="min-w-0"><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground line-clamp-1">{l.autorNome}</p></div>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{l.descricao}</p>
-                              <div className="space-y-2 text-xs font-medium">
-                                {l.produtos && l.produtos.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mb-2">
-                                    {l.produtos.map(prod => <Badge key={prod} variant="secondary" className="text-[10px]">{prod}</Badge>)}
-                                  </div>
-                                )}
-                                {l.quantidade && <div className="flex items-center gap-2"><Package className="h-3.5 w-3.5 text-muted-foreground" /> {l.quantidade}</div>}
-                                {l.localizacao && <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {l.localizacao}</div>}
-                                {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Preço: {l.preco.toLocaleString()} MT</div>}
-                              </div>
-                              {!isOwner && currentUser && (
-                                <Button onClick={() => setContactTarget({ refId: l.id!, refNome: l.titulo, refLocal: l.localizacao, donoUid: l.autorUid, donoNome: l.autorNome })}
-                                  className="w-full mt-4 h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0 font-semibold gap-2">
-                                  <Send className="h-4 w-4" /> Contactar vendedor
-                                </Button>
-                              )}
-                            </div>
-                          );
-                        })}
+                        {filteredListings.filter(l => l.listingType === 'produto-oferta').map(l => (
+                          <ListingCard key={l.id} l={l} currentUid={currentUser?.uid}
+                            onContact={(l) => setContactTarget({ refId: l.id!, refNome: l.titulo, refLocal: l.localizacao, donoUid: l.autorUid, donoNome: l.autorNome })}
+                            onDelete={handleDeleteListing} />
+                        ))}
                       </div>
                     ) : (
                       <EmptyState
@@ -1218,42 +1219,11 @@ const Marketplace = () => {
                     <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Package className="h-5 w-5 text-purple-600" /> Pedidos de Compradores</h3>
                     {filteredListings.filter(l => l.listingType === 'produto-procura').length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {filteredListings.filter(l => l.listingType === 'produto-procura').map((l, i) => {
-                          const m = listingMeta[l.listingType];
-                          const Icon = m.icon;
-                          const isOwner = currentUser?.uid === l.autorUid;
-                          return (
-                            <div key={l.id} className={`bg-card rounded-lg border ${m.color} shadow-sm p-5 relative fade-in-up`} style={{ animationDelay: `${i * 50}ms` }}>
-                              <Badge className={`absolute top-4 right-4 ${m.color} shadow-none`}>{m.badge}</Badge>
-                              {isOwner && (
-                                <button aria-label="Eliminar anúncio" onClick={() => handleDeleteListing(l.id!)} className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-colors">
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              )}
-                              <div className="flex items-center gap-3 mb-3 pr-24">
-                                <div className={`w-10 h-10 rounded-xl ${m.color} border-0 flex items-center justify-center flex-shrink-0`}><Icon className="h-5 w-5" /></div>
-                                <div className="min-w-0"><h4 className="font-bold line-clamp-1">{l.titulo}</h4><p className="text-xs text-muted-foreground line-clamp-1">{l.autorNome}</p></div>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{l.descricao}</p>
-                              <div className="space-y-2 text-xs font-medium">
-                                {l.produtos && l.produtos.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mb-2">
-                                    {l.produtos.map(prod => <Badge key={prod} variant="secondary" className="text-[10px]">{prod}</Badge>)}
-                                  </div>
-                                )}
-                                {l.quantidade && <div className="flex items-center gap-2"><Package className="h-3.5 w-3.5 text-muted-foreground" /> Precisa de {l.quantidade}</div>}
-                                {l.localizacao && <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Entrega: {l.localizacao}</div>}
-                                {l.preco && <div className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-muted-foreground" /> Orçamento: {l.preco.toLocaleString()} MT</div>}
-                              </div>
-                              {!isOwner && currentUser && (
-                                <Button onClick={() => setContactTarget({ refId: l.id!, refNome: l.titulo, refLocal: l.localizacao, donoUid: l.autorUid, donoNome: l.autorNome })}
-                                  className="w-full mt-4 h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0 font-semibold gap-2">
-                                  <Send className="h-4 w-4" /> Responder
-                                </Button>
-                              )}
-                            </div>
-                          );
-                        })}
+                        {filteredListings.filter(l => l.listingType === 'produto-procura').map(l => (
+                          <ListingCard key={l.id} l={l} currentUid={currentUser?.uid}
+                            onContact={(l) => setContactTarget({ refId: l.id!, refNome: l.titulo, refLocal: l.localizacao, donoUid: l.autorUid, donoNome: l.autorNome })}
+                            onDelete={handleDeleteListing} />
+                        ))}
                       </div>
                     ) : (
                       <EmptyState
