@@ -1,60 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { X, Download, Share } from 'lucide-react';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 
 /**
- * Convite para instalar a app no ecrã principal.
- *  - Android/Chrome: usa o evento `beforeinstallprompt` → botão "Instalar" nativo.
- *  - iPhone/Safari: o iOS não permite instalação programática → mostra as instruções
- *    (Partilhar → "Adicionar ao ecrã principal").
- * Não aparece se já estiver instalada, nem se foi dispensado há pouco tempo.
+ * Cartão que convida a instalar a app no ecrã principal.
+ *  - Android/Chrome: botão "Instalar" (pedido nativo via `beforeinstallprompt`).
+ *  - iPhone/Safari: instruções (Partilhar → "Adicionar ao ecrã principal").
+ * Não aparece se já instalada, nem se foi dispensado há pouco tempo.
  */
 const DISMISS_KEY = 'agro_install_dispensado';
 const DISMISS_DIAS = 14;
 
-const jaInstalada = () =>
-  window.matchMedia?.('(display-mode: standalone)').matches ||
-  (window.navigator as any).standalone === true;
-
-const eIOS = () =>
-  /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
-
 export default function InstallPWA() {
-  const [deferred, setDeferred] = useState<any>(null);
-  const [show, setShow] = useState(false);
-  const [ios, setIos] = useState(false);
+  const { installed, isIOS, canPrompt, prompt } = usePwaInstall();
+  const [dismissed, setDismissed] = useState(() => {
+    try { const ate = Number(localStorage.getItem(DISMISS_KEY) || 0); return !!(ate && Date.now() < ate); }
+    catch { return false; }
+  });
 
-  useEffect(() => {
-    if (jaInstalada()) return;
-    try {
-      const ate = Number(localStorage.getItem(DISMISS_KEY) || 0);
-      if (ate && Date.now() < ate) return;
-    } catch { /* localStorage indisponível */ }
-
-    if (eIOS()) { setIos(true); setShow(true); return; }
-
-    const onPrompt = (e: Event) => { e.preventDefault(); setDeferred(e); setShow(true); };
-    const onInstalled = () => setShow(false);
-    window.addEventListener('beforeinstallprompt', onPrompt as any);
-    window.addEventListener('appinstalled', onInstalled);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onPrompt as any);
-      window.removeEventListener('appinstalled', onInstalled);
-    };
-  }, []);
-
-  if (!show) return null;
+  if (installed || dismissed) return null;
+  if (!isIOS && !canPrompt) return null; // Android: só quando o browser permite
 
   const dispensar = () => {
-    setShow(false);
+    setDismissed(true);
     try { localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_DIAS * 86400000)); } catch { /* */ }
-  };
-
-  const instalar = async () => {
-    if (!deferred) return;
-    deferred.prompt();
-    try { await deferred.userChoice; } catch { /* */ }
-    setDeferred(null);
-    setShow(false);
   };
 
   return (
@@ -71,14 +40,14 @@ export default function InstallPWA() {
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-bold text-sm">Instalar a AgroConecta</p>
-          {ios ? (
+          {isIOS ? (
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               Toca em <Share className="inline h-3.5 w-3.5 align-[-2px]" /> <strong>Partilhar</strong> e depois em <strong>“Adicionar ao ecrã principal”</strong>.
             </p>
           ) : (
             <>
               <p className="text-xs text-muted-foreground mt-0.5">Fica no teu ecrã principal e usa como uma app — mais rápido, ocupa pouco.</p>
-              <button onClick={instalar} className="mt-2.5 inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
+              <button onClick={() => prompt()} className="mt-2.5 inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
                 <Download className="h-4 w-4" /> Instalar
               </button>
             </>

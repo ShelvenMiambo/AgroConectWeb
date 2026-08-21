@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import {
   Menu, X, Bell, User,
   MapPin, Bot, Sprout, Handshake, Home, LogOut, Shield,
-  LayoutGrid, Settings
+  LayoutGrid, Settings, Download
 } from "lucide-react";
+import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import OnboardingModal from "./OnboardingModal";
@@ -90,6 +92,14 @@ const Header = () => {
   const handleLogout = async () => {
     await logout();
     navigate("/");
+  };
+
+  const { installed: appInstalada, isIOS, canPrompt, prompt: promptInstall } = usePwaInstall();
+  const instalarApp = async () => {
+    if (canPrompt) { await promptInstall(); setMenuOpen(false); }
+    else if (isIOS) {
+      toast("Instalar no iPhone", { description: 'No Safari, toca em Partilhar e depois em "Adicionar ao ecrã principal".' });
+    }
   };
 
   useEffect(() => {
@@ -551,6 +561,12 @@ const Header = () => {
 
           {/* Drawer Footer — pb generoso para não ficar atrás da barra inferior fixa */}
           <div className="px-4 pt-4 pb-24 border-t border-border/60 space-y-3 mt-auto">
+            {!appInstalada && (canPrompt || isIOS) && (
+              <Button variant="outline" onClick={instalarApp}
+                className="w-full rounded-xl border-primary/40 text-primary hover:bg-primary/5 font-semibold">
+                <Download className="h-4 w-4 mr-2" /> Instalar app
+              </Button>
+            )}
             {currentUser ? (
               <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
