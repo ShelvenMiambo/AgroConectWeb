@@ -13,6 +13,7 @@ import AdminRoute from "@/features/auth/components/AdminRoute";
 
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import BottomNav from "@/components/layout/BottomNav";
+import InstallPWA from "@/components/layout/InstallPWA";
 
 // Páginas carregadas sob demanda (code-splitting) para reduzir o bundle inicial
 const Index = lazy(() => import("@/features/landing/pages/Index"));
@@ -45,6 +46,7 @@ const App = () => (
           <ScrollToTop />
           <AuthProvider>
             <BottomNav />
+            <InstallPWA />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 {/* Public Routes */}
