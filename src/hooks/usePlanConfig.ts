@@ -14,9 +14,9 @@ export interface PlanConfig {
 
 // Preços reais (fim dos testes). Ajustáveis em Admin → preços dos planos.
 export const DEFAULT_PRICES: PlanPrices = {
-  mensal: 100,
-  trimestral: 270,  // ~10% vs 3× mensal
-  anual: 1000,      // ~17% vs 12× mensal
+  mensal: 50,
+  trimestral: 150,
+  anual: 550,
 };
 
 const DEFAULT_CONFIG: PlanConfig = {

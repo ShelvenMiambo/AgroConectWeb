@@ -28,7 +28,7 @@ interface Body { uid: string; plan: string; phone: string; }
 const DEBITOPAY_URL = 'https://gyqoaningqhurhvdugne.supabase.co/functions/v1/payment-orchestrator';
 const PLANOS = ['mensal', 'trimestral', 'anual'] as const;
 // Fallback usado só se a config não tiver preços. (M-Pesa exige mínimo 10 MT.)
-const PRECOS_FALLBACK: Record<string, number> = { mensal: 100, trimestral: 270, anual: 1000 };
+const PRECOS_FALLBACK: Record<string, number> = { mensal: 50, trimestral: 150, anual: 550 };
 // Fase de testes: cobra só este valor (o preço MOSTRADO ao utilizador mantém-se o real).
 // Para LANÇAR e cobrar o valor real: pôr a env var MODO_TESTE = 'off' no Cloudflare.
 const VALOR_TESTE_MT = 10;

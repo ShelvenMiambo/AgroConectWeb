@@ -6,7 +6,7 @@
  *  - NUNCA cacheia Firebase, Google APIs, Storage nem /api/* (sempre rede).
  * Para forçar atualização, incrementar CACHE_VERSION.
  */
-const CACHE_VERSION = 'agroconecta-v29';
+const CACHE_VERSION = 'agroconecta-v30';
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
